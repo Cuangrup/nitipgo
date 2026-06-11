@@ -509,7 +509,7 @@ async function loginPengirim(){
   currentUser=user;currentRole='pengirim';
   document.getElementById('topRoleBadge').textContent='📦 '+user.nama;
   document.getElementById('topRoleBadge').style.display='';
-  goScreen('screenPengirim');pengirimTab('buat');
+  goScreen('screenPengirim');pengirimTab('buat');subscribeRealtimePengirim();
 }
 async function loginMitra(){
   const nama=document.getElementById('mitraNama').value;
@@ -527,7 +527,7 @@ function pengirimTab(tab){
   document.querySelectorAll('.pengirim-tab').forEach(t=>t.classList.remove('active'));
   ['tabBuatOrder','tabOrderAktif','tabRiwayat'].forEach(id=>document.getElementById(id).style.display='none');
   if(tab==='buat'){document.querySelectorAll('.pengirim-tab')[0].classList.add('active');document.getElementById('tabBuatOrder').style.display='block';}
-  else if(tab==='aktif'){document.querySelectorAll('.pengirim-tab')[1].classList.add('active');document.getElementById('tabOrderAktif').style.display='block';loadOrderAktifPengirim();}
+  else if(tab==='aktif'){document.querySelectorAll('.pengirim-tab')[1].classList.add('active');document.getElementById('tabOrderAktif').style.display='block';document.getElementById('tabAktifLabel').textContent='Order Aktif';loadOrderAktifPengirim();}
   else{document.querySelectorAll('.pengirim-tab')[2].classList.add('active');document.getElementById('tabRiwayat').style.display='block';loadRiwayatPengirim();}
 }
 
@@ -808,11 +808,46 @@ function subscribeRealtime(){
   if(realtimeSub)realtimeSub.unsubscribe();
   realtimeSub=db.channel('nitipgo-changes')
     .on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>{
-      const idx=Array.from(document.querySelectorAll('.mitra-tab')).findIndex(t=>t.classList.contains('active'));
-      if(idx===0)loadOrderTersedia();else if(idx===1)loadOrderAktifMitra();
+      if(currentRole==='mitra'){
+        const idx=Array.from(document.querySelectorAll('.mitra-tab')).findIndex(t=>t.classList.contains('active'));
+        if(idx===0)loadOrderTersedia();else if(idx===1)loadOrderAktifMitra();
+      } else if(currentRole==='pengirim'){
+        const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
+        if(idx===1)loadOrderAktifPengirim();
+      }
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'bids'},()=>{
+      if(currentRole==='pengirim'){
+        // Auto switch ke tab aktif dan refresh
+        const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
+        if(idx===1)loadOrderAktifPengirim();
+        else{
+          // Tampilkan notif ada bid baru
+          const badge=document.getElementById('tabAktifLabel');
+          badge.innerHTML='Order Aktif <span style="background:var(--go);color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">BARU!</span>';
+        }
+      } else if(currentRole==='mitra'){
+        const idx=Array.from(document.querySelectorAll('.mitra-tab')).findIndex(t=>t.classList.contains('active'));
+        if(idx===0)loadOrderTersedia();
+      }
+    })
+    .subscribe();
+}
+
+function subscribeRealtimePengirim(){
+  if(realtimeSub)realtimeSub.unsubscribe();
+  realtimeSub=db.channel('nitipgo-pengirim')
+    .on('postgres_changes',{event:'*',schema:'public',table:'orders',filter:`pengirim_id=eq.${currentUser.id}`},()=>{
+      const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
+      if(idx===1)loadOrderAktifPengirim();
     })
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'bids'},()=>{
-      if(currentRole==='pengirim')loadOrderAktifPengirim();
+      const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
+      if(idx===1){
+        loadOrderAktifPengirim();
+      } else {
+        document.getElementById('tabAktifLabel').innerHTML='Order Aktif <span style="background:var(--go);color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;animation:pulse 1s infinite">🔔</span>';
+      }
     })
     .subscribe();
 }
