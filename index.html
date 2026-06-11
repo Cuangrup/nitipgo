@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NitipGo — Kirim Cepat, Harga Sepakat</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --brand:#0F3460;--go:#E94560;--go-light:#fff0f3;--go-dark:#c73652;
+  --mitra:#0a7c4a;--mitra-light:#f0fff8;--surface:#f7f8fc;--card:#ffffff;
+  --border:#e8eaf0;--text:#1a1d2e;--muted:#6b7280;--radius:14px;
+  --shadow:0 2px 16px rgba(15,52,96,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color:var(--text);min-height:100vh;}
+.topbar{background:var(--brand);color:white;padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+.logo{font-size:20px;font-weight:800;letter-spacing:-0.5px;}
+.logo span{color:var(--go);}
+.role-badge{font-size:11px;background:rgba(255,255,255,0.15);padding:4px 10px;border-radius:20px;}
+.screen{display:none;min-height:calc(100vh - 56px);}
+.screen.active{display:block;}
+.home-wrap{max-width:420px;margin:0 auto;padding:40px 20px;}
+.home-hero{text-align:center;margin-bottom:40px;}
+.home-hero h1{font-size:32px;font-weight:900;color:var(--brand);line-height:1.1;}
+.home-hero h1 span{color:var(--go);}
+.home-hero p{color:var(--muted);margin-top:10px;font-size:15px;}
+.role-cards{display:grid;gap:14px;}
+.role-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:24px 20px;cursor:pointer;transition:all .2s;text-align:left;}
+.role-card:hover{border-color:var(--go);transform:translateY(-2px);box-shadow:var(--shadow);}
+.role-card.mitra:hover{border-color:var(--mitra);}
+.role-card .icon{font-size:32px;margin-bottom:10px;}
+.role-card h3{font-size:17px;font-weight:700;}
+.role-card p{font-size:13px;color:var(--muted);margin-top:4px;}
+.eco-tag{text-align:center;margin-top:32px;font-size:12px;color:var(--muted);}
+.form-wrap{max-width:480px;margin:0 auto;padding:24px 20px;}
+.form-title{font-size:20px;font-weight:800;color:var(--brand);margin-bottom:6px;}
+.form-sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.field input,.field select,.field textarea{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;background:white;color:var(--text);transition:border-color .2s;font-family:inherit;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--go);}
+.field textarea{resize:vertical;min-height:80px;}
+.harga-hint{font-size:12px;color:var(--muted);margin-top:5px;}
+.harga-hint b{color:var(--go);}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-go{background:var(--go);color:white;}
+.btn-go:hover{background:var(--go-dark);}
+.btn-mitra{background:var(--mitra);color:white;}
+.btn-mitra:hover{background:#085f38;}
+.btn-outline{background:transparent;color:var(--brand);border:2px solid var(--border);}
+.btn-outline:hover{border-color:var(--brand);}
+.btn-sm{width:auto;padding:8px 16px;font-size:13px;border-radius:8px;}
+.btn-danger{background:#fee2e2;color:#dc2626;border:none;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.card{background:var(--card);border-radius:var(--radius);padding:18px;border:1px solid var(--border);margin-bottom:12px;}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.order-kode{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;}
+.order-jenis{font-size:11px;background:var(--go-light);color:var(--go);padding:3px 8px;border-radius:20px;font-weight:600;}
+.order-jenis.suruh{background:#fff3e0;color:#e65100;}
+.order-jenis.beli{background:#e8f5e9;color:#2e7d32;}
+.route{display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;}
+.route-line{display:flex;flex-direction:column;align-items:center;padding-top:4px;}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dot-pickup{background:var(--go);}
+.dot-drop{background:var(--brand);}
+.line{width:2px;height:24px;background:var(--border);}
+.route-text{flex:1;}
+.route-addr{font-size:13px;color:var(--text);margin-bottom:16px;}
+.route-addr:last-child{margin-bottom:0;}
+.route-label{font-size:11px;color:var(--muted);}
+.harga-row{display:flex;justify-content:space-between;align-items:center;}
+.harga-tawar{font-size:18px;font-weight:800;color:var(--go);}
+.status-pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;}
+.status-mencari{background:#fff3e0;color:#e65100;}
+.status-menunggu_konfirmasi{background:#e3f2fd;color:#1565c0;}
+.status-nego{background:#e3f2fd;color:#1565c0;}
+.status-dijemput{background:#f3e5f5;color:#6a1b9a;}
+.status-diantar{background:#e8f5e9;color:#2e7d32;}
+.status-selesai{background:#e8f5e9;color:#1b5e20;}
+.status-batal{background:#fce4ec;color:#880e4f;}
+.bid-card{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;}
+.bid-card.terpilih{border-color:var(--mitra);background:var(--mitra-light);}
+.bid-mitra-name{font-size:14px;font-weight:700;}
+.bid-rating{font-size:12px;color:#f59e0b;}
+.bid-stats{font-size:11px;color:var(--muted);}
+.bid-harga{font-size:17px;font-weight:800;color:var(--go);}
+.bid-actions{display:flex;gap:8px;margin-top:10px;}
+.nego-box{background:var(--go-light);border:1.5px solid #ffc5cf;border-radius:10px;padding:14px;margin-top:12px;}
+.nego-box.mitra-side{background:var(--mitra-light);border-color:#b2dfdb;}
+.nego-title{font-size:12px;font-weight:700;color:var(--go);margin-bottom:10px;}
+.nego-title.mitra{color:var(--mitra);}
+.nego-input-row{display:flex;gap:8px;}
+.nego-input-row input{flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:15px;font-weight:700;}
+.tracking-wrap{max-width:480px;margin:0 auto;padding:24px 20px;}
+.track-status-big{text-align:center;padding:32px 20px;}
+.track-icon{font-size:56px;margin-bottom:12px;}
+.track-status-label{font-size:22px;font-weight:800;color:var(--brand);}
+.track-status-desc{font-size:14px;color:var(--muted);margin-top:6px;}
+.track-steps{margin:24px 0;}
+.step{display:flex;gap:14px;align-items:flex-start;margin-bottom:18px;}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.step-dot.done{background:var(--mitra);color:white;}
+.step-dot.active{background:var(--go);color:white;}
+.step-dot.todo{background:var(--border);color:var(--muted);}
+.step-info{padding-top:4px;}
+.step-label{font-size:14px;font-weight:600;}
+.mitra-tabs{display:flex;background:white;border-bottom:1px solid var(--border);position:sticky;top:56px;z-index:50;}
+.mitra-tab{flex:1;padding:14px;text-align:center;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
+.mitra-tab.active{color:var(--mitra);border-bottom-color:var(--mitra);}
+.mitra-content{max-width:480px;margin:0 auto;padding:16px 20px;}
+.pengirim-tabs{display:flex;background:white;border-bottom:1px solid var(--border);position:sticky;top:56px;z-index:50;}
+.pengirim-tab{flex:1;padding:14px;text-align:center;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
+.pengirim-tab.active{color:var(--go);border-bottom-color:var(--go);}
+.alert{padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;}
+.alert-success{background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9;}
+.alert-error{background:#fce4ec;color:#880e4f;border:1px solid #f8bbd0;}
+.alert-info{background:#e3f2fd;color:#1565c0;border:1px solid #bbdefb;}
+.empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty .icon{font-size:48px;margin-bottom:12px;}
+.empty p{font-size:14px;}
+.back-btn{display:flex;align-items:center;gap:6px;color:var(--brand);font-size:14px;font-weight:600;cursor:pointer;margin-bottom:20px;background:none;border:none;padding:0;}
+.back-btn:hover{color:var(--go);}
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:14px;}
+.badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:var(--go);color:white;border-radius:50%;font-size:10px;font-weight:700;margin-left:4px;}
+/* MAP */
+.map-modal{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.6);flex-direction:column;}
+.map-modal.open{display:flex;}
+.map-header{background:var(--brand);color:white;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.map-header h3{font-size:16px;font-weight:700;}
+.map-header button{background:none;border:none;color:white;font-size:22px;cursor:pointer;}
+.map-search-bar{background:white;padding:10px 14px;flex-shrink:0;}
+.map-search-bar input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;}
+.map-suggestions{background:white;border-top:1px solid var(--border);max-height:160px;overflow-y:auto;flex-shrink:0;}
+.map-suggestion-item{padding:12px 16px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);}
+.map-suggestion-item:hover{background:var(--surface);}
+#mapContainer{flex:1;min-height:0;}
+.map-confirm-bar{background:white;padding:12px 16px;flex-shrink:0;border-top:2px solid var(--border);}
+.map-selected-addr{font-size:12px;color:var(--muted);margin-bottom:8px;min-height:18px;}
+.addr-wrap{position:relative;}
+.addr-wrap input{padding-right:44px;}
+.addr-map-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:20px;cursor:pointer;}
+/* FOTO UPLOAD */
+.foto-upload-area{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;margin-top:8px;transition:border-color .2s;}
+.foto-upload-area:hover{border-color:var(--go);}
+.foto-upload-area img{max-width:100%;max-height:200px;border-radius:8px;margin-top:8px;}
+.foto-preview{width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:8px;}
+@media(max-width:480px){.home-hero h1{font-size:26px;}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">Nitip<span>Go</span></div>
+  <div class="role-badge" id="topRoleBadge" style="display:none"></div>
+</div>
+
+<!-- HOME -->
+<div id="screenHome" class="screen active">
+  <div class="home-wrap">
+    <div class="home-hero">
+      <h1>Kirim Cepat,<br><span>Harga Sepakat.</span></h1>
+      <p>Pengiriman sameday Surabaya & sekitarnya.<br>Kamu tawar, mitra bid — kamu yang pilih.</p>
+    </div>
+    <div class="role-cards">
+      <div class="role-card" onclick="goScreen('screenPengirimLogin')">
+        <div class="icon">📦</div>
+        <h3>Saya Pengirim</h3>
+        <p>Buat order, tawar harga, pilih mitra terbaik</p>
+      </div>
+      <div class="role-card mitra" onclick="goScreen('screenMitraLogin')">
+        <div class="icon">🛵</div>
+        <h3>Saya Mitra Driver</h3>
+        <p>Lihat order, bid harga, atur penghasilan sendiri</p>
+      </div>
+      <div class="role-card" onclick="goScreen('screenTracking')">
+        <div class="icon">📍</div>
+        <h3>Lacak Kiriman</h3>
+        <p>Cek status order dengan kode kiriman</p>
+      </div>
+    </div>
+    <div class="eco-tag">Bagian dari ekosistem Nitip • NitipBox · NitipGo</div>
+  </div>
+</div>
+
+<!-- PENGIRIM LOGIN -->
+<div id="screenPengirimLogin" class="screen">
+  <div class="form-wrap">
+    <button class="back-btn" onclick="goScreen('screenHome')">← Kembali</button>
+    <div class="form-title">Masuk sebagai Pengirim</div>
+    <div class="form-sub">Masukkan nama & nomor HP kamu</div>
+    <div id="pengirimLoginAlert"></div>
+    <div class="field"><label>Nama Lengkap</label><input type="text" id="pengirimNama" placeholder="Contoh: Budi Santoso"></div>
+    <div class="field"><label>Nomor WhatsApp</label><input type="tel" id="pengirimHp" placeholder="08xxxxxxxxxx"></div>
+    <button class="btn btn-go" onclick="loginPengirim()">Lanjut →</button>
+  </div>
+</div>
+
+<!-- PENGIRIM DASHBOARD -->
+<div id="screenPengirim" class="screen">
+  <div class="pengirim-tabs">
+    <div class="pengirim-tab active" onclick="pengirimTab('buat')">+ Buat Order</div>
+    <div class="pengirim-tab" onclick="pengirimTab('aktif')" id="tabAktifLabel">Order Aktif</div>
+    <div class="pengirim-tab" onclick="pengirimTab('riwayat')">Riwayat</div>
+  </div>
+  <div id="tabBuatOrder" class="form-wrap">
+    <div class="form-title">Buat Order Baru</div>
+    <div class="form-sub">Isi detail & pasang harga tawarmu</div>
+    <div id="buatOrderAlert"></div>
+    <div class="field">
+      <label>Jenis Layanan</label>
+      <select id="orderJenis">
+        <option value="kirim">📦 NitipKirim — Antar Paket/Dokumen</option>
+        <option value="suruh">🧾 NitipSuruh — Jasa Errand/Operasional</option>
+        <option value="beli">🛍️ NitipBeli — Titip Belanja</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Alamat Penjemputan</label>
+      <div class="addr-wrap">
+        <input type="text" id="orderPickup" placeholder="Ketik alamat lengkap...">
+        <button class="addr-map-btn" onclick="openMap('pickup')" title="Pilih di peta">📍</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Alamat Tujuan</label>
+      <div class="addr-wrap">
+        <input type="text" id="orderTujuan" placeholder="Ketik alamat lengkap...">
+        <button class="addr-map-btn" onclick="openMap('tujuan')" title="Pilih di peta">📍</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Deskripsi Barang/Keperluan</label>
+      <textarea id="orderDesc" placeholder="Contoh: 1 paket dokumen, perlu tanda tangan penerima"></textarea>
+    </div>
+    <div class="field">
+      <label>Harga Tawarmu (Rp)</label>
+      <input type="number" id="orderHarga" placeholder="Contoh: 25000" min="5000">
+      <div class="harga-hint">💡 Estimasi: <b id="estimasiHarga">isi alamat dulu</b> • Tawar bebas, mitra yang bid</div>
+    </div>
+    <button class="btn btn-go" onclick="buatOrder()">Pasang Order 🚀</button>
+  </div>
+  <div id="tabOrderAktif" style="display:none" class="mitra-content">
+    <div id="listOrderAktif"><div class="loading">Memuat...</div></div>
+  </div>
+  <div id="tabRiwayat" style="display:none" class="mitra-content">
+    <div id="listRiwayat"><div class="loading">Memuat...</div></div>
+  </div>
+</div>
+
+<!-- MITRA LOGIN -->
+<div id="screenMitraLogin" class="screen">
+  <div class="form-wrap">
+    <button class="back-btn" onclick="goScreen('screenHome')">← Kembali</button>
+    <div class="form-title">Masuk sebagai Mitra Driver</div>
+    <div class="form-sub">Masukkan nama & nomor HP kamu</div>
+    <div id="mitraLoginAlert"></div>
+    <div class="field"><label>Nama Lengkap</label><input type="text" id="mitraNama" placeholder="Contoh: Andi Kurniawan"></div>
+    <div class="field"><label>Nomor WhatsApp</label><input type="tel" id="mitraHp" placeholder="08xxxxxxxxxx"></div>
+    <button class="btn btn-mitra" onclick="loginMitra()">Masuk sebagai Mitra →</button>
+  </div>
+</div>
+
+<!-- MITRA DASHBOARD -->
+<div id="screenMitra" class="screen">
+  <div class="mitra-tabs">
+    <div class="mitra-tab active" onclick="mitraTab('tersedia')">Tersedia <span class="badge" id="badgeTersedia">0</span></div>
+    <div class="mitra-tab" onclick="mitraTab('aktif')">Aktifku</div>
+    <div class="mitra-tab" onclick="mitraTab('selesai')">Selesai</div>
+  </div>
+  <div id="mitraTabTersedia" class="mitra-content">
+    <div id="listTersedia"><div class="loading">Mencari order...</div></div>
+  </div>
+  <div id="mitraTabAktif" style="display:none" class="mitra-content">
+    <div id="listMitraAktif"><div class="loading">Memuat...</div></div>
+  </div>
+  <div id="mitraTabSelesai" style="display:none" class="mitra-content">
+    <div id="listMitraSelesai"><div class="loading">Memuat...</div></div>
+  </div>
+</div>
+
+<!-- TRACKING -->
+<div id="screenTracking" class="screen">
+  <div class="tracking-wrap">
+    <button class="back-btn" onclick="goScreen('screenHome')">← Kembali</button>
+    <div class="form-title">Lacak Kiriman</div>
+    <div class="form-sub">Masukkan kode order kamu</div>
+    <div class="field">
+      <input type="text" id="trackKode" placeholder="Contoh: NGO-ABC123" style="text-transform:uppercase;font-weight:700;letter-spacing:1px;">
+    </div>
+    <button class="btn btn-go" onclick="lacakOrder()" style="margin-bottom:20px;">Lacak 🔍</button>
+    <div id="trackResult"></div>
+  </div>
+</div>
+
+<!-- MAP MODAL -->
+<div id="mapModal" class="map-modal">
+  <div class="map-header">
+    <h3 id="mapModalTitle">Pilih Lokasi</h3>
+    <button onclick="closeMap()">✕</button>
+  </div>
+  <div class="map-search-bar">
+    <input type="text" id="mapSearchInput" placeholder="🔍 Cari alamat..." oninput="searchAddress(this.value)">
+  </div>
+  <div class="map-suggestions" id="mapSuggestions"></div>
+  <div id="mapContainer"></div>
+  <div class="map-confirm-bar">
+    <div class="map-selected-addr" id="mapSelectedAddr">Klik peta atau cari alamat untuk pilih lokasi</div>
+    <button class="btn btn-go" onclick="confirmMapLocation()">✓ Pakai Lokasi Ini</button>
+  </div>
+</div>
+
+<!-- FOTO MODAL -->
+<div id="fotoModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.7);flex-direction:column;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:16px;padding:24px;max-width:400px;width:90%;margin:20px;">
+    <h3 style="font-size:16px;font-weight:700;color:var(--brand);margin-bottom:6px;" id="fotoModalTitle">Upload Foto Bukti</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;" id="fotoModalDesc">Foto wajib diupload sebelum melanjutkan</p>
+    <div class="foto-upload-area" onclick="document.getElementById('fotoInput').click()">
+      <div id="fotoPreviewWrap">
+        <div style="font-size:32px;">📸</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:8px;">Klik untuk ambil/pilih foto</div>
+      </div>
+    </div>
+    <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none" onchange="previewFoto(this)">
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-outline" onclick="closeFotoModal()">Batal</button>
+      <button class="btn btn-mitra" id="fotoConfirmBtn" onclick="confirmFoto()" disabled>Upload & Lanjut</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPA_URL='https://ikypjxxufrvdihuoccut.supabase.co';
+const SUPA_KEY='sb_publishable_Z16QnBPhF7Mdge2iITcqdA_n4Mu3-dG';
+const {createClient}=supabase;
+const db=createClient(SUPA_URL,SUPA_KEY);
+
+let currentUser=null,currentRole=null,realtimeSub=null;
+let mapInstance=null,mapMarker=null,mapTarget=null,selectedLatLng=null,selectedAddress='',searchTimeout=null;
+let fotoCallback=null,fotoOrderId=null,fotoType=null,fotoDataUrl=null;
+let pickupCoords=null,tujuanCoords=null;
+
+// ── NAVIGATION ──
+function goScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── HELPERS ──
+function rupiah(n){return'Rp '+Number(n).toLocaleString('id-ID');}
+function kodeOrder(){
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let r='';for(let i=0;i<6;i++)r+=c[Math.floor(Math.random()*c.length)];
+  return'NGO-'+r;
+}
+function statusLabel(s){
+  const m={mencari:'Mencari Mitra',menunggu_konfirmasi:'Pilih Mitra',nego:'Negosiasi',dijemput:'Dijemput',diantar:'Dalam Perjalanan',selesai:'Selesai',batal:'Dibatalkan'};
+  return m[s]||s;
+}
+function jenisLabel(j){return{kirim:'NitipKirim',suruh:'NitipSuruh',beli:'NitipBeli'}[j]||j;}
+
+function showAlert(elId,msg,type='error'){
+  const el=document.getElementById(elId);
+  el.innerHTML=`<div class="alert alert-${type}">${msg}</div>`;
+  setTimeout(()=>el.innerHTML='',5000);
+}
+
+// ── KALKULASI TARIF ──
+function hitungJarak(lat1,lng1,lat2,lng2){
+  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function hitungTarif(km){
+  if(km<=3)return 7000;
+  return 7000+Math.ceil(km-3)*2500;
+}
+function updateEstimasi(){
+  const p=document.getElementById('orderPickup').value;
+  const t=document.getElementById('orderTujuan').value;
+  const el=document.getElementById('estimasiHarga');
+  if(pickupCoords&&tujuanCoords){
+    const km=hitungJarak(pickupCoords.lat,pickupCoords.lng,tujuanCoords.lat,tujuanCoords.lng);
+    const tarif=hitungTarif(km);
+    el.innerHTML=`<b>${rupiah(tarif)}</b> (${km.toFixed(1)} km)`;
+    document.getElementById('orderHarga').placeholder=tarif;
+  } else if(p&&t){
+    el.textContent='Rp 7.000 – Rp 35.000 (pilih titik peta untuk estimasi akurat)';
+  } else {
+    el.textContent='isi alamat dulu';
+  }
+}
+document.getElementById('orderPickup').addEventListener('input',updateEstimasi);
+document.getElementById('orderTujuan').addEventListener('input',updateEstimasi);
+
+// ── MAP ──
+function openMap(target){
+  mapTarget=target;
+  document.getElementById('mapModal').classList.add('open');
+  document.getElementById('mapModalTitle').textContent=target==='pickup'?'📍 Lokasi Penjemputan':'📍 Lokasi Tujuan';
+  document.getElementById('mapSearchInput').value='';
+  document.getElementById('mapSuggestions').innerHTML='';
+  document.getElementById('mapSelectedAddr').textContent='Klik peta atau cari alamat';
+  selectedLatLng=null;selectedAddress='';
+  setTimeout(()=>{
+    if(!mapInstance){
+      mapInstance=L.map('mapContainer').setView([-7.2575,112.7521],13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(mapInstance);
+      mapInstance.on('click',onMapClick);
+    } else {mapInstance.invalidateSize();}
+  },100);
+}
+function closeMap(){document.getElementById('mapModal').classList.remove('open');}
+async function onMapClick(e){
+  const{lat,lng}=e.latlng;selectedLatLng={lat,lng};
+  if(mapMarker)mapMarker.remove();
+  mapMarker=L.marker([lat,lng]).addTo(mapInstance);
+  document.getElementById('mapSelectedAddr').textContent='Mencari alamat...';
+  try{
+    const res=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=id`);
+    const data=await res.json();
+    selectedAddress=data.display_name.split(',').slice(0,4).join(',').trim();
+    document.getElementById('mapSelectedAddr').textContent=selectedAddress;
+    mapMarker.bindPopup(selectedAddress).openPopup();
+  }catch{selectedAddress=`${lat.toFixed(5)}, ${lng.toFixed(5)}`;document.getElementById('mapSelectedAddr').textContent=selectedAddress;}
+}
+async function searchAddress(query){
+  clearTimeout(searchTimeout);
+  const el=document.getElementById('mapSuggestions');
+  if(!query||query.length<3){el.innerHTML='';return;}
+  searchTimeout=setTimeout(async()=>{
+    try{
+      const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query+' Surabaya')}&format=json&limit=5&accept-language=id&countrycodes=id`);
+      const data=await res.json();
+      if(!data.length){el.innerHTML='<div class="map-suggestion-item" style="color:var(--muted)">Tidak ditemukan</div>';return;}
+      el.innerHTML=data.map(r=>`<div class="map-suggestion-item" onclick="selectSuggestion(${r.lat},${r.lon},'${r.display_name.replace(/'/g,"\\'")}')">📍 ${r.display_name.split(',').slice(0,3).join(',')}</div>`).join('');
+    }catch{el.innerHTML='';}
+  },500);
+}
+function selectSuggestion(lat,lon,addr){
+  selectedLatLng={lat:parseFloat(lat),lng:parseFloat(lon)};
+  selectedAddress=addr.split(',').slice(0,4).join(',').trim();
+  if(mapMarker)mapMarker.remove();
+  mapMarker=L.marker([lat,lon]).addTo(mapInstance);
+  mapInstance.setView([lat,lon],16);
+  mapMarker.bindPopup(selectedAddress).openPopup();
+  document.getElementById('mapSelectedAddr').textContent=selectedAddress;
+  document.getElementById('mapSuggestions').innerHTML='';
+  document.getElementById('mapSearchInput').value=selectedAddress;
+}
+function confirmMapLocation(){
+  if(!selectedAddress){alert('Pilih lokasi dulu');return;}
+  const fieldId=mapTarget==='pickup'?'orderPickup':'orderTujuan';
+  document.getElementById(fieldId).value=selectedAddress;
+  if(mapTarget==='pickup')pickupCoords=selectedLatLng;
+  else tujuanCoords=selectedLatLng;
+  updateEstimasi();
+  closeMap();
+}
+
+// ── FOTO MODAL ──
+function openFotoModal(orderId,type,title,desc,callback){
+  fotoOrderId=orderId;fotoType=type;fotoCallback=callback;fotoDataUrl=null;
+  document.getElementById('fotoModalTitle').textContent=title;
+  document.getElementById('fotoModalDesc').textContent=desc;
+  document.getElementById('fotoPreviewWrap').innerHTML='<div style="font-size:32px;">📸</div><div style="font-size:13px;color:var(--muted);margin-top:8px;">Klik untuk ambil/pilih foto</div>';
+  document.getElementById('fotoConfirmBtn').disabled=true;
+  document.getElementById('fotoInput').value='';
+  document.getElementById('fotoModal').style.display='flex';
+}
+function closeFotoModal(){document.getElementById('fotoModal').style.display='none';}
+function previewFoto(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    fotoDataUrl=e.target.result;
+    document.getElementById('fotoPreviewWrap').innerHTML=`<img src="${fotoDataUrl}" class="foto-preview">`;
+    document.getElementById('fotoConfirmBtn').disabled=false;
+  };
+  reader.readAsDataURL(file);
+}
+async function confirmFoto(){
+  if(!fotoDataUrl)return;
+  const btn=document.getElementById('fotoConfirmBtn');
+  btn.disabled=true;btn.textContent='Mengupload...';
+  // Simpan base64 ke Supabase
+  const col=fotoType==='pickup'?'foto_pickup':'foto_selesai';
+  await db.from('orders').update({[col]:fotoDataUrl}).eq('id',fotoOrderId);
+  btn.textContent='Upload & Lanjut';
+  closeFotoModal();
+  if(fotoCallback)fotoCallback();
+}
+
+// ── AUTH ──
+async function loginUser(nama,hp,role,alertId){
+  if(!nama.trim()||!hp.trim()){showAlert(alertId,'Nama dan nomor HP wajib diisi.');return null;}
+  const{data:existing}=await db.from('users').select('*').eq('no_hp',hp).eq('role',role).single();
+  if(existing)return existing;
+  const{data:newUser,error}=await db.from('users').insert({nama,no_hp:hp,role}).select().single();
+  if(error){showAlert(alertId,'Gagal masuk: '+error.message);return null;}
+  return newUser;
+}
+async function loginPengirim(){
+  const nama=document.getElementById('pengirimNama').value;
+  const hp=document.getElementById('pengirimHp').value;
+  const user=await loginUser(nama,hp,'pengirim','pengirimLoginAlert');
+  if(!user)return;
+  currentUser=user;currentRole='pengirim';
+  document.getElementById('topRoleBadge').textContent='📦 '+user.nama;
+  document.getElementById('topRoleBadge').style.display='';
+  goScreen('screenPengirim');pengirimTab('buat');
+}
+async function loginMitra(){
+  const nama=document.getElementById('mitraNama').value;
+  const hp=document.getElementById('mitraHp').value;
+  const user=await loginUser(nama,hp,'mitra','mitraLoginAlert');
+  if(!user)return;
+  currentUser=user;currentRole='mitra';
+  document.getElementById('topRoleBadge').textContent='🛵 '+user.nama;
+  document.getElementById('topRoleBadge').style.display='';
+  goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();
+}
+
+// ── PENGIRIM TABS ──
+function pengirimTab(tab){
+  document.querySelectorAll('.pengirim-tab').forEach(t=>t.classList.remove('active'));
+  ['tabBuatOrder','tabOrderAktif','tabRiwayat'].forEach(id=>document.getElementById(id).style.display='none');
+  if(tab==='buat'){document.querySelectorAll('.pengirim-tab')[0].classList.add('active');document.getElementById('tabBuatOrder').style.display='block';}
+  else if(tab==='aktif'){document.querySelectorAll('.pengirim-tab')[1].classList.add('active');document.getElementById('tabOrderAktif').style.display='block';loadOrderAktifPengirim();}
+  else{document.querySelectorAll('.pengirim-tab')[2].classList.add('active');document.getElementById('tabRiwayat').style.display='block';loadRiwayatPengirim();}
+}
+
+// ── BUAT ORDER ──
+async function buatOrder(){
+  const jenis=document.getElementById('orderJenis').value;
+  const pickup=document.getElementById('orderPickup').value.trim();
+  const tujuan=document.getElementById('orderTujuan').value.trim();
+  const desc=document.getElementById('orderDesc').value.trim();
+  const harga=parseInt(document.getElementById('orderHarga').value);
+  if(!pickup||!tujuan){showAlert('buatOrderAlert','Alamat penjemputan & tujuan wajib diisi.');return;}
+  if(!harga||harga<5000){showAlert('buatOrderAlert','Harga tawar minimal Rp 5.000.');return;}
+  const btn=event.target;btn.disabled=true;btn.textContent='Memasang order...';
+  const orderData={
+    kode:kodeOrder(),pengirim_id:currentUser.id,
+    jenis,alamat_pickup:pickup,alamat_tujuan:tujuan,
+    deskripsi:desc,harga_tawar:harga,status:'mencari',
+  };
+  if(pickupCoords){orderData.pickup_lat=pickupCoords.lat;orderData.pickup_lng=pickupCoords.lng;}
+  if(tujuanCoords){orderData.tujuan_lat=tujuanCoords.lat;orderData.tujuan_lng=tujuanCoords.lng;}
+  const{data,error}=await db.from('orders').insert(orderData).select().single();
+  btn.disabled=false;btn.textContent='Pasang Order 🚀';
+  if(error){showAlert('buatOrderAlert','Gagal buat order: '+error.message);return;}
+  document.getElementById('orderPickup').value='';
+  document.getElementById('orderTujuan').value='';
+  document.getElementById('orderDesc').value='';
+  document.getElementById('orderHarga').value='';
+  pickupCoords=null;tujuanCoords=null;
+  showAlert('buatOrderAlert',`✅ Order ${data.kode} berhasil dipasang! Tunggu bid dari mitra.`,'success');
+  pengirimTab('aktif');
+}
+
+// ── LOAD ORDER PENGIRIM ──
+async function loadOrderAktifPengirim(){
+  const el=document.getElementById('listOrderAktif');
+  el.innerHTML='<div class="loading">Memuat...</div>';
+  const{data}=await db.from('orders').select('*').eq('pengirim_id',currentUser.id)
+    .in('status',['mencari','menunggu_konfirmasi','dijemput','diantar']).order('created_at',{ascending:false});
+  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">📭</div><p>Belum ada order aktif.</p></div>';return;}
+  const html=await Promise.all(data.map(o=>renderOrderPengirim(o)));
+  el.innerHTML=html.join('');
+}
+async function loadRiwayatPengirim(){
+  const el=document.getElementById('listRiwayat');
+  el.innerHTML='<div class="loading">Memuat...</div>';
+  const{data}=await db.from('orders').select('*').eq('pengirim_id',currentUser.id)
+    .in('status',['selesai','batal']).order('created_at',{ascending:false});
+  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">📋</div><p>Belum ada riwayat.</p></div>';return;}
+  const html=await Promise.all(data.map(o=>renderOrderPengirim(o,true)));
+  el.innerHTML=html.join('');
+}
+
+async function renderOrderPengirim(o,simple=false){
+  let bidsHtml='';
+  // Load bids kalau status menunggu konfirmasi
+  if(o.status==='mencari'||o.status==='menunggu_konfirmasi'){
+    const{data:bids}=await db.from('bids').select('*,users!bids_mitra_id_fkey(nama,rating,total_order)')
+      .eq('order_id',o.id).eq('status','menunggu').order('created_at',{ascending:true});
+    if(bids&&bids.length){
+      // Sort: rating → total_order → harga mendekati tawar
+      bids.sort((a,b)=>{
+        const rA=a.users?.rating||0,rB=b.users?.rating||0;
+        if(rB!==rA)return rB-rA;
+        const tA=a.users?.total_order||0,tB=b.users?.total_order||0;
+        if(tB!==tA)return tB-tA;
+        return Math.abs(a.harga-o.harga_tawar)-Math.abs(b.harga-o.harga_tawar);
+      });
+      bidsHtml=`<div style="margin-top:12px"><div style="font-size:12px;font-weight:700;color:var(--brand);margin-bottom:8px">🛵 ${bids.length} Mitra Menawar — Pilih yang kamu mau:</div>`+
+      bids.map(b=>`
+        <div class="bid-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div class="bid-mitra-name">${b.users?.nama||'Mitra'}</div>
+              <div class="bid-rating">⭐ ${b.users?.rating||'5.0'}</div>
+              <div class="bid-stats">📦 ${b.users?.total_order||0} order selesai</div>
+              ${b.pesan?`<div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">"${b.pesan}"</div>`:''}
+            </div>
+            <div class="bid-harga">${rupiah(b.harga)}</div>
+          </div>
+          <div class="bid-actions">
+            <button class="btn btn-mitra btn-sm" onclick="pilihMitra('${o.id}','${b.id}','${b.mitra_id}',${b.harga})">✓ Pilih Mitra Ini</button>
+            <button class="btn btn-danger btn-sm" onclick="tolakBid('${b.id}')">Tolak</button>
+          </div>
+        </div>`).join('')+'</div>';
+    } else {
+      bidsHtml=`<div style="font-size:13px;color:var(--muted);margin-top:10px;text-align:center;padding:12px;background:var(--surface);border-radius:8px;">⏳ Menunggu bid dari mitra driver...</div>`;
+    }
+  }
+  return`
+  <div class="card">
+    <div class="card-header">
+      <div><div class="order-kode">${o.kode}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${new Date(o.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>
+      <div><span class="order-jenis ${o.jenis}">${jenisLabel(o.jenis)}</span><span class="status-pill status-${o.status}" style="display:block;margin-top:4px;text-align:center">${statusLabel(o.status)}</span></div>
+    </div>
+    <div class="route">
+      <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
+      <div class="route-text">
+        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup}</div>
+        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan}</div>
+      </div>
+    </div>
+    ${o.deskripsi?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📝 ${o.deskripsi}</div>`:''}
+    <div class="harga-row">
+      <div><div style="font-size:11px;color:var(--muted)">Harga tawar</div><div class="harga-tawar">${rupiah(o.harga_tawar)}</div></div>
+      ${o.harga_deal?`<div style="text-align:right"><div style="font-size:11px;color:var(--muted)">Harga deal</div><div style="font-size:18px;font-weight:800;color:var(--mitra)">${rupiah(o.harga_deal)}</div></div>`:''}
+    </div>
+    ${bidsHtml}
+    ${!simple&&(o.status==='mencari'||o.status==='menunggu_konfirmasi')?`<button class="btn btn-danger btn-sm" style="margin-top:10px" onclick="batalOrder('${o.id}')">Batalkan Order</button>`:''}
+    ${o.foto_pickup?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">📸 Foto Pickup</div><img src="${o.foto_pickup}" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover"></div>`:''}
+    ${o.foto_selesai?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">📸 Foto Selesai</div><img src="${o.foto_selesai}" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover"></div>`:''}
+  </div>`;
+}
+
+async function pilihMitra(orderId,bidId,mitraId,harga){
+  // Tolak semua bid lain
+  await db.from('bids').update({status:'ditolak'}).eq('order_id',orderId).neq('id',bidId);
+  // Tandai bid terpilih
+  await db.from('bids').update({status:'dipilih'}).eq('id',bidId);
+  // Update order
+  await db.from('orders').update({mitra_id:mitraId,status:'dijemput',harga_deal:harga}).eq('id',orderId);
+  loadOrderAktifPengirim();
+}
+async function tolakBid(bidId){
+  await db.from('bids').update({status:'ditolak'}).eq('id',bidId);
+  loadOrderAktifPengirim();
+}
+async function batalOrder(orderId){
+  if(!confirm('Yakin batalkan order ini?'))return;
+  await db.from('orders').update({status:'batal'}).eq('id',orderId);
+  loadOrderAktifPengirim();
+}
+
+// ── MITRA TABS ──
+function mitraTab(tab){
+  document.querySelectorAll('.mitra-tab').forEach(t=>t.classList.remove('active'));
+  ['mitraTabTersedia','mitraTabAktif','mitraTabSelesai'].forEach(id=>document.getElementById(id).style.display='none');
+  if(tab==='tersedia'){document.querySelectorAll('.mitra-tab')[0].classList.add('active');document.getElementById('mitraTabTersedia').style.display='block';loadOrderTersedia();}
+  else if(tab==='aktif'){document.querySelectorAll('.mitra-tab')[1].classList.add('active');document.getElementById('mitraTabAktif').style.display='block';loadOrderAktifMitra();}
+  else{document.querySelectorAll('.mitra-tab')[2].classList.add('active');document.getElementById('mitraTabSelesai').style.display='block';loadOrderSelesaiMitra();}
+}
+
+// ── LOAD ORDER MITRA ──
+async function loadOrderTersedia(){
+  const el=document.getElementById('listTersedia');
+  el.innerHTML='<div class="loading">Mencari order...</div>';
+  const{data}=await db.from('orders').select('*,users!orders_pengirim_id_fkey(nama)')
+    .eq('status','mencari').order('created_at',{ascending:false});
+  document.getElementById('badgeTersedia').textContent=data?data.length:0;
+  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">🔍</div><p>Belum ada order tersedia.</p><button class="btn btn-outline" style="width:auto;margin-top:16px" onclick="loadOrderTersedia()">🔄 Refresh</button></div>';return;}
+  el.innerHTML=data.map(o=>renderOrderMitra(o)).join('');
+}
+async function loadOrderAktifMitra(){
+  const el=document.getElementById('listMitraAktif');
+  el.innerHTML='<div class="loading">Memuat...</div>';
+  const{data}=await db.from('orders').select('*').eq('mitra_id',currentUser.id)
+    .in('status',['dijemput','diantar']).order('created_at',{ascending:false});
+  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">🛵</div><p>Belum ada order aktif.</p></div>';return;}
+  el.innerHTML=data.map(o=>renderOrderAktifMitra(o)).join('');
+}
+async function loadOrderSelesaiMitra(){
+  const el=document.getElementById('listMitraSelesai');
+  el.innerHTML='<div class="loading">Memuat...</div>';
+  const{data}=await db.from('orders').select('*').eq('mitra_id',currentUser.id)
+    .eq('status','selesai').order('created_at',{ascending:false});
+  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">✅</div><p>Belum ada order selesai.</p></div>';return;}
+  const total=data.reduce((s,o)=>s+(o.harga_deal||o.harga_tawar),0);
+  el.innerHTML=`<div class="card" style="background:var(--mitra-light);border-color:#b2dfdb">
+    <div style="font-size:13px;color:var(--muted)">Total pendapatan</div>
+    <div style="font-size:24px;font-weight:900;color:var(--mitra)">${rupiah(total*0.95)}</div>
+    <div style="font-size:11px;color:var(--muted)">${data.length} order • setelah komisi 5%</div>
+  </div>`+data.map(o=>renderOrderMitra(o,true)).join('');
+}
+
+function renderOrderMitra(o,done=false){
+  const pengirim=o.users||{};
+  // Cek apakah mitra ini sudah bid order ini
+  return`
+  <div class="card">
+    <div class="card-header">
+      <div><div class="order-kode">${o.kode}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${new Date(o.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>
+      <div><span class="order-jenis ${o.jenis}">${jenisLabel(o.jenis)}</span>${done?`<span class="status-pill status-selesai" style="display:block;margin-top:4px;text-align:center">Selesai</span>`:''}</div>
+    </div>
+    <div class="route">
+      <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
+      <div class="route-text">
+        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup}</div>
+        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan}</div>
+      </div>
+    </div>
+    ${o.deskripsi?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📝 ${o.deskripsi}</div>`:''}
+    <div class="harga-row" style="margin-bottom:12px">
+      <div><div style="font-size:11px;color:var(--muted)">Harga tawar pengirim</div><div class="harga-tawar">${rupiah(o.harga_tawar)}</div></div>
+      ${pengirim.nama?`<div style="font-size:12px;color:var(--muted)">👤 ${pengirim.nama}</div>`:''}
+    </div>
+    ${!done?`
+    <div class="nego-box mitra-side">
+      <div class="nego-title mitra">💬 Ajukan Penawaran Harga</div>
+      <div class="nego-input-row">
+        <input type="number" id="bidHarga_${o.id}" placeholder="Harga tawaranmu" value="${o.harga_tawar}" min="5000">
+      </div>
+      <input type="text" id="bidPesan_${o.id}" placeholder="Pesan ke pengirim (opsional)" style="width:100%;margin-top:8px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px">
+      <button class="btn btn-mitra" style="margin-top:10px" onclick="ajukanBid('${o.id}')">Ajukan Penawaran →</button>
+    </div>`:`<div style="font-size:13px;font-weight:700;color:var(--mitra);margin-top:8px">✅ ${rupiah((o.harga_deal||o.harga_tawar)*0.95)} masuk ke kamu</div>`}
+  </div>`;
+}
+
+function renderOrderAktifMitra(o){
+  return`
+  <div class="card">
+    <div class="card-header"><div class="order-kode">${o.kode}</div><span class="status-pill status-${o.status}">${statusLabel(o.status)}</span></div>
+    <div class="route">
+      <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
+      <div class="route-text">
+        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup}</div>
+        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan}</div>
+      </div>
+    </div>
+    <div class="harga-row" style="margin-bottom:16px"><div class="harga-tawar">${rupiah(o.harga_deal||o.harga_tawar)}</div></div>
+    ${o.status==='dijemput'?`
+      ${o.foto_pickup?
+        `<button class="btn btn-mitra" onclick="updateStatus('${o.id}','diantar')">📦 Barang Dijemput — Mulai Antar</button>`:
+        `<button class="btn btn-go" onclick="uploadFotoPickup('${o.id}')">📸 Upload Foto Pickup Dulu</button>`
+      }`:''
+    }
+    ${o.status==='diantar'?`
+      ${o.foto_selesai?
+        `<button class="btn btn-mitra" onclick="updateStatus('${o.id}','selesai')">🏁 Tandai Selesai</button>`:
+        `<button class="btn btn-go" onclick="uploadFotoSelesai('${o.id}')">📸 Upload Foto Bukti Selesai</button>`
+      }`:''
+    }
+    ${o.foto_pickup?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">📸 Foto Pickup</div><img src="${o.foto_pickup}" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover"></div>`:''}
+  </div>`;
+}
+
+// ── AKSI MITRA ──
+async function ajukanBid(orderId){
+  const harga=parseInt(document.getElementById('bidHarga_'+orderId).value);
+  const pesan=document.getElementById('bidPesan_'+orderId).value;
+  if(!harga||harga<5000){alert('Harga minimal Rp 5.000');return;}
+  // Cek apakah sudah bid sebelumnya
+  const{data:existing}=await db.from('bids').select('id').eq('order_id',orderId).eq('mitra_id',currentUser.id).eq('status','menunggu');
+  if(existing&&existing.length){alert('Kamu sudah mengajukan penawaran untuk order ini. Tunggu pengirim memilih.');return;}
+  await db.from('bids').insert({order_id:orderId,mitra_id:currentUser.id,harga,pesan});
+  await db.from('orders').update({status:'menunggu_konfirmasi'}).eq('id',orderId).eq('status','mencari');
+  showAlert('','','');
+  alert('✅ Penawaran berhasil diajukan! Tunggu pengirim memilih kamu.');
+  loadOrderTersedia();
+}
+
+function uploadFotoPickup(orderId){
+  openFotoModal(orderId,'pickup','📸 Foto Bukti Pickup','Upload foto barang sebelum dibawa',()=>{
+    loadOrderAktifMitra();
+  });
+}
+function uploadFotoSelesai(orderId){
+  openFotoModal(orderId,'selesai','📸 Foto Bukti Selesai','Upload foto bukti barang sudah diantar',()=>{
+    loadOrderAktifMitra();
+  });
+}
+async function updateStatus(orderId,status){
+  await db.from('orders').update({status}).eq('id',orderId);
+  if(status==='selesai'){
+    await db.from('users').update({total_order:db.rpc('increment')}).eq('id',currentUser.id);
+    mitraTab('selesai');
+  } else {loadOrderAktifMitra();}
+}
+
+// ── REALTIME ──
+function subscribeRealtime(){
+  if(realtimeSub)realtimeSub.unsubscribe();
+  realtimeSub=db.channel('nitipgo-changes')
+    .on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>{
+      const idx=Array.from(document.querySelectorAll('.mitra-tab')).findIndex(t=>t.classList.contains('active'));
+      if(idx===0)loadOrderTersedia();else if(idx===1)loadOrderAktifMitra();
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'bids'},()=>{
+      if(currentRole==='pengirim')loadOrderAktifPengirim();
+    })
+    .subscribe();
+}
+
+// ── TRACKING ──
+async function lacakOrder(){
+  const kode=document.getElementById('trackKode').value.trim().toUpperCase();
+  if(!kode){document.getElementById('trackResult').innerHTML='<div class="alert alert-error">Masukkan kode order dulu.</div>';return;}
+  document.getElementById('trackResult').innerHTML='<div class="loading">Mencari...</div>';
+  const{data}=await db.from('orders')
+    .select('*,users!orders_pengirim_id_fkey(nama),mitra:users!orders_mitra_id_fkey(nama,no_hp)')
+    .eq('kode',kode).single();
+  if(!data){document.getElementById('trackResult').innerHTML='<div class="alert alert-error">Order tidak ditemukan.</div>';return;}
+  const icons={mencari:'🔍',menunggu_konfirmasi:'🤝',dijemput:'🛵',diantar:'📦',selesai:'✅',batal:'❌'};
+  const descs={mencari:'Sedang mencari mitra driver...',menunggu_konfirmasi:'Pengirim sedang memilih mitra',dijemput:'Mitra dalam perjalanan ke pickup',diantar:'Paket dalam perjalanan ke tujuan',selesai:'Paket telah sampai!',batal:'Order dibatalkan'};
+  const allSteps=[{key:'mencari',label:'Order Dipasang'},{key:'menunggu_konfirmasi',label:'Memilih Mitra'},{key:'dijemput',label:'Dijemput'},{key:'diantar',label:'Dalam Perjalanan'},{key:'selesai',label:'Sampai Tujuan'}];
+  const sOrder=['mencari','menunggu_konfirmasi','dijemput','diantar','selesai'];
+  const ci=sOrder.indexOf(data.status);
+  const stepsHtml=allSteps.map((s,i)=>{const si=sOrder.indexOf(s.key);const cls=si<ci?'done':si===ci?'active':'todo';return`<div class="step"><div class="step-dot ${cls}">${cls==='done'?'✓':(i+1)}</div><div class="step-info"><div class="step-label">${s.label}</div></div></div>`;}).join('');
+  document.getElementById('trackResult').innerHTML=`
+    <div class="card">
+      <div class="track-status-big"><div class="track-icon">${icons[data.status]||'📦'}</div><div class="track-status-label">${statusLabel(data.status)}</div><div class="track-status-desc">${descs[data.status]||''}</div></div>
+      <div style="border-top:1px solid var(--border);padding-top:16px">
+        <div class="route"><div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div><div class="route-text"><div class="route-addr"><div class="route-label">Pickup</div>${data.alamat_pickup}</div><div class="route-addr"><div class="route-label">Tujuan</div>${data.alamat_tujuan}</div></div></div>
+      </div>
+      <div class="track-steps">${stepsHtml}</div>
+      <div style="border-top:1px solid var(--border);padding-top:14px;display:flex;justify-content:space-between;font-size:13px">
+        <div><span style="color:var(--muted)">Pengirim: </span><b>${data.users?.nama||'-'}</b></div>
+        <div><span style="color:var(--muted)">Mitra: </span><b>${data.mitra?.nama||'Belum dipilih'}</b></div>
+      </div>
+      <div style="margin-top:10px;text-align:center;font-size:13px"><span style="color:var(--muted)">Harga: </span><b style="color:var(--go)">${rupiah(data.harga_deal||data.harga_tawar)}</b>${data.harga_deal?' <span style="font-size:11px;color:var(--muted)">(deal)</span>':''}</div>
+      ${data.foto_pickup?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">📸 Foto Pickup</div><img src="${data.foto_pickup}" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover"></div>`:''}
+      ${data.foto_selesai?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">📸 Foto Selesai</div><img src="${data.foto_selesai}" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover"></div>`:''}
+    </div>`;
+}
+</script>
+</body>
+</html>
