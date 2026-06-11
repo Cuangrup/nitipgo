@@ -674,10 +674,14 @@ async function loadOrderTersedia(){
   const el=document.getElementById('listTersedia');
   el.innerHTML='<div class="loading">Mencari order...</div>';
   const{data}=await db.from('orders').select('*,users!orders_pengirim_id_fkey(nama)')
-    .eq('status','mencari').order('created_at',{ascending:false});
+    .in('status',['mencari','menunggu_konfirmasi']).is('mitra_id',null).order('created_at',{ascending:false});
   document.getElementById('badgeTersedia').textContent=data?data.length:0;
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">🔍</div><p>Belum ada order tersedia.</p><button class="btn btn-outline" style="width:auto;margin-top:16px" onclick="loadOrderTersedia()">🔄 Refresh</button></div>';return;}
-  el.innerHTML=data.map(o=>renderOrderMitra(o)).join('');
+  // Cek bid mitra ini untuk setiap order
+  const orderIds=data.map(o=>o.id);
+  const{data:myBids}=await db.from('bids').select('order_id').eq('mitra_id',currentUser.id).eq('status','menunggu').in('order_id',orderIds);
+  const sudahBidIds=new Set((myBids||[]).map(b=>b.order_id));
+  el.innerHTML=data.map(o=>renderOrderMitra(o,false,sudahBidIds.has(o.id))).join('');
 }
 async function loadOrderAktifMitra(){
   const el=document.getElementById('listMitraAktif');
@@ -701,7 +705,7 @@ async function loadOrderSelesaiMitra(){
   </div>`+data.map(o=>renderOrderMitra(o,true)).join('');
 }
 
-function renderOrderMitra(o,done=false){
+function renderOrderMitra(o,done=false,sudahBid=false){
   const pengirim=o.users||{};
   // Cek apakah mitra ini sudah bid order ini
   return`
@@ -722,15 +726,19 @@ function renderOrderMitra(o,done=false){
       <div><div style="font-size:11px;color:var(--muted)">Harga tawar pengirim</div><div class="harga-tawar">${rupiah(o.harga_tawar)}</div></div>
       ${pengirim.nama?`<div style="font-size:12px;color:var(--muted)">👤 ${pengirim.nama}</div>`:''}
     </div>
-    ${!done?`
-    <div class="nego-box mitra-side">
+    ${!done?(sudahBid?
+    `<div style="background:var(--mitra-light);border:1.5px solid #b2dfdb;border-radius:10px;padding:12px;margin-top:12px;text-align:center">
+      <div style="font-size:14px;font-weight:700;color:var(--mitra)">✅ Penawaran sudah dikirim</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Tunggu pengirim memilih kamu</div>
+    </div>`:
+    `<div class="nego-box mitra-side">
       <div class="nego-title mitra">💬 Ajukan Penawaran Harga</div>
       <div class="nego-input-row">
         <input type="number" id="bidHarga_${o.id}" placeholder="Harga tawaranmu" value="${o.harga_tawar}" min="5000">
       </div>
       <input type="text" id="bidPesan_${o.id}" placeholder="Pesan ke pengirim (opsional)" style="width:100%;margin-top:8px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px">
       <button class="btn btn-mitra" style="margin-top:10px" onclick="ajukanBid('${o.id}')">Ajukan Penawaran →</button>
-    </div>`:`<div style="font-size:13px;font-weight:700;color:var(--mitra);margin-top:8px">✅ ${rupiah((o.harga_deal||o.harga_tawar)*0.95)} masuk ke kamu</div>`}
+    </div>`):`<div style="font-size:13px;font-weight:700;color:var(--mitra);margin-top:8px">✅ ${rupiah((o.harga_deal||o.harga_tawar)*0.95)} masuk ke kamu</div>`}
   </div>`;
 }
 
