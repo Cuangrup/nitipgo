@@ -1574,6 +1574,13 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 // Akses via URL hash
 function checkAdminHash(){
+  // Cek session admin tersimpan
+  if(localStorage.getItem('nitipgo_admin')==='1'){
+    goScreen('screenAdmin');
+    loadAdminStats();
+    loadAdminOrders();
+    return;
+  }
   if(window.location.hash==='#dev-nitipgo-2025'){
     goScreen('screenAdminLogin');
   }
@@ -1587,14 +1594,14 @@ async function loginAdmin(){
     showAlert('adminLoginAlert','Password salah.');
     return;
   }
-  sessionStorage.setItem('nitipgo_admin','1');
+  localStorage.setItem('nitipgo_admin','1');
   goScreen('screenAdmin');
   loadAdminStats();
   loadAdminOrders();
 }
 
 function logoutAdmin(){
-  sessionStorage.removeItem('nitipgo_admin');
+  localStorage.removeItem('nitipgo_admin');
   document.getElementById('adminPwd').value='';
   goScreen('screenHome');
 }
@@ -1739,9 +1746,27 @@ async function ubahStatusMitra(userId, status){
 
 async function hapusAkun(userId){
   if(!confirm('Yakin hapus akun ini? Tindakan ini tidak bisa dibatalkan.'))return;
-  await db.from('users').delete().eq('id',userId);
-  loadAdminAkun();
-  loadAdminStats();
+  try{
+    // Hapus bids dulu
+    await db.from('bids').delete().eq('mitra_id',userId);
+    // Set mitra_id null di orders
+    await db.from('orders').update({mitra_id:null}).eq('mitra_id',userId);
+    // Hapus orders yang dibuat user ini
+    const{data:orders}=await db.from('orders').select('id').eq('pengirim_id',userId);
+    if(orders&&orders.length){
+      for(const o of orders){
+        await db.from('bids').delete().eq('order_id',o.id);
+        await db.from('negosiasi').delete().eq('order_id',o.id);
+      }
+      await db.from('orders').delete().eq('pengirim_id',userId);
+    }
+    // Baru hapus user
+    const{error}=await db.from('users').delete().eq('id',userId);
+    if(error){alert('Gagal hapus: '+error.message);return;}
+    alert('✅ Akun berhasil dihapus.');
+    loadAdminAkun();
+    loadAdminStats();
+  }catch(e){alert('Error: '+e.message);}
 }
 
 async function hapusOrder(orderId){
