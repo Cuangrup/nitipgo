@@ -1663,11 +1663,15 @@ function startPengirimPolling(){
   stopPengirimPolling();
   _pengirimPollTimer=setInterval(async()=>{
     if(!currentUser||currentRole!=='pengirim')return;
-    // Cek jumlah bid baru untuk order pengirim ini
-    const{data:orders}=await db.from('orders').select('id')
+    // Cek apakah masih ada order yang butuh polling (mencari/menunggu_konfirmasi)
+    const{data:activeOrders}=await db.from('orders').select('id')
       .eq('pengirim_id',currentUser.id).in('status',['mencari','menunggu_konfirmasi']);
-    if(!orders||!orders.length)return;
-    const orderIds=orders.map(o=>o.id);
+    // Kalau tidak ada order aktif yang butuh bid → stop polling
+    if(!activeOrders||!activeOrders.length){
+      stopPengirimPolling();
+      return;
+    }
+    const orderIds=activeOrders.map(o=>o.id);
     const{count}=await db.from('bids').select('*',{count:'exact',head:true})
       .in('order_id',orderIds).eq('status','menunggu');
     const newCount=count||0;
