@@ -698,10 +698,49 @@ function previewDok(type, input){
   const reader=new FileReader();
   reader.onload=e=>{
     const el=document.getElementById('preview'+type);
-    el.innerHTML=`<img src="${e.target.result}" class="dok-preview">`;
+    el.innerHTML=`<img src="${e.target.result}" class="dok-preview"><div style="font-size:11px;color:var(--mitra);margin-top:4px">✅ Siap diupload</div>`;
     document.getElementById('upload'+type).classList.add('uploaded');
   };
   reader.readAsDataURL(file);
+}
+
+// Upload dokumen pakai base64 — lebih reliable dari File object
+async function uploadDokumenBase64(userId){
+  const types=[
+    {key:'ktp',col:'dok_ktp'},
+    {key:'sim',col:'dok_sim'},
+    {key:'stnk',col:'dok_stnk'},
+    {key:'kendaraan',col:'dok_kendaraan'},
+  ];
+  const updates={};
+  for(const t of types){
+    const file=dokFiles[t.key];
+    if(!file)continue;
+    try{
+      // Convert ke ArrayBuffer untuk upload
+      const arrayBuffer=await file.arrayBuffer();
+      const ext=file.name.split('.').pop()||'jpg';
+      const path=`${userId}/${t.key}_${Date.now()}.${ext}`;
+      const{error}=await db.storage.from('dokumen-mitra').upload(path, arrayBuffer, {
+        contentType:file.type||'image/jpeg',
+        upsert:true
+      });
+      if(!error){
+        const{data:url}=db.storage.from('dokumen-mitra').getPublicUrl(path);
+        updates[t.col]=url.publicUrl;
+        console.log('Upload OK:',t.key, url.publicUrl);
+      } else {
+        console.error('Upload error:',t.key, error.message);
+      }
+    }catch(e){console.error('Upload exception:',t.key,e);}
+  }
+  if(Object.keys(updates).length>0){
+    const{error}=await db.from('users').update(updates).eq('id',userId);
+    if(error)console.error('Update user error:',error.message);
+    else console.log('Dokumen URLs saved to user');
+  }
+  // Reset dokFiles
+  dokFiles={ktp:null,sim:null,stnk:null,kendaraan:null};
 }
 
 async function uploadDokumen(userId){
@@ -796,7 +835,7 @@ async function verifikasiOTP(){
     if(error){showAlert('otpAlert','Gagal buat akun: '+error.message);return;}
     // Upload dokumen kalau mitra
     if(isMitra&&user){
-      await uploadDokumen(user.id);
+      await uploadDokumenBase64(user.id);
       // Kirim notif WA ke owner
       await kirimWA('6287750883510',`🔔 *NitipGo - Pendaftar Mitra Baru*\nNama: ${user.nama}\nHP: +${user.no_hp}\nDokumen sudah diupload. Silakan verifikasi di dashboard admin.`);
     }
