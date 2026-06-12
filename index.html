@@ -618,6 +618,7 @@ function hitungTarif(km){
   if(km<=3)return 7000;
   return 7000+Math.ceil(km-3)*2500;
 }
+let geocodeTimeout=null;
 function updateEstimasi(){
   const p=document.getElementById('orderPickup').value;
   const t=document.getElementById('orderTujuan').value;
@@ -625,16 +626,33 @@ function updateEstimasi(){
   if(pickupCoords&&tujuanCoords){
     const km=hitungJarak(pickupCoords.lat,pickupCoords.lng,tujuanCoords.lat,tujuanCoords.lng);
     const tarif=hitungTarif(km);
-    el.innerHTML=`<b>${rupiah(tarif)}</b> (${km.toFixed(1)} km)`;
+    el.innerHTML=`<b>${rupiah(tarif)}</b> (~${km.toFixed(1)} km) <span style="font-size:10px;color:var(--muted)">estimasi</span>`;
     document.getElementById('orderHarga').placeholder=tarif;
   } else if(p&&t){
-    el.textContent='Rp 7.000 – Rp 35.000 (pilih titik peta untuk estimasi akurat)';
+    el.innerHTML='<span style="color:var(--muted)">Menghitung...</span>';
   } else {
     el.textContent='isi alamat dulu';
   }
 }
-document.getElementById('orderPickup').addEventListener('input',updateEstimasi);
-document.getElementById('orderTujuan').addEventListener('input',updateEstimasi);
+async function autoGeocode(target){
+  clearTimeout(geocodeTimeout);
+  geocodeTimeout=setTimeout(async()=>{
+    const val=document.getElementById(target==='pickup'?'orderPickup':'orderTujuan').value.trim();
+    if(val.length<5)return;
+    try{
+      const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val+' Surabaya Indonesia')}&format=json&limit=1&countrycodes=id`);
+      const data=await res.json();
+      if(data&&data.length){
+        const coords={lat:parseFloat(data[0].lat),lng:parseFloat(data[0].lon)};
+        if(target==='pickup')pickupCoords=coords;
+        else tujuanCoords=coords;
+        updateEstimasi();
+      }
+    }catch(e){}
+  },1200);
+}
+document.getElementById('orderPickup').addEventListener('input',()=>{updateEstimasi();autoGeocode('pickup');});
+document.getElementById('orderTujuan').addEventListener('input',()=>{updateEstimasi();autoGeocode('tujuan');});
 
 // ── MAP ──
 function openMap(target){
