@@ -1243,12 +1243,19 @@ function pengirimTab(tab){
     },100);
   }
   else if(tab==='aktif'){document.querySelectorAll('.pengirim-tab')[1].classList.add('active');document.getElementById('tabOrderAktif').style.display='block';document.getElementById('tabAktifLabel').textContent='Order Aktif';loadOrderAktifPengirim();
-    // Auto refresh setiap 5 detik kalau di tab aktif
+    // Auto refresh hanya kalau masih ada order mencari/menunggu_konfirmasi
     if(window._pengirimRefreshTimer)clearInterval(window._pengirimRefreshTimer);
-    window._pengirimRefreshTimer=setInterval(()=>{
+    window._pengirimRefreshTimer=setInterval(async()=>{
       const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
-      if(idx===1)loadOrderAktifPengirim();
-      else clearInterval(window._pengirimRefreshTimer);
+      if(idx!==1){clearInterval(window._pengirimRefreshTimer);return;}
+      // Cek apakah masih ada order yang butuh refresh
+      const{data:need}=await db.from('orders').select('id',{count:'exact',head:true})
+        .eq('pengirim_id',currentUser.id).in('status',['mencari','menunggu_konfirmasi']);
+      if(!need||need.length===0){
+        clearInterval(window._pengirimRefreshTimer);
+        return;
+      }
+      loadOrderAktifPengirim();
     },5000);
   }
   else{document.querySelectorAll('.pengirim-tab')[2].classList.add('active');document.getElementById('tabRiwayat').style.display='block';loadRiwayatPengirim();}
