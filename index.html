@@ -148,6 +148,30 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
 .foto-upload-area img{max-width:100%;max-height:200px;border-radius:8px;margin-top:8px;}
 .foto-preview{width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:8px;}
 @media(max-width:480px){.home-hero h1{font-size:26px;}}
+/* ADMIN */
+.admin-wrap{max-width:900px;margin:0 auto;padding:20px;}
+.admin-topbar{background:var(--brand);color:white;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;border-radius:var(--radius);}
+.admin-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.admin-nav-btn{padding:8px 16px;border:1.5px solid var(--border);border-radius:8px;background:white;font-size:13px;font-weight:600;cursor:pointer;color:var(--text);}
+.admin-nav-btn.active{background:var(--brand);color:white;border-color:var(--brand);}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;}
+.stat-num{font-size:28px;font-weight:900;color:var(--brand);}
+.stat-label{font-size:12px;color:var(--muted);margin-top:4px;}
+.admin-table{width:100%;border-collapse:collapse;background:white;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);}
+.admin-table th{background:var(--brand);color:white;padding:10px 12px;font-size:12px;text-align:left;}
+.admin-table td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.admin-table tr:last-child td{border-bottom:none;}
+.admin-table tr:hover td{background:var(--surface);}
+.status-badge{padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-menunggu{background:#fff3e0;color:#e65100;}
+.badge-aktif{background:#e8f5e9;color:#2e7d32;}
+.badge-ditolak{background:#fce4ec;color:#880e4f;}
+.dok-thumb{width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer;}
+.dok-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;}
+.dok-modal.open{display:flex;}
+.dok-modal img{max-width:90vw;max-height:90vh;border-radius:8px;}
+.admin-login{max-width:360px;margin:80px auto;padding:20px;}
 /* AUTH */
 .otp-inputs{display:flex;gap:8px;justify-content:center;margin:20px 0;}
 .otp-input{width:44px;height:52px;text-align:center;font-size:22px;font-weight:800;border:2px solid var(--border);border-radius:10px;background:white;color:var(--brand);}
@@ -429,6 +453,92 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
   </div>
 </div>
 
+<!-- ADMIN LOGIN -->
+<div id="screenAdminLogin" class="screen">
+  <div class="admin-login">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:40px">🔐</div>
+      <div class="form-title" style="margin-top:8px">Developer Access</div>
+    </div>
+    <div id="adminLoginAlert"></div>
+    <div class="field">
+      <label>Password Admin</label>
+      <div class="pwd-wrap">
+        <input type="password" id="adminPwd" placeholder="Password developer" onkeydown="if(event.key==='Enter')loginAdmin()">
+        <button class="pwd-eye" onclick="togglePwd('adminPwd',this)">👁️</button>
+      </div>
+    </div>
+    <button class="btn btn-go" onclick="loginAdmin()">Masuk →</button>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="screenAdmin" class="screen">
+  <div class="admin-wrap">
+    <div class="admin-topbar">
+      <div style="font-weight:800;font-size:16px">🛠️ NitipGo Developer Dashboard</div>
+      <button class="logout-btn" onclick="logoutAdmin()">Keluar Admin</button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stat-grid" id="adminStats">
+      <div class="stat-card"><div class="stat-num" id="statMitraMenunggu">-</div><div class="stat-label">Mitra Menunggu</div></div>
+      <div class="stat-card"><div class="stat-num" id="statMitraAktif">-</div><div class="stat-label">Mitra Aktif</div></div>
+      <div class="stat-card"><div class="stat-num" id="statPengirim">-</div><div class="stat-label">Pengirim</div></div>
+      <div class="stat-card"><div class="stat-num" id="statOrderHari">-</div><div class="stat-label">Order Hari Ini</div></div>
+      <div class="stat-card"><div class="stat-num" id="statOrderTotal">-</div><div class="stat-label">Total Order</div></div>
+      <div class="stat-card"><div class="stat-num" id="statOrderAktif">-</div><div class="stat-label">Order Aktif</div></div>
+    </div>
+
+    <!-- NAV -->
+    <div class="admin-nav">
+      <button class="admin-nav-btn active" onclick="adminTab('orders')" id="navOrders">📦 Order & Transaksi</button>
+      <button class="admin-nav-btn" onclick="adminTab('mitra')" id="navMitra">🛵 Verifikasi Mitra</button>
+      <button class="admin-nav-btn" onclick="adminTab('akun')" id="navAkun">👤 Manajemen Akun</button>
+    </div>
+
+    <!-- TAB: ORDER -->
+    <div id="adminTabOrders">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-weight:700;font-size:15px">Semua Order</div>
+        <select id="filterStatus" onchange="loadAdminOrders()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px">
+          <option value="">Semua Status</option>
+          <option value="mencari">Mencari</option>
+          <option value="menunggu_konfirmasi">Menunggu Konfirmasi</option>
+          <option value="dijemput">Dijemput</option>
+          <option value="diantar">Diantar</option>
+          <option value="selesai">Selesai</option>
+          <option value="batal">Batal</option>
+        </select>
+      </div>
+      <div id="adminOrdersList"><div class="loading">Memuat...</div></div>
+    </div>
+
+    <!-- TAB: MITRA -->
+    <div id="adminTabMitra" style="display:none">
+      <div style="font-weight:700;font-size:15px;margin-bottom:12px">Pendaftar Mitra — Menunggu Verifikasi</div>
+      <div id="adminMitraList"><div class="loading">Memuat...</div></div>
+    </div>
+
+    <!-- TAB: AKUN -->
+    <div id="adminTabAkun" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-weight:700;font-size:15px">Semua Akun</div>
+        <select id="filterRole" onchange="loadAdminAkun()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px">
+          <option value="">Semua Role</option>
+          <option value="pengirim">Pengirim</option>
+          <option value="mitra">Mitra</option>
+        </select>
+      </div>
+      <div id="adminAkunList"><div class="loading">Memuat...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- DOK MODAL (lihat dokumen fullscreen) -->
+<div id="dokModal" class="dok-modal" onclick="closeDokModal()">
+  <img id="dokModalImg" src="">
+</div>
 <!-- TRACKING -->
 <div id="screenTracking" class="screen">
   <div class="tracking-wrap">
@@ -1436,7 +1546,196 @@ async function lacakOrder(){
       ${data.foto_selesai?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">📸 Foto Selesai</div><img src="${data.foto_selesai}" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover"></div>`:''}
     </div>`;
 }
+
+// ═══════════════════════════════════════════
+// ADMIN
+// ═══════════════════════════════════════════
+const ADMIN_PWD_HASH='66907df6b90bdb2749a75eaada01ef22284a633fe2775f9cb11ee1879f022ab4';
+let logoClickCount=0,logoClickTimer=null;
+
+// Akses via klik logo 5x
+document.querySelector('.logo').addEventListener('click',()=>{
+  logoClickCount++;
+  clearTimeout(logoClickTimer);
+  logoClickTimer=setTimeout(()=>logoClickCount=0,2000);
+  if(logoClickCount>=5){logoClickCount=0;goScreen('screenAdminLogin');}
+});
+
+// Akses via URL hash
+function checkAdminHash(){
+  if(window.location.hash==='#dev-nitipgo-2025'){
+    goScreen('screenAdminLogin');
+  }
+}
+
+async function loginAdmin(){
+  const pwd=document.getElementById('adminPwd').value;
+  if(!pwd){showAlert('adminLoginAlert','Password wajib diisi.');return;}
+  const hash=await hashPassword(pwd);
+  if(hash!==ADMIN_PWD_HASH){
+    showAlert('adminLoginAlert','Password salah.');
+    return;
+  }
+  sessionStorage.setItem('nitipgo_admin','1');
+  goScreen('screenAdmin');
+  loadAdminStats();
+  loadAdminOrders();
+}
+
+function logoutAdmin(){
+  sessionStorage.removeItem('nitipgo_admin');
+  document.getElementById('adminPwd').value='';
+  goScreen('screenHome');
+}
+
+function adminTab(tab){
+  ['orders','mitra','akun'].forEach(t=>{
+    document.getElementById('adminTab'+t.charAt(0).toUpperCase()+t.slice(1)).style.display='none';
+    document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1)).classList.remove('active');
+  });
+  document.getElementById('adminTab'+tab.charAt(0).toUpperCase()+tab.slice(1)).style.display='block';
+  document.getElementById('nav'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+  if(tab==='orders')loadAdminOrders();
+  else if(tab==='mitra')loadAdminMitra();
+  else loadAdminAkun();
+}
+
+async function loadAdminStats(){
+  const[{count:mitraMenunggu},{count:mitraAktif},{count:pengirim},{count:orderTotal},{count:orderAktif}]=await Promise.all([
+    db.from('users').select('*',{count:'exact',head:true}).eq('role','mitra').eq('status_verifikasi','menunggu'),
+    db.from('users').select('*',{count:'exact',head:true}).eq('role','mitra').eq('status_verifikasi','aktif'),
+    db.from('users').select('*',{count:'exact',head:true}).eq('role','pengirim'),
+    db.from('orders').select('*',{count:'exact',head:true}),
+    db.from('orders').select('*',{count:'exact',head:true}).in('status',['mencari','menunggu_konfirmasi','dijemput','diantar']),
+  ]);
+  document.getElementById('statMitraMenunggu').textContent=mitraMenunggu||0;
+  document.getElementById('statMitraAktif').textContent=mitraAktif||0;
+  document.getElementById('statPengirim').textContent=pengirim||0;
+  document.getElementById('statOrderTotal').textContent=orderTotal||0;
+  document.getElementById('statOrderAktif').textContent=orderAktif||0;
+  // Order hari ini
+  const today=new Date().toISOString().split('T')[0];
+  const{count:orderHari}=await db.from('orders').select('*',{count:'exact',head:true}).gte('created_at',today);
+  document.getElementById('statOrderHari').textContent=orderHari||0;
+}
+
+async function loadAdminOrders(){
+  const el=document.getElementById('adminOrdersList');
+  el.innerHTML='<div class="loading">Memuat...</div>';
+  const status=document.getElementById('filterStatus').value;
+  let q=db.from('orders').select('*,pengirim:users!orders_pengirim_id_fkey(nama,no_hp),mitra:users!orders_mitra_id_fkey(nama,no_hp)').order('created_at',{ascending:false}).limit(50);
+  if(status)q=q.eq('status',status);
+  const{data}=await q;
+  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">📭</div><p>Tidak ada order.</p></div>';return;}
+  el.innerHTML=`<table class="admin-table">
+    <tr><th>Kode</th><th>Jenis</th><th>Pengirim</th><th>Mitra</th><th>Harga</th><th>Status</th><th>Waktu</th></tr>
+    ${data.map(o=>`<tr>
+      <td><b>${o.kode}</b></td>
+      <td>${o.jenis}</td>
+      <td>${o.pengirim?.nama||'-'}<br><small style="color:var(--muted)">${o.pengirim?.no_hp||''}</small></td>
+      <td>${o.mitra?.nama||'-'}</td>
+      <td><b>${rupiah(o.harga_deal||o.harga_tawar)}</b></td>
+      <td><span class="status-pill status-${o.status}">${statusLabel(o.status)}</span></td>
+      <td style="font-size:11px;color:var(--muted)">${new Date(o.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+async function loadAdminMitra(){
+  const el=document.getElementById('adminMitraList');
+  el.innerHTML='<div class="loading">Memuat...</div>';
+  const{data}=await db.from('users').select('*').eq('role','mitra').order('created_at',{ascending:false});
+  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">✅</div><p>Tidak ada mitra yang perlu diverifikasi.</p></div>';return;}
+  el.innerHTML=data.map(u=>`
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <div style="font-weight:700;font-size:15px">${u.nama}</div>
+          <div style="font-size:12px;color:var(--muted)">+${u.no_hp} • ${u.email||'-'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${new Date(u.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</div>
+        </div>
+        <span class="status-badge badge-${u.status_verifikasi}">${u.status_verifikasi}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        ${u.dok_ktp?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">KTP</div><img src="${u.dok_ktp}" class="dok-thumb" onclick="openDokModal('${u.dok_ktp}')"></div>`:'<div style="font-size:12px;color:var(--muted)">KTP: belum upload</div>'}
+        ${u.dok_sim?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">SIM</div><img src="${u.dok_sim}" class="dok-thumb" onclick="openDokModal('${u.dok_sim}')"></div>`:''}
+        ${u.dok_stnk?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">STNK</div><img src="${u.dok_stnk}" class="dok-thumb" onclick="openDokModal('${u.dok_stnk}')"></div>`:''}
+        ${u.dok_kendaraan?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Kendaraan</div><img src="${u.dok_kendaraan}" class="dok-thumb" onclick="openDokModal('${u.dok_kendaraan}')"></div>`:''}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-mitra btn-sm" onclick="approveMitra('${u.id}','${u.no_hp}','${u.nama}')">✅ Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="tolakMitra('${u.id}','${u.no_hp}','${u.nama}')">❌ Tolak</button>
+        <button class="btn btn-outline btn-sm" onclick="ubahStatusMitra('${u.id}','aktif')" style="font-size:12px">Set Aktif</button>
+        <button class="btn btn-outline btn-sm" onclick="ubahStatusMitra('${u.id}','menunggu')" style="font-size:12px">Set Menunggu</button>
+      </div>
+    </div>`).join('');
+}
+
+async function loadAdminAkun(){
+  const el=document.getElementById('adminAkunList');
+  el.innerHTML='<div class="loading">Memuat...</div>';
+  const role=document.getElementById('filterRole').value;
+  let q=db.from('users').select('*').order('created_at',{ascending:false}).limit(100);
+  if(role)q=q.eq('role',role);
+  const{data}=await q;
+  if(!data||!data.length){el.innerHTML='<div class="empty"><p>Tidak ada akun.</p></div>';return;}
+  el.innerHTML=`<table class="admin-table">
+    <tr><th>Nama</th><th>HP</th><th>Role</th><th>Status</th><th>Order</th><th>Rating</th><th>Aksi</th></tr>
+    ${data.map(u=>`<tr>
+      <td><b>${u.nama}</b><br><small style="color:var(--muted)">${u.email||''}</small></td>
+      <td>+${u.no_hp}</td>
+      <td><span style="font-size:11px;font-weight:600">${u.role==='mitra'?'🛵 Mitra':'📦 Pengirim'}</span></td>
+      <td><span class="status-badge badge-${u.status_verifikasi||'aktif'}">${u.status_verifikasi||'aktif'}</span></td>
+      <td>${u.total_order||0}</td>
+      <td>⭐ ${u.rating||5.0}</td>
+      <td>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          ${u.role==='mitra'?`<button class="btn btn-mitra btn-sm" style="padding:4px 8px;font-size:11px" onclick="ubahStatusMitra('${u.id}','aktif')">Aktifkan</button>
+          <button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="ubahStatusMitra('${u.id}','ditolak')">Nonaktif</button>`:''}
+          <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:red;border-color:red" onclick="hapusAkun('${u.id}','${u.nama}')">Hapus</button>
+        </div>
+      </td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+async function approveMitra(userId, hp, nama){
+  await db.from('users').update({status_verifikasi:'aktif'}).eq('id',userId);
+  await kirimWA(hp,`✅ *NitipGo*\nHalo ${nama}! Akun mitra kamu sudah diverifikasi dan aktif. Kamu sekarang bisa mulai menerima order di nitipgo.vercel.app`);
+  loadAdminMitra();
+  loadAdminStats();
+}
+
+async function tolakMitra(userId, hp, nama){
+  const alasan=prompt('Alasan penolakan (opsional):') || 'Dokumen tidak memenuhi syarat';
+  await db.from('users').update({status_verifikasi:'ditolak',catatan_verifikasi:alasan}).eq('id',userId);
+  await kirimWA(hp,`❌ *NitipGo*\nHalo ${nama}, maaf pendaftaran mitra kamu ditolak.\nAlasan: ${alasan}\n\nSilakan daftar ulang dengan dokumen yang valid.`);
+  loadAdminMitra();
+  loadAdminStats();
+}
+
+async function ubahStatusMitra(userId, status){
+  await db.from('users').update({status_verifikasi:status}).eq('id',userId);
+  loadAdminMitra();
+  loadAdminAkun();
+  loadAdminStats();
+}
+
+async function hapusAkun(userId, nama){
+  if(!confirm(`Yakin hapus akun "${nama}"? Tindakan ini tidak bisa dibatalkan.`))return;
+  await db.from('users').delete().eq('id',userId);
+  loadAdminAkun();
+  loadAdminStats();
+}
+
+function openDokModal(url){
+  document.getElementById('dokModalImg').src=url;
+  document.getElementById('dokModal').classList.add('open');
+}
+function closeDokModal(){document.getElementById('dokModal').classList.remove('open');}
+
 checkSession();
+checkAdminHash();
 </script>
 </body>
 </html>
