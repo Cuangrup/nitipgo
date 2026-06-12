@@ -1343,8 +1343,8 @@ async function renderOrderPengirim(o,simple=false){
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="salinAlamat('${o.alamat_pickup.replace(/'/g,"\'")}','pickup')" style="background:none;border:none;cursor:pointer;font-size:14px;vertical-align:middle" title="Salin alamat">📋 Salin</button></div>
-        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="salinAlamat('${o.alamat_tujuan.replace(/'/g,"\'")}','tujuan')" style="background:none;border:none;cursor:pointer;font-size:14px;vertical-align:middle" title="Salin alamat">📋 Salin</button></div>
+        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="salinAlamat('${o.alamat_pickup.replace(/'/g,"\'")}','pickup')" style="background:none;border:none;cursor:pointer;font-size:14px;vertical-align:middle" title="Salin alamat">📋 Salin</button> <button onclick="bukaGoogleMaps(this.dataset.addr)" data-addr="${o.alamat_pickup}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8">🗺️ Maps</button></div>
+        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="salinAlamat('${o.alamat_tujuan.replace(/'/g,"\'")}','tujuan')" style="background:none;border:none;cursor:pointer;font-size:14px;vertical-align:middle" title="Salin alamat">📋 Salin</button> <button onclick="bukaGoogleMaps(this.dataset.addr)" data-addr="${o.alamat_tujuan}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8">🗺️ Maps</button></div>
       </div>
     </div>
     ${o.deskripsi?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📝 ${o.deskripsi}</div>`:''}
@@ -1436,7 +1436,7 @@ function renderOrderMitra(o,done=false,sudahBid=false){
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
         <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="salinAlamat('${o.alamat_pickup.replace(/'/g,"\'")}','pickup')" style="background:none;border:none;cursor:pointer;font-size:14px;vertical-align:middle" title="Salin alamat">📋 Salin</button></div>
-        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="salinAlamat('${o.alamat_tujuan.replace(/'/g,"\'")}','tujuan')" style="background:none;border:none;cursor:pointer;font-size:14px;vertical-align:middle" title="Salin alamat">📋 Salin</button></div>
+        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="salinAlamat('${o.alamat_tujuan.replace(/'/g,"\'")}','tujuan')" style="background:none;border:none;cursor:pointer;font-size:14px;vertical-align:middle" title="Salin alamat">📋 Salin</button> <button onclick="bukaGoogleMaps(this.dataset.addr)" data-addr="${o.alamat_tujuan}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8">🗺️ Maps</button></div>
       </div>
     </div>
     ${o.deskripsi?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📝 ${o.deskripsi}</div>`:''}
@@ -1474,7 +1474,7 @@ function renderOrderAktifMitra(o){
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
         <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="salinAlamat('${o.alamat_pickup.replace(/'/g,"\'")}','pickup')" style="background:none;border:none;cursor:pointer;font-size:14px;vertical-align:middle" title="Salin alamat">📋 Salin</button></div>
-        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="salinAlamat('${o.alamat_tujuan.replace(/'/g,"\'")}','tujuan')" style="background:none;border:none;cursor:pointer;font-size:14px;vertical-align:middle" title="Salin alamat">📋 Salin</button></div>
+        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="salinAlamat('${o.alamat_tujuan.replace(/'/g,"\'")}','tujuan')" style="background:none;border:none;cursor:pointer;font-size:14px;vertical-align:middle" title="Salin alamat">📋 Salin</button> <button onclick="bukaGoogleMaps(this.dataset.addr)" data-addr="${o.alamat_tujuan}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8">🗺️ Maps</button></div>
       </div>
     </div>
     <div class="harga-row" style="margin-bottom:16px"><div class="harga-tawar">${rupiah(o.harga_deal||o.harga_tawar)}</div></div>
@@ -1495,6 +1495,12 @@ function renderOrderAktifMitra(o){
 }
 
 // ── AKSI MITRA ──
+function bukaGoogleMaps(alamat){
+  const addr = typeof alamat === 'string' ? alamat : alamat;
+  const url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(addr);
+  window.open(url,'_blank');
+}
+
 function salinAlamat(alamat, tipe){
   navigator.clipboard.writeText(alamat).then(()=>{
     // Tampilkan feedback
