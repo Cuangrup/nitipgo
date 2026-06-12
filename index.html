@@ -955,6 +955,7 @@ function logout(){
   currentUser=null;currentRole=null;
   if(realtimeSub)realtimeSub.unsubscribe();
   stopPengirimPolling();
+  if(_mitraPollTimer)clearInterval(_mitraPollTimer);
   if(window._pengirimRefreshTimer)clearInterval(window._pengirimRefreshTimer);
   document.getElementById('userMenu').style.display='none';
   goScreen('screenHome');
@@ -1257,20 +1258,8 @@ function pengirimTab(tab){
     },100);
   }
   else if(tab==='aktif'){document.querySelectorAll('.pengirim-tab')[1].classList.add('active');document.getElementById('tabOrderAktif').style.display='block';document.getElementById('tabAktifLabel').textContent='Order Aktif';loadOrderAktifPengirim();
-    // Auto refresh hanya kalau masih ada order mencari/menunggu_konfirmasi
-    if(window._pengirimRefreshTimer)clearInterval(window._pengirimRefreshTimer);
-    window._pengirimRefreshTimer=setInterval(async()=>{
-      const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
-      if(idx!==1){clearInterval(window._pengirimRefreshTimer);return;}
-      // Cek apakah masih ada order yang butuh refresh
-      const{data:need}=await db.from('orders').select('id',{count:'exact',head:true})
-        .eq('pengirim_id',currentUser.id).in('status',['mencari','menunggu_konfirmasi']);
-      if(!need||need.length===0){
-        clearInterval(window._pengirimRefreshTimer);
-        return;
-      }
-      loadOrderAktifPengirim();
-    },5000);
+    // Refresh sekali saat tab dibuka
+    loadOrderAktifPengirim();
   }
   else{document.querySelectorAll('.pengirim-tab')[2].classList.add('active');document.getElementById('tabRiwayat').style.display='block';loadRiwayatPengirim();}
 }
@@ -1636,6 +1625,49 @@ async function updateStatus(orderId,status){
 }
 
 // ── REALTIME ──
+// ── NOTIFIKASI SUARA & POLLING MITRA ──
+let _lastOrderCount=0;
+let _mitraPollTimer=null;
+let _audioCtx=null;
+
+function bunyikanNotif(){
+  try{
+    if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const ctx=_audioCtx;
+    const o1=ctx.createOscillator(),g1=ctx.createGain();
+    o1.connect(g1);g1.connect(ctx.destination);
+    o1.frequency.value=880;
+    g1.gain.setValueAtTime(0.3,ctx.currentTime);
+    g1.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.3);
+    o1.start(ctx.currentTime);o1.stop(ctx.currentTime+0.3);
+    const o2=ctx.createOscillator(),g2=ctx.createGain();
+    o2.connect(g2);g2.connect(ctx.destination);
+    o2.frequency.value=1100;
+    g2.gain.setValueAtTime(0.3,ctx.currentTime+0.15);
+    g2.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.45);
+    o2.start(ctx.currentTime+0.15);o2.stop(ctx.currentTime+0.45);
+    if(navigator.vibrate)navigator.vibrate([200,100,200]);
+  }catch(e){}
+}
+
+function startMitraPolling(){
+  if(_mitraPollTimer)clearInterval(_mitraPollTimer);
+  _mitraPollTimer=setInterval(async()=>{
+    if(!currentUser||currentRole!=='mitra')return;
+    const{count}=await db.from('orders').select('*',{count:'exact',head:true})
+      .in('status',['mencari','menunggu_konfirmasi']).is('mitra_id',null);
+    const newCount=count||0;
+    if(newCount>_lastOrderCount){
+      bunyikanNotif();
+      showToast('🔔 Ada order baru masuk!');
+      const idx=Array.from(document.querySelectorAll('.mitra-tab')).findIndex(t=>t.classList.contains('active'));
+      if(idx===0)loadOrderTersedia();
+      else document.getElementById('badgeTersedia').textContent=newCount;
+    }
+    _lastOrderCount=newCount;
+  },5000);
+}
+
 function subscribeRealtime(){
   if(realtimeSub)realtimeSub.unsubscribe();
   realtimeSub=db.channel('nitipgo-changes')
@@ -1664,6 +1696,7 @@ function subscribeRealtime(){
       }
     })
     .subscribe();
+  startMitraPolling();
 }
 
 // Polling timer untuk pengirim
@@ -1671,17 +1704,7 @@ let _pengirimPollTimer=null;
 let _lastBidCount=0;
 
 function subscribeRealtimePengirim(){
-  // Coba realtime dulu
-  if(realtimeSub)realtimeSub.unsubscribe();
-  realtimeSub=db.channel('nitipgo-pengirim-'+currentUser.id)
-    .on('postgres_changes',{event:'*',schema:'public',table:'bids'},()=>{
-      const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
-      if(idx===1)loadOrderAktifPengirim();
-      else showBidNotif();
-    })
-    .subscribe();
-
-  // Polling sebagai backup (setiap 4 detik)
+  // Langsung pakai polling — lebih reliable di mobile
   startPengirimPolling();
 }
 
@@ -1712,28 +1735,36 @@ function startPengirimPolling(){
   stopPengirimPolling();
   _pengirimPollTimer=setInterval(async()=>{
     if(!currentUser||currentRole!=='pengirim')return;
-    // Cek order selesai untuk notifikasi rating
-    await cekOrderSelesai();
-    // Cek apakah masih ada order yang butuh polling (mencari/menunggu_konfirmasi)
-    const{data:activeOrders}=await db.from('orders').select('id')
-      .eq('pengirim_id',currentUser.id).in('status',['mencari','menunggu_konfirmasi']);
-    // Kalau tidak ada order aktif yang butuh bid → stop polling
+
+    // Selalu cek order aktif pengguna
+    const{data:activeOrders}=await db.from('orders').select('id,status')
+      .eq('pengirim_id',currentUser.id)
+      .in('status',['mencari','menunggu_konfirmasi','dijemput','diantar']);
+
     if(!activeOrders||!activeOrders.length){
-      stopPengirimPolling();
+      // Cek order selesai untuk rating
+      await cekOrderSelesai();
       return;
     }
-    const orderIds=activeOrders.map(o=>o.id);
-    const{count}=await db.from('bids').select('*',{count:'exact',head:true})
-      .in('order_id',orderIds).eq('status','menunggu');
-    const newCount=count||0;
-    if(newCount>_lastBidCount){
-      _lastBidCount=newCount;
-      const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
-      if(idx===1)loadOrderAktifPengirim();
-      else showBidNotif();
-    } else {
-      _lastBidCount=newCount;
+
+    // Cek bid baru untuk order yang masih mencari
+    const ordersMencari=activeOrders.filter(o=>['mencari','menunggu_konfirmasi'].includes(o.status));
+    if(ordersMencari.length){
+      const orderIds=ordersMencari.map(o=>o.id);
+      const{count}=await db.from('bids').select('*',{count:'exact',head:true})
+        .in('order_id',orderIds).eq('status','menunggu');
+      const newCount=count||0;
+      if(newCount!==_lastBidCount){
+        _lastBidCount=newCount;
+        const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
+        if(idx===1)loadOrderAktifPengirim();
+        else showBidNotif();
+      }
     }
+
+    // Cek order selesai untuk notif rating
+    await cekOrderSelesai();
+
   },4000);
 }
 
