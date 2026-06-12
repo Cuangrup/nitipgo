@@ -148,12 +148,94 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
 .foto-upload-area img{max-width:100%;max-height:200px;border-radius:8px;margin-top:8px;}
 .foto-preview{width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:8px;}
 @media(max-width:480px){.home-hero h1{font-size:26px;}}
+/* AUTH */
+.otp-inputs{display:flex;gap:8px;justify-content:center;margin:20px 0;}
+.otp-input{width:44px;height:52px;text-align:center;font-size:22px;font-weight:800;border:2px solid var(--border);border-radius:10px;background:white;color:var(--brand);}
+.otp-input:focus{outline:none;border-color:var(--go);}
+.pwd-wrap{position:relative;}
+.pwd-wrap input{padding-right:44px;}
+.pwd-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted);}
+.user-menu{display:flex;align-items:center;gap:8px;}
+.logout-btn{background:rgba(255,255,255,0.15);border:none;color:white;padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;}
+.logout-btn:hover{background:rgba(255,255,255,0.25);}
+
 </style>
 </head>
 <body>
 <div class="topbar">
   <div class="logo">Nitip<span>Go</span></div>
-  <div class="role-badge" id="topRoleBadge" style="display:none"></div>
+  <div class="user-menu" id="userMenu" style="display:none">
+    <div class="role-badge" id="topRoleBadge"></div>
+    <button class="logout-btn" onclick="logout()">Keluar</button>
+  </div>
+</div>
+
+<!-- DAFTAR -->
+<div id="screenDaftar" class="screen">
+  <div class="form-wrap">
+    <button class="back-btn" onclick="goScreen('screenHome')">← Kembali</button>
+    <div class="form-title">Buat Akun Baru</div>
+    <div class="form-sub">Daftar sebagai pengirim atau mitra driver</div>
+    <div id="daftarAlert"></div>
+    <div class="field"><label>Nama Lengkap</label><input type="text" id="daftarNama" placeholder="Nama lengkap kamu"></div>
+    <div class="field"><label>Nomor WhatsApp</label><input type="tel" id="daftarHp" placeholder="08xxxxxxxxxx" oninput="formatHP(this)"></div>
+    <div class="field">
+      <label>Password</label>
+      <div class="pwd-wrap">
+        <input type="password" id="daftarPwd" placeholder="Minimal 6 karakter">
+        <button class="pwd-eye" onclick="togglePwd('daftarPwd',this)">👁️</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Daftar sebagai</label>
+      <select id="daftarRole">
+        <option value="pengirim">📦 Pengirim</option>
+        <option value="mitra">🛵 Mitra Driver</option>
+      </select>
+    </div>
+    <button class="btn btn-go" onclick="kirimOTP('daftar')">Kirim Kode OTP via WhatsApp →</button>
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">Sudah punya akun? <a href="#" onclick="goScreen('screenLogin')" style="color:var(--go);font-weight:600">Masuk di sini</a></div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="screenLogin" class="screen">
+  <div class="form-wrap">
+    <button class="back-btn" onclick="goScreen('screenHome')">← Kembali</button>
+    <div class="form-title">Masuk ke NitipGo</div>
+    <div class="form-sub">Gunakan nomor WA & password kamu</div>
+    <div id="loginAlert"></div>
+    <div class="field"><label>Nomor WhatsApp</label><input type="tel" id="loginHp" placeholder="08xxxxxxxxxx" oninput="formatHP(this)"></div>
+    <div class="field">
+      <label>Password</label>
+      <div class="pwd-wrap">
+        <input type="password" id="loginPwd" placeholder="Password kamu">
+        <button class="pwd-eye" onclick="togglePwd('loginPwd',this)">👁️</button>
+      </div>
+    </div>
+    <button class="btn btn-go" onclick="loginAkun()">Masuk →</button>
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">Belum punya akun? <a href="#" onclick="goScreen('screenDaftar')" style="color:var(--go);font-weight:600">Daftar di sini</a></div>
+  </div>
+</div>
+
+<!-- OTP VERIFIKASI -->
+<div id="screenOTP" class="screen">
+  <div class="form-wrap">
+    <button class="back-btn" id="otpBackBtn" onclick="goScreen('screenDaftar')">← Kembali</button>
+    <div class="form-title">Verifikasi WhatsApp</div>
+    <div class="form-sub" id="otpSubtitle">Masukkan kode 6 digit yang dikirim ke WhatsApp kamu</div>
+    <div id="otpAlert"></div>
+    <div class="otp-inputs">
+      <input class="otp-input" type="number" maxlength="1" id="otp0" oninput="otpNext(this,0)">
+      <input class="otp-input" type="number" maxlength="1" id="otp1" oninput="otpNext(this,1)">
+      <input class="otp-input" type="number" maxlength="1" id="otp2" oninput="otpNext(this,2)">
+      <input class="otp-input" type="number" maxlength="1" id="otp3" oninput="otpNext(this,3)">
+      <input class="otp-input" type="number" maxlength="1" id="otp4" oninput="otpNext(this,4)">
+      <input class="otp-input" type="number" maxlength="1" id="otp5" oninput="otpNext(this,5)">
+    </div>
+    <button class="btn btn-go" onclick="verifikasiOTP()">Verifikasi →</button>
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">Tidak dapat kode? <a href="#" onclick="kirimOTPUlang()" style="color:var(--go);font-weight:600">Kirim ulang</a></div>
+  </div>
 </div>
 
 <!-- HOME -->
@@ -164,15 +246,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
       <p>Pengiriman sameday Surabaya & sekitarnya.<br>Kamu tawar, mitra bid — kamu yang pilih.</p>
     </div>
     <div class="role-cards">
-      <div class="role-card" onclick="goScreen('screenPengirimLogin')">
+      <div class="role-card" onclick="goScreen('screenLogin')">
         <div class="icon">📦</div>
-        <h3>Saya Pengirim</h3>
-        <p>Buat order, tawar harga, pilih mitra terbaik</p>
-      </div>
-      <div class="role-card mitra" onclick="goScreen('screenMitraLogin')">
-        <div class="icon">🛵</div>
-        <h3>Saya Mitra Driver</h3>
-        <p>Lihat order, bid harga, atur penghasilan sendiri</p>
+        <h3>Masuk / Daftar</h3>
+        <p>Login sebagai pengirim atau mitra driver</p>
       </div>
       <div class="role-card" onclick="goScreen('screenTracking')">
         <div class="icon">📍</div>
@@ -184,18 +261,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
   </div>
 </div>
 
-<!-- PENGIRIM LOGIN -->
-<div id="screenPengirimLogin" class="screen">
-  <div class="form-wrap">
-    <button class="back-btn" onclick="goScreen('screenHome')">← Kembali</button>
-    <div class="form-title">Masuk sebagai Pengirim</div>
-    <div class="form-sub">Masukkan nama & nomor HP kamu</div>
-    <div id="pengirimLoginAlert"></div>
-    <div class="field"><label>Nama Lengkap</label><input type="text" id="pengirimNama" placeholder="Contoh: Budi Santoso"></div>
-    <div class="field"><label>Nomor WhatsApp</label><input type="tel" id="pengirimHp" placeholder="08xxxxxxxxxx"></div>
-    <button class="btn btn-go" onclick="loginPengirim()">Lanjut →</button>
-  </div>
-</div>
+
 
 <!-- PENGIRIM DASHBOARD -->
 <div id="screenPengirim" class="screen">
@@ -249,18 +315,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
   </div>
 </div>
 
-<!-- MITRA LOGIN -->
-<div id="screenMitraLogin" class="screen">
-  <div class="form-wrap">
-    <button class="back-btn" onclick="goScreen('screenHome')">← Kembali</button>
-    <div class="form-title">Masuk sebagai Mitra Driver</div>
-    <div class="form-sub">Masukkan nama & nomor HP kamu</div>
-    <div id="mitraLoginAlert"></div>
-    <div class="field"><label>Nama Lengkap</label><input type="text" id="mitraNama" placeholder="Contoh: Andi Kurniawan"></div>
-    <div class="field"><label>Nomor WhatsApp</label><input type="tel" id="mitraHp" placeholder="08xxxxxxxxxx"></div>
-    <button class="btn btn-mitra" onclick="loginMitra()">Masuk sebagai Mitra →</button>
-  </div>
-</div>
+
 
 <!-- MITRA DASHBOARD -->
 <div id="screenMitra" class="screen">
@@ -331,6 +386,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
 </div>
 
 <script>
+// ═══════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════
+const FONNTE_TOKEN='iUzz279oQ3SyMaNTzkqy';
 const SUPA_URL='https://ikypjxxufrvdihuoccut.supabase.co';
 const SUPA_KEY='sb_publishable_Z16QnBPhF7Mdge2iITcqdA_n4Mu3-dG';
 const {createClient}=supabase;
@@ -340,6 +399,169 @@ let currentUser=null,currentRole=null,realtimeSub=null;
 let mapInstance=null,mapMarker=null,mapTarget=null,selectedLatLng=null,selectedAddress='',searchTimeout=null;
 let fotoCallback=null,fotoOrderId=null,fotoType=null,fotoDataUrl=null;
 let pickupCoords=null,tujuanCoords=null;
+let otpPending={kode:null,hp:null,nama:null,role:null,pwd:null};
+
+// ═══════════════════════════════════════════
+// AUTH — HELPER
+// ═══════════════════════════════════════════
+function formatHP(input){
+  let v=input.value.replace(/\D/g,'');
+  if(v.startsWith('0'))v='62'+v.slice(1);
+  input.value=v;
+}
+function togglePwd(id,btn){
+  const el=document.getElementById(id);
+  if(el.type==='password'){el.type='text';btn.textContent='🙈';}
+  else{el.type='password';btn.textContent='👁️';}
+}
+function otpNext(el,idx){
+  const v=el.value.replace(/[^0-9]/g,'');
+  el.value=v.slice(-1);
+  if(v&&idx<5)document.getElementById('otp'+(idx+1)).focus();
+}
+function getOTPValue(){
+  return[0,1,2,3,4,5].map(i=>document.getElementById('otp'+i).value).join('');
+}
+function clearOTP(){[0,1,2,3,4,5].forEach(i=>{document.getElementById('otp'+i).value='';});document.getElementById('otp0').focus();}
+
+async function hashPassword(pwd){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pwd));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ═══════════════════════════════════════════
+// FONNTE — KIRIM WA
+// ═══════════════════════════════════════════
+async function kirimWA(hp,pesan){
+  try{
+    await fetch('https://fontee.io/api/send',{
+      method:'POST',
+      headers:{'Authorization':FONNTE_TOKEN,'Content-Type':'application/json'},
+      body:JSON.stringify({target:hp,message:pesan})
+    });
+  }catch(e){console.log('WA error:',e);}
+}
+
+// ═══════════════════════════════════════════
+// DAFTAR + OTP
+// ═══════════════════════════════════════════
+async function kirimOTP(mode){
+  const nama=document.getElementById('daftarNama')?.value?.trim()||'';
+  const hp=document.getElementById('daftarHp').value.replace(/\D/g,'');
+  const pwd=document.getElementById('daftarPwd')?.value||'';
+  const role=document.getElementById('daftarRole')?.value||'pengirim';
+
+  if(mode==='daftar'){
+    if(!nama){showAlert('daftarAlert','Nama wajib diisi.');return;}
+    if(hp.length<10){showAlert('daftarAlert','Nomor HP tidak valid.');return;}
+    if(pwd.length<6){showAlert('daftarAlert','Password minimal 6 karakter.');return;}
+    // Cek HP sudah terdaftar
+    const{data:existing}=await db.from('users').select('id').eq('no_hp',hp).maybeSingle();
+    if(existing){showAlert('daftarAlert','Nomor HP sudah terdaftar. Silakan login.');return;}
+  }
+
+  // Generate OTP
+  const kode=Math.floor(100000+Math.random()*900000).toString();
+  otpPending={kode,hp,nama,role,pwd};
+
+  // Kirim via Fonnte
+  const pesan=`*NitipGo*\nKode OTP kamu: *${kode}*\n\nJangan berikan kode ini ke siapapun.\nBerlaku 5 menit.`;
+  await kirimWA(hp,pesan);
+
+  document.getElementById('otpSubtitle').textContent=`Kode dikirim ke WhatsApp +${hp}`;
+  document.getElementById('otpBackBtn').onclick=()=>goScreen(mode==='daftar'?'screenDaftar':'screenLogin');
+  clearOTP();
+  goScreen('screenOTP');
+  showAlert('otpAlert',`✅ Kode OTP dikirim ke +${hp}`,'success');
+
+  // Auto expire 5 menit
+  setTimeout(()=>{otpPending.kode=null;},300000);
+}
+
+async function verifikasiOTP(){
+  const input=getOTPValue();
+  if(input.length<6){showAlert('otpAlert','Masukkan 6 digit kode OTP.');return;}
+  if(!otpPending.kode){showAlert('otpAlert','Kode OTP sudah kadaluarsa. Minta ulang.');return;}
+  if(input!==otpPending.kode){showAlert('otpAlert','Kode OTP salah. Coba lagi.');return;}
+
+  // OTP valid — buat akun
+  const pwdHash=await hashPassword(otpPending.pwd);
+  const{data:user,error}=await db.from('users').insert({
+    nama:otpPending.nama,no_hp:otpPending.hp,
+    role:otpPending.role,pwd_hash:pwdHash,verified:true
+  }).select().single();
+
+  if(error){showAlert('otpAlert','Gagal buat akun: '+error.message);return;}
+  otpPending={kode:null,hp:null,nama:null,role:null,pwd:null};
+  masukSebagai(user);
+}
+
+async function kirimOTPUlang(){
+  if(!otpPending.hp){goScreen('screenDaftar');return;}
+  const kode=Math.floor(100000+Math.random()*900000).toString();
+  otpPending.kode=kode;
+  const pesan=`*NitipGo*\nKode OTP baru kamu: *${kode}*\n\nJangan berikan kode ini ke siapapun.`;
+  await kirimWA(otpPending.hp,pesan);
+  clearOTP();
+  showAlert('otpAlert','✅ Kode OTP baru sudah dikirim.','success');
+  setTimeout(()=>{otpPending.kode=null;},300000);
+}
+
+// ═══════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════
+async function loginAkun(){
+  const hp=document.getElementById('loginHp').value.replace(/\D/g,'');
+  const pwd=document.getElementById('loginPwd').value;
+  if(hp.length<10){showAlert('loginAlert','Nomor HP tidak valid.');return;}
+  if(!pwd){showAlert('loginAlert','Password wajib diisi.');return;}
+
+  const pwdHash=await hashPassword(pwd);
+  const{data:user}=await db.from('users').select('*').eq('no_hp',hp).eq('pwd_hash',pwdHash).maybeSingle();
+  if(!user){showAlert('loginAlert','Nomor HP atau password salah.');return;}
+  masukSebagai(user);
+}
+
+function masukSebagai(user){
+  currentUser=user;
+  currentRole=user.role;
+  // Simpan session
+  localStorage.setItem('nitipgo_user',JSON.stringify(user));
+  updateTopbar(user);
+  if(user.role==='pengirim'){goScreen('screenPengirim');pengirimTab('buat');}
+  else{goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();}
+}
+
+function updateTopbar(user){
+  const icon=user.role==='pengirim'?'📦':'🛵';
+  document.getElementById('topRoleBadge').textContent=icon+' '+user.nama;
+  document.getElementById('userMenu').style.display='flex';
+}
+
+function logout(){
+  if(!confirm('Yakin ingin keluar?'))return;
+  localStorage.removeItem('nitipgo_user');
+  currentUser=null;currentRole=null;
+  if(realtimeSub)realtimeSub.unsubscribe();
+  document.getElementById('userMenu').style.display='none';
+  goScreen('screenHome');
+}
+
+// Auto login saat reload
+function checkSession(){
+  const saved=localStorage.getItem('nitipgo_user');
+  if(saved){
+    try{
+      const user=JSON.parse(saved);
+      // Refresh dari DB dulu
+      db.from('users').select('*').eq('id',user.id).single().then(({data})=>{
+        if(data)masukSebagai(data);
+        else localStorage.removeItem('nitipgo_user');
+      });
+    }catch{localStorage.removeItem('nitipgo_user');}
+  }
+}
+
 
 // ── NAVIGATION ──
 function goScreen(id){
@@ -883,6 +1105,7 @@ async function lacakOrder(){
       ${data.foto_selesai?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">📸 Foto Selesai</div><img src="${data.foto_selesai}" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover"></div>`:''}
     </div>`;
 }
+checkSession();
 </script>
 </body>
 </html>
