@@ -704,7 +704,7 @@ function previewDok(type, input){
   reader.readAsDataURL(file);
 }
 
-// Upload dokumen pakai base64 — lebih reliable dari File object
+// Upload dokumen sebagai base64 langsung ke database
 async function uploadDokumenBase64(userId){
   const types=[
     {key:'ktp',col:'dok_ktp'},
@@ -717,30 +717,42 @@ async function uploadDokumenBase64(userId){
     const file=dokFiles[t.key];
     if(!file)continue;
     try{
-      // Convert ke ArrayBuffer untuk upload
-      const arrayBuffer=await file.arrayBuffer();
-      const ext=file.name.split('.').pop()||'jpg';
-      const path=`${userId}/${t.key}_${Date.now()}.${ext}`;
-      const{error}=await db.storage.from('dokumen-mitra').upload(path, arrayBuffer, {
-        contentType:file.type||'image/jpeg',
-        upsert:true
-      });
-      if(!error){
-        const{data:url}=db.storage.from('dokumen-mitra').getPublicUrl(path);
-        updates[t.col]=url.publicUrl;
-        console.log('Upload OK:',t.key, url.publicUrl);
-      } else {
-        console.error('Upload error:',t.key, error.message);
-      }
-    }catch(e){console.error('Upload exception:',t.key,e);}
+      // Kompres & convert ke base64
+      const base64=await fileToBase64Compressed(file);
+      updates[t.col]=base64;
+    }catch(e){console.error('Convert error:',t.key,e);}
   }
   if(Object.keys(updates).length>0){
     const{error}=await db.from('users').update(updates).eq('id',userId);
     if(error)console.error('Update user error:',error.message);
-    else console.log('Dokumen URLs saved to user');
+    else console.log('Dokumen saved to DB');
   }
-  // Reset dokFiles
   dokFiles={ktp:null,sim:null,stnk:null,kendaraan:null};
+}
+
+// Kompres gambar sebelum simpan ke DB
+function fileToBase64Compressed(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        // Max 800px
+        const max=800;
+        let w=img.width,h=img.height;
+        if(w>max){h=h*(max/w);w=max;}
+        if(h>max){w=w*(max/h);h=max;}
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg',0.7));
+      };
+      img.onerror=reject;
+      img.src=e.target.result;
+    };
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 async function uploadDokumen(userId){
