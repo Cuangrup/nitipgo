@@ -928,6 +928,8 @@ function logout(){
   localStorage.removeItem('nitipgo_user');
   currentUser=null;currentRole=null;
   if(realtimeSub)realtimeSub.unsubscribe();
+  stopPengirimPolling();
+  if(window._pengirimRefreshTimer)clearInterval(window._pengirimRefreshTimer);
   document.getElementById('userMenu').style.display='none';
   goScreen('screenHome');
 }
@@ -1558,34 +1560,56 @@ function subscribeRealtime(){
     .subscribe();
 }
 
+// Polling timer untuk pengirim
+let _pengirimPollTimer=null;
+let _lastBidCount=0;
+
 function subscribeRealtimePengirim(){
+  // Coba realtime dulu
   if(realtimeSub)realtimeSub.unsubscribe();
   realtimeSub=db.channel('nitipgo-pengirim-'+currentUser.id)
-    .on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>{
+    .on('postgres_changes',{event:'*',schema:'public',table:'bids'},()=>{
       const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
       if(idx===1)loadOrderAktifPengirim();
       else showBidNotif();
     })
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'bids'},()=>{
-      const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
-      if(idx===1){
-        loadOrderAktifPengirim();
-      } else {
-        showBidNotif();
-      }
-    })
-    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'bids'},()=>{
+    .subscribe();
+
+  // Polling sebagai backup (setiap 4 detik)
+  startPengirimPolling();
+}
+
+function startPengirimPolling(){
+  stopPengirimPolling();
+  _pengirimPollTimer=setInterval(async()=>{
+    if(!currentUser||currentRole!=='pengirim')return;
+    // Cek jumlah bid baru untuk order pengirim ini
+    const{data:orders}=await db.from('orders').select('id')
+      .eq('pengirim_id',currentUser.id).in('status',['mencari','menunggu_konfirmasi']);
+    if(!orders||!orders.length)return;
+    const orderIds=orders.map(o=>o.id);
+    const{count}=await db.from('bids').select('*',{count:'exact',head:true})
+      .in('order_id',orderIds).eq('status','menunggu');
+    const newCount=count||0;
+    if(newCount>_lastBidCount){
+      _lastBidCount=newCount;
       const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
       if(idx===1)loadOrderAktifPengirim();
-    })
-    .subscribe((status)=>{
-      console.log('Pengirim realtime status:',status);
-    });
+      else showBidNotif();
+    } else {
+      _lastBidCount=newCount;
+    }
+  },4000);
+}
+
+function stopPengirimPolling(){
+  if(_pengirimPollTimer)clearInterval(_pengirimPollTimer);
+  _pengirimPollTimer=null;
 }
 
 function showBidNotif(){
   const el=document.getElementById('tabAktifLabel');
-  if(el)el.innerHTML='Order Aktif <span style="background:var(--go);color:white;border-radius:10px;padding:2px 7px;font-size:10px;font-weight:700">🔔 BARU</span>';
+  if(el)el.innerHTML='Order Aktif <span style="background:var(--go);color:white;border-radius:10px;padding:2px 7px;font-size:10px;font-weight:700;vertical-align:middle">🔔</span>';
 }
 
 // ── TRACKING ──
