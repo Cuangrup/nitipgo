@@ -655,6 +655,9 @@ function updateEstimasi(){
   } else if(p&&t){
     el.innerHTML='Rp 7.000 – Rp 35.000 <span style="font-size:11px;color:var(--muted)">(📍 untuk estimasi akurat)</span>';
     estimasiTarif=0;
+    // Set default harga ke 15000 kalau belum ada estimasi
+    const cur=parseInt(document.getElementById('orderHarga').value)||0;
+    if(cur===0||cur===5000)setHarga(15000);
   } else {
     el.textContent='isi alamat dulu';
     estimasiTarif=0;
@@ -682,11 +685,18 @@ function validateHarga(){
     const minTawar=bulatkan500(estimasiTarif*0.8);
     if(harga<minTawar){
       warning.style.display='block';
-      warning.textContent=`⚠️ Naikkan tarifmu! Minimum tawar ${rupiah(minTawar)} (80% dari estimasi)`;
+      warning.textContent=`⚠️ Naikkan tarifmu! Minimum tawar ${rupiah(minTawar)} (80% dari estimasi ${rupiah(estimasiTarif)})`;
       btn.disabled=true;
       btn.style.opacity='0.5';
       return false;
     }
+  } else if(harga<5500){
+    // Tanpa estimasi, minimal Rp 5.500
+    warning.style.display='block';
+    warning.textContent='⚠️ Harga tawar terlalu rendah. Minimal Rp 5.500';
+    btn.disabled=true;
+    btn.style.opacity='0.5';
+    return false;
   }
   if(harga<5000){
     warning.style.display='block';
@@ -706,7 +716,7 @@ async function autoGeocode(target){
     const val=document.getElementById(target==='pickup'?'orderPickup':'orderTujuan').value.trim();
     if(val.length<5)return;
     try{
-      const res=await fetch(`https://corsproxy.io/?${encodeURIComponent('https://us1.locationiq.com/v1/search?key='+LOCATIONIQ_TOKEN+'&q='+encodeURIComponent(val+' Surabaya Indonesia')+'&format=json&limit=1&countrycodes=id')}`);
+      const res=await fetch('https://ikypjxxufrvdihuoccut.supabase.co/functions/v1/hyper-handler',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPA_KEY},body:JSON.stringify({type:'search',q:val})});
       const data=await res.json();
       if(data&&data.length){
         const coords={lat:parseFloat(data[0].lat),lng:parseFloat(data[0].lon)};
@@ -744,8 +754,8 @@ async function onMapClick(e){
   mapMarker=L.marker([lat,lng]).addTo(mapInstance);
   document.getElementById('mapSelectedAddr').textContent='Mencari alamat...';
   try{
-    const res=await fetch(`https://corsproxy.io/?${encodeURIComponent('https://us1.locationiq.com/v1/reverse?key='+LOCATIONIQ_TOKEN+'&lat='+lat+'&lon='+lng+'&format=json&accept-language=id')}`);
-    const data=await res.json();
+    const rres=await fetch('https://ikypjxxufrvdihuoccut.supabase.co/functions/v1/hyper-handler',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPA_KEY},body:JSON.stringify({type:'reverse',lat,lon:lng})});
+    const data=await rres.json();
     selectedAddress=data.display_name.split(',').slice(0,4).join(',').trim();
     document.getElementById('mapSelectedAddr').textContent=selectedAddress;
     mapMarker.bindPopup(selectedAddress).openPopup();
@@ -757,8 +767,8 @@ async function searchAddress(query){
   if(!query||query.length<3){el.innerHTML='';return;}
   searchTimeout=setTimeout(async()=>{
     try{
-      const res=await fetch(`https://corsproxy.io/?${encodeURIComponent('https://us1.locationiq.com/v1/search?key='+LOCATIONIQ_TOKEN+'&q='+encodeURIComponent(query+' Surabaya')+'&format=json&limit=5&accept-language=id&countrycodes=id')}`);
-      const data=await res.json();
+      const sres=await fetch('https://ikypjxxufrvdihuoccut.supabase.co/functions/v1/hyper-handler',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPA_KEY},body:JSON.stringify({type:'search',q:query})});
+      const data=await sres.json();
       if(!data.length){el.innerHTML='<div class="map-suggestion-item" style="color:var(--muted)">Tidak ditemukan</div>';return;}
       el.innerHTML=data.map(r=>`<div class="map-suggestion-item" onclick="selectSuggestion(${r.lat},${r.lon},'${r.display_name.replace(/'/g,"\\'")}')">📍 ${r.display_name.split(',').slice(0,3).join(',')}</div>`).join('');
     }catch{el.innerHTML='';}
