@@ -390,6 +390,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
 // CONFIG
 // ═══════════════════════════════════════════
 const FONNTE_TOKEN='iUzz279oQ3SyMaNTzkqy';
+const LOCATIONIQ_TOKEN='pk.7cf48234a34a50d8e692e7e36265bdbd';
 const SUPA_URL='https://ikypjxxufrvdihuoccut.supabase.co';
 const SUPA_KEY='sb_publishable_Z16QnBPhF7Mdge2iITcqdA_n4Mu3-dG';
 const {createClient}=supabase;
@@ -629,7 +630,7 @@ function updateEstimasi(){
     el.innerHTML=`<b>${rupiah(tarif)}</b> (~${km.toFixed(1)} km) <span style="font-size:10px;color:var(--muted)">estimasi</span>`;
     document.getElementById('orderHarga').placeholder=tarif;
   } else if(p&&t){
-    el.innerHTML='<span style="color:var(--muted)">Menghitung...</span>';
+    el.innerHTML='Rp 7.000 – Rp 35.000 <span style="font-size:11px;color:var(--muted)">(gunakan 📍 untuk estimasi akurat)</span>';
   } else {
     el.textContent='isi alamat dulu';
   }
@@ -640,7 +641,7 @@ async function autoGeocode(target){
     const val=document.getElementById(target==='pickup'?'orderPickup':'orderTujuan').value.trim();
     if(val.length<5)return;
     try{
-      const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val+' Surabaya Indonesia')}&format=json&limit=1&countrycodes=id`);
+      const res=await fetch(`https://us1.locationiq.com/v1/search?key=${LOCATIONIQ_TOKEN}&q=${encodeURIComponent(val+' Surabaya Indonesia')}&format=json&limit=1&countrycodes=id`);
       const data=await res.json();
       if(data&&data.length){
         const coords={lat:parseFloat(data[0].lat),lng:parseFloat(data[0].lon)};
@@ -648,7 +649,7 @@ async function autoGeocode(target){
         else tujuanCoords=coords;
         updateEstimasi();
       }
-    }catch(e){}
+    }catch(e){console.log('geocode error:',e);}
   },1200);
 }
 document.getElementById('orderPickup').addEventListener('input',()=>{updateEstimasi();autoGeocode('pickup');});
@@ -678,7 +679,7 @@ async function onMapClick(e){
   mapMarker=L.marker([lat,lng]).addTo(mapInstance);
   document.getElementById('mapSelectedAddr').textContent='Mencari alamat...';
   try{
-    const res=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=id`);
+    const res=await fetch(`https://us1.locationiq.com/v1/reverse?key=${LOCATIONIQ_TOKEN}&lat=${lat}&lon=${lng}&format=json&accept-language=id`);
     const data=await res.json();
     selectedAddress=data.display_name.split(',').slice(0,4).join(',').trim();
     document.getElementById('mapSelectedAddr').textContent=selectedAddress;
@@ -691,7 +692,7 @@ async function searchAddress(query){
   if(!query||query.length<3){el.innerHTML='';return;}
   searchTimeout=setTimeout(async()=>{
     try{
-      const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query+' Surabaya')}&format=json&limit=5&accept-language=id&countrycodes=id`);
+      const res=await fetch(`https://us1.locationiq.com/v1/search?key=${LOCATIONIQ_TOKEN}&q=${encodeURIComponent(query+' Surabaya')}&format=json&limit=5&accept-language=id&countrycodes=id`);
       const data=await res.json();
       if(!data.length){el.innerHTML='<div class="map-suggestion-item" style="color:var(--muted)">Tidak ditemukan</div>';return;}
       el.innerHTML=data.map(r=>`<div class="map-suggestion-item" onclick="selectSuggestion(${r.lat},${r.lon},'${r.display_name.replace(/'/g,"\\'")}')">📍 ${r.display_name.split(',').slice(0,3).join(',')}</div>`).join('');
