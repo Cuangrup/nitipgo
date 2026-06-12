@@ -423,7 +423,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
       </div>
       <div id="hargaWarning" style="display:none;margin-top:8px;padding:10px 12px;background:#fce4ec;color:#880e4f;border-radius:8px;font-size:13px;font-weight:600;"></div>
     </div>
-    <button class="btn btn-go" id="btnPasangOrder" onclick="buatOrder()">Pasang Order 🚀</button>
+    <button class="btn btn-go" id="btnPasangOrder" onclick="buatOrder()" style="opacity:1">Pasang Order 🚀</button>
   </div>
   <div id="tabOrderAktif" style="display:none" class="mitra-content">
     <div id="listOrderAktif"><div class="loading">Memuat...</div></div>
@@ -1222,7 +1222,14 @@ async function loginMitra(){
 function pengirimTab(tab){
   document.querySelectorAll('.pengirim-tab').forEach(t=>t.classList.remove('active'));
   ['tabBuatOrder','tabOrderAktif','tabRiwayat'].forEach(id=>document.getElementById(id).style.display='none');
-  if(tab==='buat'){document.querySelectorAll('.pengirim-tab')[0].classList.add('active');document.getElementById('tabBuatOrder').style.display='block';}
+  if(tab==='buat'){document.querySelectorAll('.pengirim-tab')[0].classList.add('active');document.getElementById('tabBuatOrder').style.display='block';
+    // Set harga default dan validasi saat tab dibuka
+    setTimeout(()=>{
+      const h=parseInt(document.getElementById('orderHarga').value)||0;
+      if(h===0)setHarga(15000);
+      else validateHarga();
+    },100);
+  }
   else if(tab==='aktif'){document.querySelectorAll('.pengirim-tab')[1].classList.add('active');document.getElementById('tabOrderAktif').style.display='block';document.getElementById('tabAktifLabel').textContent='Order Aktif';loadOrderAktifPengirim();
     // Auto refresh setiap 5 detik kalau di tab aktif
     if(window._pengirimRefreshTimer)clearInterval(window._pengirimRefreshTimer);
@@ -1237,16 +1244,10 @@ function pengirimTab(tab){
 
 // ── BUAT ORDER ──
 async function buatOrder(){
+  const btn=document.getElementById('btnPasangOrder');
   // Pastikan user sudah login dan ID valid
   if(!currentUser||!currentUser.id){
     showAlert('buatOrderAlert','Sesi habis. Silakan login ulang.');
-    setTimeout(()=>logout(),2000);
-    return;
-  }
-  // Refresh user dari DB untuk pastikan ID valid
-  const{data:freshUser}=await db.from('users').select('id').eq('id',currentUser.id).single();
-  if(!freshUser){
-    showAlert('buatOrderAlert','Akun tidak ditemukan. Silakan login ulang.');
     setTimeout(()=>logout(),2000);
     return;
   }
@@ -1256,9 +1257,8 @@ async function buatOrder(){
   const desc=document.getElementById('orderDesc').value.trim();
   const harga=parseInt(document.getElementById('orderHarga').value)||0;
   if(!pickup||!tujuan){showAlert('buatOrderAlert','Alamat penjemputan & tujuan wajib diisi.');return;}
-  if(!validateHarga())return;
   if(harga<5000){showAlert('buatOrderAlert','Harga tawar minimal Rp 5.000.');return;}
-  const btn=event.target;btn.disabled=true;btn.textContent='Memasang order...';
+  btn.disabled=true;btn.textContent='Memasang order...';
   const orderData={
     kode:kodeOrder(),pengirim_id:currentUser.id,
     jenis,alamat_pickup:pickup,alamat_tujuan:tujuan,
