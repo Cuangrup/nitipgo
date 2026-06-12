@@ -704,48 +704,20 @@ function previewDok(type, input){
   reader.readAsDataURL(file);
 }
 
-// Upload dokumen sebagai base64 langsung ke database
-async function uploadDokumenBase64(userId){
-  const types=[
-    {key:'ktp',col:'dok_ktp'},
-    {key:'sim',col:'dok_sim'},
-    {key:'stnk',col:'dok_stnk'},
-    {key:'kendaraan',col:'dok_kendaraan'},
-  ];
-  const updates={};
-  for(const t of types){
-    const file=dokFiles[t.key];
-    if(!file)continue;
-    try{
-      // Kompres & convert ke base64
-      const base64=await fileToBase64Compressed(file);
-      updates[t.col]=base64;
-    }catch(e){console.error('Convert error:',t.key,e);}
-  }
-  if(Object.keys(updates).length>0){
-    const{error}=await db.from('users').update(updates).eq('id',userId);
-    if(error)console.error('Update user error:',error.message);
-    else console.log('Dokumen saved to DB');
-  }
-  dokFiles={ktp:null,sim:null,stnk:null,kendaraan:null};
-}
-
-// Kompres gambar sebelum simpan ke DB
-function fileToBase64Compressed(file){
+// Kompres gambar kecil untuk DB
+function fileToBase64Compressed(file, maxSize=400, quality=0.5){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
     reader.onload=e=>{
       const img=new Image();
       img.onload=()=>{
         const canvas=document.createElement('canvas');
-        // Max 800px
-        const max=800;
         let w=img.width,h=img.height;
-        if(w>max){h=h*(max/w);w=max;}
-        if(h>max){w=w*(max/h);h=max;}
+        if(w>maxSize){h=Math.round(h*(maxSize/w));w=maxSize;}
+        if(h>maxSize){w=Math.round(w*(maxSize/h));h=maxSize;}
         canvas.width=w;canvas.height=h;
         canvas.getContext('2d').drawImage(img,0,0,w,h);
-        resolve(canvas.toDataURL('image/jpeg',0.7));
+        resolve(canvas.toDataURL('image/jpeg',quality));
       };
       img.onerror=reject;
       img.src=e.target.result;
@@ -753,6 +725,27 @@ function fileToBase64Compressed(file){
     reader.onerror=reject;
     reader.readAsDataURL(file);
   });
+}
+
+// Upload dokumen satu per satu ke database
+async function uploadDokumenBase64(userId){
+  const types=[
+    {key:'ktp',col:'dok_ktp'},
+    {key:'sim',col:'dok_sim'},
+    {key:'stnk',col:'dok_stnk'},
+    {key:'kendaraan',col:'dok_kendaraan'},
+  ];
+  for(const t of types){
+    const file=dokFiles[t.key];
+    if(!file)continue;
+    try{
+      const base64=await fileToBase64Compressed(file);
+      const{error}=await db.from('users').update({[t.col]:base64}).eq('id',userId);
+      if(error)console.error('Update error:',t.key,error.message);
+      else console.log('Saved:',t.key,'size:',Math.round(base64.length/1024)+'KB');
+    }catch(e){console.error('Error:',t.key,e);}
+  }
+  dokFiles={ktp:null,sim:null,stnk:null,kendaraan:null};
 }
 
 async function uploadDokumen(userId){
