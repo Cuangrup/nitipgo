@@ -939,7 +939,7 @@ async function masukSebagai(user){
   // Simpan session
   localStorage.setItem('nitipgo_user',JSON.stringify(u));
   updateTopbar(u);
-  if(u.role==='pengirim'){goScreen('screenPengirim');pengirimTab('buat');}
+  if(u.role==='pengirim'){goScreen('screenPengirim');pengirimTab('buat');subscribeRealtimePengirim();setTimeout(cekOrderSelesai,2000);}
   else{goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();}
 }
 
