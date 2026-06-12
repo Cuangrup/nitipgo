@@ -1707,7 +1707,7 @@ async function loadAdminOrders(){
 async function loadAdminMitra(){
   const el=document.getElementById('adminMitraList');
   el.innerHTML='<div class="loading">Memuat...</div>';
-  const{data}=await db.from('users').select('*').eq('role','mitra').order('created_at',{ascending:false});
+  const{data}=await db.from('users').select('*').eq('role','mitra').eq('status_verifikasi','menunggu').order('created_at',{ascending:false});
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">✅</div><p>Tidak ada mitra yang perlu diverifikasi.</p></div>';return;}
   el.innerHTML=data.map(u=>`
     <div class="card" style="margin-bottom:12px">
