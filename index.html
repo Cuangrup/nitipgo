@@ -148,6 +148,20 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
 .foto-upload-area img{max-width:100%;max-height:200px;border-radius:8px;margin-top:8px;}
 .foto-preview{width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:8px;}
 @media(max-width:480px){.home-hero h1{font-size:26px;}}
+/* NOTIFIKASI & RATING */
+.notif-popup{display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;}
+.notif-popup.show{display:flex;}
+.notif-box{background:white;border-radius:16px;padding:28px 24px;max-width:360px;width:90%;text-align:center;animation:popIn .3s ease;}
+@keyframes popIn{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}
+.notif-icon{font-size:56px;margin-bottom:12px;}
+.notif-title{font-size:18px;font-weight:800;color:var(--brand);margin-bottom:6px;}
+.notif-desc{font-size:14px;color:var(--muted);margin-bottom:20px;}
+.star-rating{display:flex;justify-content:center;gap:8px;margin:16px 0;}
+.star-btn{font-size:32px;cursor:pointer;transition:transform .1s;background:none;border:none;padding:0;}
+.star-btn:hover{transform:scale(1.2);}
+.star-btn.active{filter:drop-shadow(0 0 4px gold);}
+.rating-form{text-align:left;}
+.rating-form textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;resize:none;height:80px;font-family:inherit;margin-top:8px;}
 /* ADMIN */
 .admin-wrap{max-width:900px;margin:0 auto;padding:20px;}
 .admin-topbar{background:var(--brand);color:white;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;border-radius:var(--radius);}
@@ -1217,7 +1231,7 @@ async function loginPengirim(){
   currentUser=user;currentRole='pengirim';
   document.getElementById('topRoleBadge').textContent='👤 '+user.nama;
   document.getElementById('topRoleBadge').style.display='';
-  goScreen('screenPengirim');pengirimTab('buat');subscribeRealtimePengirim();
+  goScreen('screenPengirim');pengirimTab('buat');subscribeRealtimePengirim();setTimeout(cekOrderSelesai,2000);
 }
 async function loginMitra(){
   const nama=document.getElementById('mitraNama').value;
@@ -1611,8 +1625,12 @@ function uploadFotoSelesai(orderId){
 async function updateStatus(orderId,status){
   await db.from('orders').update({status}).eq('id',orderId);
   if(status==='selesai'){
-    await db.from('users').update({total_order:db.rpc('increment')}).eq('id',currentUser.id);
+    // Update total order mitra
+    const{data:u}=await db.from('users').select('total_order').eq('id',currentUser.id).single();
+    await db.from('users').update({total_order:(u?.total_order||0)+1}).eq('id',currentUser.id);
     mitraTab('selesai');
+    // Tampilkan rating form untuk mitra
+    showNotifSelesai(orderId,'mitra');
   } else {loadOrderAktifMitra();}
 }
 
@@ -1666,10 +1684,35 @@ function subscribeRealtimePengirim(){
   startPengirimPolling();
 }
 
+// Polling cek order selesai untuk pengguna
+let _selesaiChecked = new Set(); // track order yang sudah dinotif
+
+async function cekOrderSelesai(){
+  if(!currentUser||currentRole!=='pengirim')return;
+  const{data}=await db.from('orders').select('id,kode,status')
+    .eq('pengirim_id',currentUser.id).eq('status','selesai');
+  if(!data)return;
+  for(const o of data){
+    if(_selesaiChecked.has(o.id))continue;
+    // Cek apakah pengguna sudah beri rating untuk order ini
+    const{data:sudahRating}=await db.from('ratings')
+      .select('id').eq('order_id',o.id).eq('dari','pengirim').maybeSingle();
+    if(!sudahRating){
+      _selesaiChecked.add(o.id);
+      showNotifSelesai(o.id,'pengirim');
+      break; // tampilkan satu per satu
+    } else {
+      _selesaiChecked.add(o.id);
+    }
+  }
+}
+
 function startPengirimPolling(){
   stopPengirimPolling();
   _pengirimPollTimer=setInterval(async()=>{
     if(!currentUser||currentRole!=='pengirim')return;
+    // Cek order selesai untuk notifikasi rating
+    await cekOrderSelesai();
     // Cek apakah masih ada order yang butuh polling (mencari/menunggu_konfirmasi)
     const{data:activeOrders}=await db.from('orders').select('id')
       .eq('pengirim_id',currentUser.id).in('status',['mencari','menunggu_konfirmasi']);
@@ -1962,6 +2005,109 @@ function openDokModal(url){
   document.getElementById('dokModal').classList.add('open');
 }
 function closeDokModal(){document.getElementById('dokModal').classList.remove('open');}
+
+
+// ═══════════════════════════════════════════
+// RATING & NOTIFIKASI
+// ═══════════════════════════════════════════
+let _ratingOrderId=null;
+let _ratingTarget=null; // 'mitra' or 'pengirim'
+let _ratingScore=0;
+
+function showNotifSelesai(orderId, role){
+  _ratingOrderId=orderId;
+  _ratingTarget=role==='pengirim'?'mitra':'pengirim';
+  const title=role==='pengirim'?'Pesananmu Sudah Sampai! 🎉':'Order Berhasil Diselesaikan! 🎉';
+  const desc=role==='pengirim'?'Berikan rating untuk mitra yang mengantarkan pesananmu.':'Berikan rating untuk pengguna ini.';
+  const targetLabel=role==='pengirim'?'mitra':'pengguna';
+  
+  document.getElementById('notifContent').innerHTML=`
+    <div class="notif-icon">✅</div>
+    <div class="notif-title">${title}</div>
+    <div class="notif-desc">${desc}</div>
+    <div class="rating-form">
+      <div style="text-align:center;font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Nilai ${targetLabel} ini:</div>
+      <div class="star-rating" id="starRating">
+        ${[1,2,3,4,5].map(i=>`<button class="star-btn" onclick="setRating(${i})" id="star${i}">☆</button>`).join('')}
+      </div>
+      <textarea id="ratingKomentar" placeholder="Tulis komentar (opsional)..."></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-outline" onclick="skipRating()" style="flex:1">Lewati</button>
+      <button class="btn btn-go" onclick="kirimRating()" style="flex:1" id="btnKirimRating">Kirim Rating ⭐</button>
+    </div>`;
+  
+  document.getElementById('notifSelesai').classList.add('show');
+  _ratingScore=0;
+}
+
+function setRating(score){
+  _ratingScore=score;
+  for(let i=1;i<=5;i++){
+    const btn=document.getElementById('star'+i);
+    btn.textContent=i<=score?'⭐':'☆';
+  }
+}
+
+function skipRating(){
+  document.getElementById('notifSelesai').classList.remove('show');
+}
+
+async function kirimRating(){
+  if(_ratingScore===0){
+    alert('Pilih bintang dulu ya!');return;
+  }
+  const komentar=document.getElementById('ratingKomentar').value.trim();
+  
+  // Simpan rating ke tabel ratings
+  await db.from('ratings').insert({
+    order_id:_ratingOrderId,
+    dari:currentRole,
+    untuk:_ratingTarget,
+    nilai:_ratingScore,
+    komentar:komentar||null
+  });
+
+  // Update rata-rata rating user yang dinilai
+  await updateRataRating(_ratingOrderId, _ratingTarget);
+  
+  document.getElementById('notifSelesai').classList.remove('show');
+  
+  // Tampilkan terima kasih
+  showToast('⭐ Rating berhasil dikirim! Terima kasih.');
+}
+
+async function updateRataRating(orderId, targetRole){
+  // Ambil user_id target dari order
+  const{data:order}=await db.from('orders').select('pengirim_id,mitra_id').eq('id',orderId).single();
+  if(!order)return;
+  const userId=targetRole==='mitra'?order.mitra_id:order.pengirim_id;
+  if(!userId)return;
+  
+  // Hitung rata-rata rating
+  const{data:ratings}=await db.from('ratings').select('nilai').eq('untuk',targetRole).eq('order_id', orderId);
+  // Ambil semua rating user ini dari semua order
+  const{data:allRatings}=await db.from('ratings').select('nilai,orders!inner(pengirim_id,mitra_id)')
+    .eq('untuk',targetRole);
+  
+  if(!allRatings||!allRatings.length)return;
+  const userRatings=allRatings.filter(r=>{
+    const o=r.orders;
+    return targetRole==='mitra'?o?.mitra_id===userId:o?.pengirim_id===userId;
+  });
+  
+  if(!userRatings.length)return;
+  const avg=userRatings.reduce((s,r)=>s+r.nilai,0)/userRatings.length;
+  await db.from('users').update({rating:Math.round(avg*10)/10}).eq('id',userId);
+}
+
+function showToast(msg){
+  const toast=document.createElement('div');
+  toast.textContent=msg;
+  toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1d2e;color:white;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;';
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(),3000);
+}
 
 checkSession();
 checkAdminHash();
