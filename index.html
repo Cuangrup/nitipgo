@@ -434,10 +434,10 @@ async function hashPassword(pwd){
 // ═══════════════════════════════════════════
 async function kirimWA(hp,pesan){
   try{
-    await fetch('https://fontee.io/api/send',{
+    await fetch('https://api.fonnte.com/send',{
       method:'POST',
-      headers:{'Authorization':FONNTE_TOKEN,'Content-Type':'application/json'},
-      body:JSON.stringify({target:hp,message:pesan})
+      headers:{'Authorization':FONNTE_TOKEN},
+      body:new URLSearchParams({target:hp,message:pesan})
     });
   }catch(e){console.log('WA error:',e);}
 }
