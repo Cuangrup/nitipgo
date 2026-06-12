@@ -1221,7 +1221,15 @@ function pengirimTab(tab){
   document.querySelectorAll('.pengirim-tab').forEach(t=>t.classList.remove('active'));
   ['tabBuatOrder','tabOrderAktif','tabRiwayat'].forEach(id=>document.getElementById(id).style.display='none');
   if(tab==='buat'){document.querySelectorAll('.pengirim-tab')[0].classList.add('active');document.getElementById('tabBuatOrder').style.display='block';}
-  else if(tab==='aktif'){document.querySelectorAll('.pengirim-tab')[1].classList.add('active');document.getElementById('tabOrderAktif').style.display='block';document.getElementById('tabAktifLabel').textContent='Order Aktif';loadOrderAktifPengirim();}
+  else if(tab==='aktif'){document.querySelectorAll('.pengirim-tab')[1].classList.add('active');document.getElementById('tabOrderAktif').style.display='block';document.getElementById('tabAktifLabel').textContent='Order Aktif';loadOrderAktifPengirim();
+    // Auto refresh setiap 5 detik kalau di tab aktif
+    if(window._pengirimRefreshTimer)clearInterval(window._pengirimRefreshTimer);
+    window._pengirimRefreshTimer=setInterval(()=>{
+      const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
+      if(idx===1)loadOrderAktifPengirim();
+      else clearInterval(window._pengirimRefreshTimer);
+    },5000);
+  }
   else{document.querySelectorAll('.pengirim-tab')[2].classList.add('active');document.getElementById('tabRiwayat').style.display='block';loadRiwayatPengirim();}
 }
 
@@ -1552,20 +1560,32 @@ function subscribeRealtime(){
 
 function subscribeRealtimePengirim(){
   if(realtimeSub)realtimeSub.unsubscribe();
-  realtimeSub=db.channel('nitipgo-pengirim')
-    .on('postgres_changes',{event:'*',schema:'public',table:'orders',filter:`pengirim_id=eq.${currentUser.id}`},()=>{
+  realtimeSub=db.channel('nitipgo-pengirim-'+currentUser.id)
+    .on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>{
       const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
       if(idx===1)loadOrderAktifPengirim();
+      else showBidNotif();
     })
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'bids'},()=>{
       const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
       if(idx===1){
         loadOrderAktifPengirim();
       } else {
-        document.getElementById('tabAktifLabel').innerHTML='Order Aktif <span style="background:var(--go);color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;animation:pulse 1s infinite">🔔</span>';
+        showBidNotif();
       }
     })
-    .subscribe();
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'bids'},()=>{
+      const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
+      if(idx===1)loadOrderAktifPengirim();
+    })
+    .subscribe((status)=>{
+      console.log('Pengirim realtime status:',status);
+    });
+}
+
+function showBidNotif(){
+  const el=document.getElementById('tabAktifLabel');
+  if(el)el.innerHTML='Order Aktif <span style="background:var(--go);color:white;border-radius:10px;padding:2px 7px;font-size:10px;font-weight:700">🔔 BARU</span>';
 }
 
 // ── TRACKING ──
