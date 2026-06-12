@@ -667,7 +667,7 @@ function openMap(target){
   setTimeout(()=>{
     if(!mapInstance){
       mapInstance=L.map('mapContainer').setView([-7.2575,112.7521],13);
-      L.tileLayer(`https://tile.locationiq.com/v3/streets/r/{z}/{x}/{y}.png?key=${LOCATIONIQ_TOKEN}`,{attribution:'© LocationIQ © OpenStreetMap'}).addTo(mapInstance);
+      L.tileLayer(`https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`,{attribution:'© OpenStreetMap'}).addTo(mapInstance);
       mapInstance.on('click',onMapClick);
     } else {mapInstance.invalidateSize();}
   },100);
