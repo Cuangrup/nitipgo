@@ -848,24 +848,28 @@ async function loginAkun(){
   setTimeout(()=>{otpPending.kode=null;},300000);
 }
 
-function masukSebagai(user){
-  currentUser=user;
-  currentRole=user.role;
+async function masukSebagai(user){
+  // Selalu ambil data terbaru dari DB
+  const{data:freshUser}=await db.from('users').select('*').eq('id',user.id).single();
+  const u=freshUser||user;
+  currentUser=u;
+  currentRole=u.role;
   // Cek status verifikasi mitra
-  if(user.role==='mitra' && user.status_verifikasi==='menunggu'){
-    localStorage.setItem('nitipgo_user',JSON.stringify(user));
-    updateTopbar(user);
+  if(u.role==='mitra' && u.status_verifikasi==='menunggu'){
+    localStorage.setItem('nitipgo_user',JSON.stringify(u));
+    updateTopbar(u);
     goScreen('screenMenunggu');
     return;
   }
-  if(user.role==='mitra' && user.status_verifikasi==='ditolak'){
+  if(u.role==='mitra' && u.status_verifikasi==='ditolak'){
+    localStorage.removeItem('nitipgo_user');
     showAlert('loginAlert','Pendaftaran mitrammu ditolak. Hubungi admin untuk info lebih lanjut.');
     return;
   }
   // Simpan session
-  localStorage.setItem('nitipgo_user',JSON.stringify(user));
-  updateTopbar(user);
-  if(user.role==='pengirim'){goScreen('screenPengirim');pengirimTab('buat');}
+  localStorage.setItem('nitipgo_user',JSON.stringify(u));
+  updateTopbar(u);
+  if(u.role==='pengirim'){goScreen('screenPengirim');pengirimTab('buat');}
   else{goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();}
 }
 
@@ -890,10 +894,15 @@ function checkSession(){
   if(saved){
     try{
       const user=JSON.parse(saved);
-      // Refresh dari DB dulu
+      // Selalu refresh dari DB untuk dapat status terbaru
       db.from('users').select('*').eq('id',user.id).single().then(({data})=>{
-        if(data)masukSebagai(data);
-        else localStorage.removeItem('nitipgo_user');
+        if(data){
+          // Update localStorage dengan data terbaru
+          localStorage.setItem('nitipgo_user',JSON.stringify(data));
+          masukSebagai(data);
+        } else {
+          localStorage.removeItem('nitipgo_user');
+        }
       });
     }catch{localStorage.removeItem('nitipgo_user');}
   }
