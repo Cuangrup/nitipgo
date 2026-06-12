@@ -1343,8 +1343,8 @@ async function renderOrderPengirim(o,simple=false){
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps(this.dataset.addr)" data-addr="${o.alamat_pickup}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
-        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps(this.dataset.addr)" data-addr="${o.alamat_tujuan}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps(this.getAttribute('data-addr'))" data-addr="${o.alamat_pickup}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps(this.getAttribute('data-addr'))" data-addr="${o.alamat_tujuan}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
       </div>
     </div>
     ${o.deskripsi?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📝 ${o.deskripsi}</div>`:''}
@@ -1435,8 +1435,8 @@ function renderOrderMitra(o,done=false,sudahBid=false){
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps(this.dataset.addr)" data-addr="${o.alamat_pickup}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
-        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps(this.dataset.addr)" data-addr="${o.alamat_tujuan}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps(this.getAttribute('data-addr'))" data-addr="${o.alamat_pickup}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps(this.getAttribute('data-addr'))" data-addr="${o.alamat_tujuan}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
       </div>
     </div>
     ${o.deskripsi?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📝 ${o.deskripsi}</div>`:''}
@@ -1473,8 +1473,8 @@ function renderOrderAktifMitra(o){
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps(this.dataset.addr)" data-addr="${o.alamat_pickup}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
-        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps(this.dataset.addr)" data-addr="${o.alamat_tujuan}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps(this.getAttribute('data-addr'))" data-addr="${o.alamat_pickup}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps(this.getAttribute('data-addr'))" data-addr="${o.alamat_tujuan}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
       </div>
     </div>
     <div class="harga-row" style="margin-bottom:16px"><div class="harga-tawar">${rupiah(o.harga_deal||o.harga_tawar)}</div></div>
@@ -1496,8 +1496,15 @@ function renderOrderAktifMitra(o){
 
 // ── AKSI MITRA ──
 function bukaGoogleMaps(el){
-  const addr = typeof el === 'string' ? el : (el.dataset ? el.dataset.addr : '');
-  if(!addr)return;
+  let addr = '';
+  if(typeof el === 'string'){
+    addr = el;
+  } else if(el && el.dataset && el.dataset.addr){
+    addr = el.dataset.addr;
+  } else if(el && el.getAttribute){
+    addr = el.getAttribute('data-addr') || '';
+  }
+  if(!addr){console.warn('No address');return;}
   const url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(addr);
   window.open(url,'_blank');
 }
