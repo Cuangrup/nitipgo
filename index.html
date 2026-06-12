@@ -158,6 +158,19 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
 .user-menu{display:flex;align-items:center;gap:8px;}
 .logout-btn{background:rgba(255,255,255,0.15);border:none;color:white;padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;}
 .logout-btn:hover{background:rgba(255,255,255,0.25);}
+.dok-upload{border:2px dashed var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;background:white;}
+.dok-upload:hover{border-color:var(--go);background:var(--go-light);}
+.dok-upload.uploaded{border-color:var(--mitra);background:var(--mitra-light);}
+.dok-upload input{display:none;}
+.dok-preview{width:100%;max-height:120px;object-fit:cover;border-radius:6px;margin-top:8px;}
+.mitra-docs{display:none;margin-top:16px;padding-top:16px;border-top:2px dashed var(--border);}
+.mitra-docs.show{display:block;}
+.step-indicator{display:flex;gap:8px;margin-bottom:24px;}
+.step-item{flex:1;text-align:center;font-size:11px;font-weight:600;padding:6px;border-radius:8px;background:var(--surface);color:var(--muted);}
+.step-item.active{background:var(--go);color:white;}
+.step-item.done{background:var(--mitra);color:white;}
+.menunggu-verifikasi{text-align:center;padding:40px 20px;}
+.menunggu-verifikasi .icon{font-size:64px;margin-bottom:16px;}
 
 </style>
 </head>
@@ -176,25 +189,99 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
     <button class="back-btn" onclick="goScreen('screenHome')">← Kembali</button>
     <div class="form-title">Buat Akun Baru</div>
     <div class="form-sub">Daftar sebagai pengirim atau mitra driver</div>
+
+    <!-- Step indicator -->
+    <div class="step-indicator">
+      <div class="step-item active" id="stepInfo">1 Info</div>
+      <div class="step-item" id="stepDok">2 Dokumen</div>
+      <div class="step-item" id="stepOtp">3 Verifikasi</div>
+    </div>
+
     <div id="daftarAlert"></div>
-    <div class="field"><label>Nama Lengkap</label><input type="text" id="daftarNama" placeholder="Nama lengkap kamu"></div>
-    <div class="field"><label>Nomor WhatsApp</label><input type="tel" id="daftarHp" placeholder="08xxxxxxxxxx" oninput="formatHP(this)"></div>
-    <div class="field">
-      <label>Password</label>
-      <div class="pwd-wrap">
-        <input type="password" id="daftarPwd" placeholder="Minimal 6 karakter">
-        <button class="pwd-eye" onclick="togglePwd('daftarPwd',this)">👁️</button>
+
+    <!-- STEP 1: Info Dasar -->
+    <div id="daftarStep1">
+      <div class="field"><label>Nama Lengkap</label><input type="text" id="daftarNama" placeholder="Nama lengkap kamu"></div>
+      <div class="field"><label>Nomor WhatsApp</label><input type="tel" id="daftarHp" placeholder="08xxxxxxxxxx" oninput="formatHP(this)"></div>
+      <div class="field"><label>Email</label><input type="email" id="daftarEmail" placeholder="email@kamu.com"></div>
+      <div class="field">
+        <label>Password</label>
+        <div class="pwd-wrap">
+          <input type="password" id="daftarPwd" placeholder="Minimal 6 karakter">
+          <button class="pwd-eye" onclick="togglePwd('daftarPwd',this)">👁️</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Daftar sebagai</label>
+        <select id="daftarRole" onchange="toggleDokMitra()">
+          <option value="pengirim">📦 Pengirim</option>
+          <option value="mitra">🛵 Mitra Driver</option>
+        </select>
+      </div>
+      <button class="btn btn-go" onclick="nextStepDaftar()">Lanjut →</button>
+    </div>
+
+    <!-- STEP 2: Dokumen Mitra (hanya tampil kalau pilih mitra) -->
+    <div id="daftarStep2" style="display:none">
+      <div style="background:var(--go-light);border:1.5px solid #ffc5cf;border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--go)">
+        🛵 Sebagai mitra driver, kamu wajib upload dokumen berikut untuk verifikasi.
+      </div>
+
+      <div class="field">
+        <label>📄 Foto KTP</label>
+        <div class="dok-upload" id="uploadKtp" onclick="document.getElementById('inputKtp').click()">
+          <div id="previewKtp"><div style="font-size:24px">📄</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk upload foto KTP</div></div>
+        </div>
+        <input type="file" id="inputKtp" accept="image/*" onchange="previewDok('Ktp',this)">
+      </div>
+
+      <div class="field">
+        <label>🪪 Foto SIM</label>
+        <div class="dok-upload" id="uploadSim" onclick="document.getElementById('inputSim').click()">
+          <div id="previewSim"><div style="font-size:24px">🪪</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk upload foto SIM</div></div>
+        </div>
+        <input type="file" id="inputSim" accept="image/*" onchange="previewDok('Sim',this)">
+      </div>
+
+      <div class="field">
+        <label>🚗 Foto STNK + Bukti Pajak</label>
+        <div class="dok-upload" id="uploadStnk" onclick="document.getElementById('inputStnk').click()">
+          <div id="previewStnk"><div style="font-size:24px">🚗</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk upload foto STNK</div></div>
+        </div>
+        <input type="file" id="inputStnk" accept="image/*" onchange="previewDok('Stnk',this)">
+      </div>
+
+      <div class="field">
+        <label>📸 Foto Kendaraan (plat nomor terlihat)</label>
+        <div class="dok-upload" id="uploadKendaraan" onclick="document.getElementById('inputKendaraan').click()">
+          <div id="previewKendaraan"><div style="font-size:24px">📸</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk upload foto kendaraan</div></div>
+        </div>
+        <input type="file" id="inputKendaraan" accept="image/*" onchange="previewDok('Kendaraan',this)">
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" onclick="backStepDaftar()">← Kembali</button>
+        <button class="btn btn-go" onclick="kirimOTP('daftar')">Kirim OTP Verifikasi →</button>
       </div>
     </div>
-    <div class="field">
-      <label>Daftar sebagai</label>
-      <select id="daftarRole">
-        <option value="pengirim">📦 Pengirim</option>
-        <option value="mitra">🛵 Mitra Driver</option>
-      </select>
-    </div>
-    <button class="btn btn-go" onclick="kirimOTP('daftar')">Kirim Kode OTP via WhatsApp →</button>
+
     <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">Sudah punya akun? <a href="#" onclick="goScreen('screenLogin')" style="color:var(--go);font-weight:600">Masuk di sini</a></div>
+  </div>
+</div>
+
+<!-- MENUNGGU VERIFIKASI -->
+<div id="screenMenunggu" class="screen">
+  <div class="form-wrap">
+    <div class="menunggu-verifikasi">
+      <div class="icon">⏳</div>
+      <div class="form-title">Akun Sedang Diverifikasi</div>
+      <div class="form-sub" style="margin-top:8px">Dokumenmu sedang kami review. Proses verifikasi maksimal <b>1x24 jam</b>.<br><br>Kamu akan mendapat notifikasi WhatsApp setelah akun disetujui.</div>
+      <div style="margin-top:24px;padding:16px;background:var(--surface);border-radius:12px;font-size:13px;color:var(--muted)">
+        📞 Ada pertanyaan? Hubungi kami di WhatsApp<br>
+        <b style="color:var(--brand)">+62 877-5088-3510</b>
+      </div>
+      <button class="btn btn-outline" style="margin-top:20px" onclick="logout()">Kembali ke Beranda</button>
+    </div>
   </div>
 </div>
 
@@ -411,7 +498,7 @@ let currentUser=null,currentRole=null,realtimeSub=null;
 let mapInstance=null,mapMarker=null,mapTarget=null,selectedLatLng=null,selectedAddress='',searchTimeout=null;
 let fotoCallback=null,fotoOrderId=null,fotoType=null,fotoDataUrl=null;
 let pickupCoords=null,tujuanCoords=null;
-let otpPending={kode:null,hp:null,nama:null,role:null,pwd:null,userId:null};
+let otpPending={kode:null,hp:null,nama:null,role:null,pwd:null,userId:null,email:null};
 
 // ═══════════════════════════════════════════
 // AUTH — HELPER
@@ -457,6 +544,82 @@ async function kirimWA(hp,pesan){
 // ═══════════════════════════════════════════
 // DAFTAR + OTP
 // ═══════════════════════════════════════════
+// Dokumen data
+let dokFiles = {ktp:null, sim:null, stnk:null, kendaraan:null};
+
+function toggleDokMitra(){
+  const role=document.getElementById('daftarRole').value;
+  const step2Btn=document.querySelector('#daftarStep1 .btn-go');
+  step2Btn.textContent = role==='mitra' ? 'Lanjut Upload Dokumen →' : 'Kirim Kode OTP via WhatsApp →';
+}
+
+function nextStepDaftar(){
+  const nama=document.getElementById('daftarNama').value.trim();
+  const hp=document.getElementById('daftarHp').value.replace(/\D/g,'');
+  const email=document.getElementById('daftarEmail').value.trim();
+  const pwd=document.getElementById('daftarPwd').value;
+  const role=document.getElementById('daftarRole').value;
+
+  if(!nama){showAlert('daftarAlert','Nama wajib diisi.');return;}
+  if(hp.length<10){showAlert('daftarAlert','Nomor HP tidak valid.');return;}
+  if(!email||!email.includes('@')){showAlert('daftarAlert','Email tidak valid.');return;}
+  if(pwd.length<6){showAlert('daftarAlert','Password minimal 6 karakter.');return;}
+
+  if(role==='mitra'){
+    // Tampilkan step 2 dokumen
+    document.getElementById('daftarStep1').style.display='none';
+    document.getElementById('daftarStep2').style.display='block';
+    document.getElementById('stepInfo').className='step-item done';
+    document.getElementById('stepDok').className='step-item active';
+  } else {
+    // Langsung kirim OTP
+    kirimOTP('daftar');
+  }
+}
+
+function backStepDaftar(){
+  document.getElementById('daftarStep2').style.display='none';
+  document.getElementById('daftarStep1').style.display='block';
+  document.getElementById('stepInfo').className='step-item active';
+  document.getElementById('stepDok').className='step-item';
+}
+
+function previewDok(type, input){
+  const file=input.files[0];
+  if(!file)return;
+  const key=type.toLowerCase();
+  dokFiles[key]=file;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const el=document.getElementById('preview'+type);
+    el.innerHTML=`<img src="${e.target.result}" class="dok-preview">`;
+    document.getElementById('upload'+type).classList.add('uploaded');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function uploadDokumen(userId){
+  const docs = [
+    {key:'ktp', col:'dok_ktp', file:dokFiles.ktp},
+    {key:'sim', col:'dok_sim', file:dokFiles.sim},
+    {key:'stnk', col:'dok_stnk', file:dokFiles.stnk},
+    {key:'kendaraan', col:'dok_kendaraan', file:dokFiles.kendaraan},
+  ];
+  const updates={};
+  for(const doc of docs){
+    if(!doc.file)continue;
+    const path=`${userId}/${doc.key}_${Date.now()}`;
+    const{data,error}=await db.storage.from('dokumen-mitra').upload(path, doc.file, {upsert:true});
+    if(!error){
+      const{data:url}=db.storage.from('dokumen-mitra').getPublicUrl(path);
+      updates[doc.col]=url.publicUrl;
+    }
+  }
+  if(Object.keys(updates).length>0){
+    await db.from('users').update(updates).eq('id',userId);
+  }
+}
+
 async function kirimOTP(mode){
   const nama=document.getElementById('daftarNama')?.value?.trim()||'';
   const hp=document.getElementById('daftarHp').value.replace(/\D/g,'');
@@ -474,14 +637,27 @@ async function kirimOTP(mode){
 
   // Generate OTP
   const kode=Math.floor(100000+Math.random()*900000).toString();
-  otpPending={kode,hp,nama,role,pwd};
+  const email=document.getElementById('daftarEmail')?.value||'';
+  otpPending={kode,hp,nama,role,pwd,email};
 
   // Kirim via Fonnte
   const pesan=`*NitipGo*\nKode OTP kamu: *${kode}*\n\nJangan berikan kode ini ke siapapun.\nBerlaku 5 menit.`;
   await kirimWA(hp,pesan);
 
   document.getElementById('otpSubtitle').textContent=`Kode dikirim ke WhatsApp +${hp}`;
-  document.getElementById('otpBackBtn').onclick=()=>goScreen(mode==='daftar'?'screenDaftar':'screenLogin');
+  document.getElementById('otpBackBtn').onclick=()=>{
+    if(mode==='daftar'&&role==='mitra'){
+      goScreen('screenDaftar');
+      document.getElementById('daftarStep1').style.display='none';
+      document.getElementById('daftarStep2').style.display='block';
+    } else {
+      goScreen(mode==='daftar'?'screenDaftar':'screenLogin');
+    }
+  };
+  if(mode==='daftar'){
+    document.getElementById('stepDok').className='step-item done';
+    document.getElementById('stepOtp').className='step-item active';
+  }
   clearOTP();
   goScreen('screenOTP');
   showAlert('otpAlert',`✅ Kode OTP dikirim ke +${hp}`,'success');
@@ -505,13 +681,25 @@ async function verifikasiOTP(){
   } else {
     // Mode DAFTAR — buat akun baru
     const pwdHash=await hashPassword(otpPending.pwd);
+    const isMitra=otpPending.role==='mitra';
     const{data:user,error}=await db.from('users').insert({
-      nama:otpPending.nama,no_hp:otpPending.hp,
-      role:otpPending.role,pwd_hash:pwdHash,verified:true
+      nama:otpPending.nama,no_hp:otpPending.hp,email:otpPending.email||null,
+      role:otpPending.role,pwd_hash:pwdHash,verified:true,
+      status_verifikasi:isMitra?'menunggu':'aktif'
     }).select().single();
     if(error){showAlert('otpAlert','Gagal buat akun: '+error.message);return;}
-    otpPending={kode:null,hp:null,nama:null,role:null,pwd:null,userId:null};
-    masukSebagai(user);
+    // Upload dokumen kalau mitra
+    if(isMitra&&user){
+      await uploadDokumen(user.id);
+      // Kirim notif WA ke owner
+      await kirimWA('6287750883510',`🔔 *NitipGo - Pendaftar Mitra Baru*\nNama: ${user.nama}\nHP: +${user.no_hp}\nDokumen sudah diupload. Silakan verifikasi di dashboard admin.`);
+    }
+    otpPending={kode:null,hp:null,nama:null,role:null,pwd:null,userId:null,email:null};
+    if(isMitra){
+      goScreen('screenMenunggu');
+    } else {
+      masukSebagai(user);
+    }
   }
 }
 
