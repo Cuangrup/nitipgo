@@ -467,9 +467,9 @@ async function kirimOTP(mode){
     if(!nama){showAlert('daftarAlert','Nama wajib diisi.');return;}
     if(hp.length<10){showAlert('daftarAlert','Nomor HP tidak valid.');return;}
     if(pwd.length<6){showAlert('daftarAlert','Password minimal 6 karakter.');return;}
-    // Cek HP sudah terdaftar
-    const{data:existing}=await db.from('users').select('id').eq('no_hp',hp).maybeSingle();
-    if(existing){showAlert('daftarAlert','Nomor HP sudah terdaftar. Silakan login.');return;}
+    // Cek HP + role sudah terdaftar (boleh punya 2 akun: pengirim & mitra)
+    const{data:existing}=await db.from('users').select('id').eq('no_hp',hp).eq('role',role).maybeSingle();
+    if(existing){showAlert('daftarAlert','Nomor HP sudah terdaftar sebagai '+role+'. Silakan login.');return;}
   }
 
   // Generate OTP
