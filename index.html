@@ -1554,11 +1554,13 @@ const ADMIN_PWD_HASH='66907df6b90bdb2749a75eaada01ef22284a633fe2775f9cb11ee1879f
 let logoClickCount=0,logoClickTimer=null;
 
 // Akses via klik logo 5x
-document.querySelector('.logo').addEventListener('click',()=>{
-  logoClickCount++;
-  clearTimeout(logoClickTimer);
-  logoClickTimer=setTimeout(()=>logoClickCount=0,2000);
-  if(logoClickCount>=5){logoClickCount=0;goScreen('screenAdminLogin');}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelector('.logo').addEventListener('click',()=>{
+    logoClickCount++;
+    clearTimeout(logoClickTimer);
+    logoClickTimer=setTimeout(()=>logoClickCount=0,2000);
+    if(logoClickCount>=5){logoClickCount=0;goScreen('screenAdminLogin');}
+  });
 });
 
 // Akses via URL hash
@@ -1628,7 +1630,7 @@ async function loadAdminOrders(){
   const{data}=await q;
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">📭</div><p>Tidak ada order.</p></div>';return;}
   el.innerHTML=`<table class="admin-table">
-    <tr><th>Kode</th><th>Jenis</th><th>Pengirim</th><th>Mitra</th><th>Harga</th><th>Status</th><th>Waktu</th></tr>
+    <tr><th>Kode</th><th>Jenis</th><th>Pengirim</th><th>Mitra</th><th>Harga</th><th>Status</th><th>Waktu</th><th>Aksi</th></tr>
     ${data.map(o=>`<tr>
       <td><b>${o.kode}</b></td>
       <td>${o.jenis}</td>
@@ -1637,6 +1639,7 @@ async function loadAdminOrders(){
       <td><b>${rupiah(o.harga_deal||o.harga_tawar)}</b></td>
       <td><span class="status-pill status-${o.status}">${statusLabel(o.status)}</span></td>
       <td style="font-size:11px;color:var(--muted)">${new Date(o.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+      <td><button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="hapusOrder('${o.id}')">Hapus</button></td>
     </tr>`).join('')}
   </table>`;
 }
@@ -1663,8 +1666,8 @@ async function loadAdminMitra(){
         ${u.dok_kendaraan?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Kendaraan</div><img src="${u.dok_kendaraan}" class="dok-thumb" onclick="openDokModal('${u.dok_kendaraan}')"></div>`:''}
       </div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-mitra btn-sm" onclick="approveMitra('${u.id}','${u.no_hp}','${u.nama}')">✅ Approve</button>
-        <button class="btn btn-danger btn-sm" onclick="tolakMitra('${u.id}','${u.no_hp}','${u.nama}')">❌ Tolak</button>
+        <button class="btn btn-mitra btn-sm" onclick="approveMitra('${u.id}','${u.no_hp}')">✅ Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="tolakMitra('${u.id}','${u.no_hp}')">❌ Tolak</button>
         <button class="btn btn-outline btn-sm" onclick="ubahStatusMitra('${u.id}','aktif')" style="font-size:12px">Set Aktif</button>
         <button class="btn btn-outline btn-sm" onclick="ubahStatusMitra('${u.id}','menunggu')" style="font-size:12px">Set Menunggu</button>
       </div>
@@ -1692,24 +1695,28 @@ async function loadAdminAkun(){
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           ${u.role==='mitra'?`<button class="btn btn-mitra btn-sm" style="padding:4px 8px;font-size:11px" onclick="ubahStatusMitra('${u.id}','aktif')">Aktifkan</button>
           <button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="ubahStatusMitra('${u.id}','ditolak')">Nonaktif</button>`:''}
-          <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:red;border-color:red" onclick="hapusAkun('${u.id}','${u.nama}')">Hapus</button>
+          <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:red;border-color:red" onclick="hapusAkun('${u.id}')">Hapus</button>
         </div>
       </td>
     </tr>`).join('')}
   </table>`;
 }
 
-async function approveMitra(userId, hp, nama){
+async function approveMitra(userId, hp){
+  const{data:u}=await db.from('users').select('nama').eq('id',userId).single();
   await db.from('users').update({status_verifikasi:'aktif'}).eq('id',userId);
-  await kirimWA(hp,`✅ *NitipGo*\nHalo ${nama}! Akun mitra kamu sudah diverifikasi dan aktif. Kamu sekarang bisa mulai menerima order di nitipgo.vercel.app`);
+  if(u)await kirimWA(hp,`✅ *NitipGo*\nHalo ${u.nama}! Akun mitra kamu sudah diverifikasi dan aktif. Kamu sekarang bisa mulai menerima order di nitipgo.vercel.app`);
+  alert('✅ Mitra berhasil di-approve!');
   loadAdminMitra();
   loadAdminStats();
 }
 
-async function tolakMitra(userId, hp, nama){
+async function tolakMitra(userId, hp){
+  const{data:u}=await db.from('users').select('nama').eq('id',userId).single();
   const alasan=prompt('Alasan penolakan (opsional):') || 'Dokumen tidak memenuhi syarat';
   await db.from('users').update({status_verifikasi:'ditolak',catatan_verifikasi:alasan}).eq('id',userId);
-  await kirimWA(hp,`❌ *NitipGo*\nHalo ${nama}, maaf pendaftaran mitra kamu ditolak.\nAlasan: ${alasan}\n\nSilakan daftar ulang dengan dokumen yang valid.`);
+  if(u)await kirimWA(hp,`❌ *NitipGo*\nHalo ${u.nama}, maaf pendaftaran mitra kamu ditolak.\nAlasan: ${alasan}\n\nSilakan daftar ulang dengan dokumen yang valid.`);
+  alert('❌ Mitra berhasil ditolak.');
   loadAdminMitra();
   loadAdminStats();
 }
@@ -1721,10 +1728,19 @@ async function ubahStatusMitra(userId, status){
   loadAdminStats();
 }
 
-async function hapusAkun(userId, nama){
-  if(!confirm(`Yakin hapus akun "${nama}"? Tindakan ini tidak bisa dibatalkan.`))return;
+async function hapusAkun(userId){
+  if(!confirm('Yakin hapus akun ini? Tindakan ini tidak bisa dibatalkan.'))return;
   await db.from('users').delete().eq('id',userId);
   loadAdminAkun();
+  loadAdminStats();
+}
+
+async function hapusOrder(orderId){
+  if(!confirm('Yakin hapus order ini?'))return;
+  await db.from('bids').delete().eq('order_id',orderId);
+  await db.from('negosiasi').delete().eq('order_id',orderId);
+  await db.from('orders').delete().eq('id',orderId);
+  loadAdminOrders();
   loadAdminStats();
 }
 
