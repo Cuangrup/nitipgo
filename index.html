@@ -404,6 +404,18 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
       </div>
     </div>
     <div class="field">
+      <label>Nama Pengantar</label>
+      <input type="text" id="orderNamaPengantar" placeholder="Nama yang mengantar barang (boleh kosong = nama akun)">
+    </div>
+    <div class="field">
+      <label>Nama Penerima</label>
+      <input type="text" id="orderNamaPenerima" placeholder="Nama penerima di lokasi tujuan">
+    </div>
+    <div class="field">
+      <label>Nomor HP Penerima</label>
+      <input type="tel" id="orderHpPenerima" placeholder="08xxxxxxxxxx" oninput="formatHP(this)">
+    </div>
+    <div class="field">
       <label>Deskripsi Barang/Keperluan</label>
       <textarea id="orderDesc" placeholder="Contoh: 1 paket dokumen, perlu tanda tangan penerima"></textarea>
     </div>
@@ -1259,10 +1271,16 @@ async function buatOrder(){
   if(!pickup||!tujuan){showAlert('buatOrderAlert','Alamat penjemputan & tujuan wajib diisi.');return;}
   if(harga<5000){showAlert('buatOrderAlert','Harga tawar minimal Rp 5.000.');return;}
   btn.disabled=true;btn.textContent='Memasang order...';
+  const namaPengantar=document.getElementById('orderNamaPengantar').value.trim()||currentUser.nama;
+  const namaPenerima=document.getElementById('orderNamaPenerima').value.trim();
+  const hpPenerima=document.getElementById('orderHpPenerima').value.trim();
   const orderData={
     kode:kodeOrder(),pengirim_id:currentUser.id,
     jenis,alamat_pickup:pickup,alamat_tujuan:tujuan,
     deskripsi:desc,harga_tawar:harga,status:'mencari',
+    nama_pengantar:namaPengantar,
+    nama_penerima:namaPenerima||null,
+    hp_penerima:hpPenerima||null,
   };
   if(pickupCoords){orderData.pickup_lat=pickupCoords.lat;orderData.pickup_lng=pickupCoords.lng;}
   if(tujuanCoords){orderData.tujuan_lat=tujuanCoords.lat;orderData.tujuan_lng=tujuanCoords.lng;}
@@ -1273,6 +1291,9 @@ async function buatOrder(){
   document.getElementById('orderTujuan').value='';
   document.getElementById('orderDesc').value='';
   document.getElementById('orderHarga').value='';
+  document.getElementById('orderNamaPengantar').value='';
+  document.getElementById('orderNamaPenerima').value='';
+  document.getElementById('orderHpPenerima').value='';
   pickupCoords=null;tujuanCoords=null;
   showAlert('buatOrderAlert',`✅ Order ${data.kode} berhasil dipasang! Tunggu bid dari mitra.`,'success');
   pengirimTab('aktif');
@@ -1282,7 +1303,7 @@ async function buatOrder(){
 async function loadOrderAktifPengirim(){
   const el=document.getElementById('listOrderAktif');
   el.innerHTML='<div class="loading">Memuat...</div>';
-  const{data}=await db.from('orders').select('*').eq('pengirim_id',currentUser.id)
+  const{data}=await db.from('orders').select('*,mitra:users!orders_mitra_id_fkey(no_hp)').eq('pengirim_id',currentUser.id)
     .in('status',['mencari','menunggu_konfirmasi','dijemput','diantar']).order('created_at',{ascending:false});
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">📭</div><p>Belum ada order aktif.</p></div>';return;}
   const html=await Promise.all(data.map(o=>renderOrderPengirim(o)));
@@ -1350,8 +1371,9 @@ async function renderOrderPengirim(o,simple=false){
     ${o.deskripsi?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📝 ${o.deskripsi}</div>`:''}
     <div class="harga-row">
       <div><div style="font-size:11px;color:var(--muted)">Harga tawar</div><div class="harga-tawar">${rupiah(o.harga_tawar)}</div></div>
-      ${o.harga_deal?`<div style="text-align:right"><div style="font-size:11px;color:var(--muted)">Harga deal</div><div style="font-size:18px;font-weight:800;color:var(--mitra)">${rupiah(o.harga_deal)}</div></div>`:''}
+        ${o.harga_deal?`<div style="text-align:right"><div style="font-size:11px;color:var(--muted)">Harga deal</div><div style="font-size:18px;font-weight:800;color:var(--mitra)">${rupiah(o.harga_deal)}</div></div>`:''}
     </div>
+    ${o.mitra?.no_hp?`<div style="background:var(--mitra-light);border:1.5px solid #b2dfdb;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px">💬 <b>WA Mitra:</b> <a href="https://wa.me/${o.mitra?.no_hp}" target="_blank" style="color:var(--mitra);font-weight:700;text-decoration:none">${o.mitra?.no_hp} 💬</a></div>`:''}
     ${bidsHtml}
     ${!simple&&(o.status==='mencari'||o.status==='menunggu_konfirmasi')?`<button class="btn btn-danger btn-sm" style="margin-top:10px" onclick="batalOrder('${o.id}')">Batalkan Order</button>`:''}
     ${o.foto_pickup?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">📸 Foto Pickup</div><img src="${o.foto_pickup}" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover"></div>`:''}
@@ -1404,7 +1426,7 @@ async function loadOrderTersedia(){
 async function loadOrderAktifMitra(){
   const el=document.getElementById('listMitraAktif');
   el.innerHTML='<div class="loading">Memuat...</div>';
-  const{data}=await db.from('orders').select('*').eq('mitra_id',currentUser.id)
+  const{data}=await db.from('orders').select('*,pengirim:users!orders_pengirim_id_fkey(no_hp)').eq('mitra_id',currentUser.id)
     .in('status',['dijemput','diantar']).order('created_at',{ascending:false});
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">🛵</div><p>Belum ada order aktif.</p></div>';return;}
   el.innerHTML=data.map(o=>renderOrderAktifMitra(o)).join('');
@@ -1477,7 +1499,13 @@ function renderOrderAktifMitra(o){
         <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps(this.getAttribute('data-addr'))" data-addr="${o.alamat_tujuan}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
       </div>
     </div>
-    <div class="harga-row" style="margin-bottom:16px"><div class="harga-tawar">${rupiah(o.harga_deal||o.harga_tawar)}</div></div>
+    <div class="harga-row" style="margin-bottom:12px"><div class="harga-tawar">${rupiah(o.harga_deal||o.harga_tawar)}</div></div>
+    <div style="background:var(--surface);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px">
+      ${o.nama_pengantar?`<div style="margin-bottom:4px">👤 <b>Pengantar:</b> ${o.nama_pengantar}</div>`:''}
+      ${o.nama_penerima?`<div style="margin-bottom:4px">📦 <b>Penerima:</b> ${o.nama_penerima}</div>`:''}
+      ${o.hp_penerima?`<div style="margin-bottom:4px">📞 <b>HP Penerima:</b> <a href="https://wa.me/${o.hp_penerima}" target="_blank" style="color:var(--mitra);font-weight:700;text-decoration:none">${o.hp_penerima} 💬</a></div>`:''}
+      ${o.pengirim?.no_hp?`<div>💬 <b>WA Pengguna:</b> <a href="https://wa.me/${o.pengirim.no_hp}" target="_blank" style="color:var(--mitra);font-weight:700;text-decoration:none">${o.pengirim.no_hp} 💬</a></div>`:''}
+    </div>
     ${o.status==='dijemput'?`
       ${o.foto_pickup?
         `<button class="btn btn-mitra" onclick="updateStatus('${o.id}','diantar')">📦 Barang Dijemput — Mulai Antar</button>`:
