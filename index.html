@@ -1237,6 +1237,19 @@ function pengirimTab(tab){
 
 // ── BUAT ORDER ──
 async function buatOrder(){
+  // Pastikan user sudah login dan ID valid
+  if(!currentUser||!currentUser.id){
+    showAlert('buatOrderAlert','Sesi habis. Silakan login ulang.');
+    setTimeout(()=>logout(),2000);
+    return;
+  }
+  // Refresh user dari DB untuk pastikan ID valid
+  const{data:freshUser}=await db.from('users').select('id').eq('id',currentUser.id).single();
+  if(!freshUser){
+    showAlert('buatOrderAlert','Akun tidak ditemukan. Silakan login ulang.');
+    setTimeout(()=>logout(),2000);
+    return;
+  }
   const jenis=document.getElementById('orderJenis').value;
   const pickup=document.getElementById('orderPickup').value.trim();
   const tujuan=document.getElementById('orderTujuan').value.trim();
