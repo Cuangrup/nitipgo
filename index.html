@@ -399,7 +399,7 @@ let currentUser=null,currentRole=null,realtimeSub=null;
 let mapInstance=null,mapMarker=null,mapTarget=null,selectedLatLng=null,selectedAddress='',searchTimeout=null;
 let fotoCallback=null,fotoOrderId=null,fotoType=null,fotoDataUrl=null;
 let pickupCoords=null,tujuanCoords=null;
-let otpPending={kode:null,hp:null,nama:null,role:null,pwd:null};
+let otpPending={kode:null,hp:null,nama:null,role:null,pwd:null,userId:null};
 
 // ═══════════════════════════════════════════
 // AUTH — HELPER
@@ -484,16 +484,23 @@ async function verifikasiOTP(){
   if(!otpPending.kode){showAlert('otpAlert','Kode OTP sudah kadaluarsa. Minta ulang.');return;}
   if(input!==otpPending.kode){showAlert('otpAlert','Kode OTP salah. Coba lagi.');return;}
 
-  // OTP valid — buat akun
-  const pwdHash=await hashPassword(otpPending.pwd);
-  const{data:user,error}=await db.from('users').insert({
-    nama:otpPending.nama,no_hp:otpPending.hp,
-    role:otpPending.role,pwd_hash:pwdHash,verified:true
-  }).select().single();
-
-  if(error){showAlert('otpAlert','Gagal buat akun: '+error.message);return;}
-  otpPending={kode:null,hp:null,nama:null,role:null,pwd:null};
-  masukSebagai(user);
+  // OTP valid
+  if(otpPending.userId){
+    // Mode LOGIN — langsung masuk
+    const{data:user}=await db.from('users').select('*').eq('id',otpPending.userId).single();
+    otpPending={kode:null,hp:null,nama:null,role:null,pwd:null,userId:null};
+    if(user)masukSebagai(user);
+  } else {
+    // Mode DAFTAR — buat akun baru
+    const pwdHash=await hashPassword(otpPending.pwd);
+    const{data:user,error}=await db.from('users').insert({
+      nama:otpPending.nama,no_hp:otpPending.hp,
+      role:otpPending.role,pwd_hash:pwdHash,verified:true
+    }).select().single();
+    if(error){showAlert('otpAlert','Gagal buat akun: '+error.message);return;}
+    otpPending={kode:null,hp:null,nama:null,role:null,pwd:null,userId:null};
+    masukSebagai(user);
+  }
 }
 
 async function kirimOTPUlang(){
@@ -516,10 +523,23 @@ async function loginAkun(){
   if(hp.length<10){showAlert('loginAlert','Nomor HP tidak valid.');return;}
   if(!pwd){showAlert('loginAlert','Password wajib diisi.');return;}
 
+  const btn=event.target;btn.disabled=true;btn.textContent='Memeriksa...';
   const pwdHash=await hashPassword(pwd);
   const{data:user}=await db.from('users').select('*').eq('no_hp',hp).eq('pwd_hash',pwdHash).maybeSingle();
+  btn.disabled=false;btn.textContent='Masuk →';
   if(!user){showAlert('loginAlert','Nomor HP atau password salah.');return;}
-  masukSebagai(user);
+
+  // Password benar → kirim OTP untuk verifikasi
+  const kode=Math.floor(100000+Math.random()*900000).toString();
+  otpPending={kode,hp,nama:user.nama,role:user.role,pwd:null,userId:user.id};
+  const pesan=`*NitipGo*\nKode verifikasi login kamu: *${kode}*\n\nJangan berikan kode ini ke siapapun.\nBerlaku 5 menit.`;
+  await kirimWA(hp,pesan);
+  document.getElementById('otpSubtitle').textContent=`Kode verifikasi dikirim ke WhatsApp +${hp}`;
+  document.getElementById('otpBackBtn').onclick=()=>goScreen('screenLogin');
+  clearOTP();
+  goScreen('screenOTP');
+  showAlert('otpAlert',`✅ Kode OTP dikirim ke +${hp}`,'success');
+  setTimeout(()=>{otpPending.kode=null;},300000);
 }
 
 function masukSebagai(user){
