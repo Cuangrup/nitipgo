@@ -641,7 +641,7 @@ async function autoGeocode(target){
     const val=document.getElementById(target==='pickup'?'orderPickup':'orderTujuan').value.trim();
     if(val.length<5)return;
     try{
-      const res=await fetch(`https://us1.locationiq.com/v1/search?key=${LOCATIONIQ_TOKEN}&q=${encodeURIComponent(val+' Surabaya Indonesia')}&format=json&limit=1&countrycodes=id`);
+      const res=await fetch(`https://corsproxy.io/?${encodeURIComponent('https://us1.locationiq.com/v1/search?key='+LOCATIONIQ_TOKEN+'&q='+encodeURIComponent(val+' Surabaya Indonesia')+'&format=json&limit=1&countrycodes=id')}`);
       const data=await res.json();
       if(data&&data.length){
         const coords={lat:parseFloat(data[0].lat),lng:parseFloat(data[0].lon)};
@@ -679,7 +679,7 @@ async function onMapClick(e){
   mapMarker=L.marker([lat,lng]).addTo(mapInstance);
   document.getElementById('mapSelectedAddr').textContent='Mencari alamat...';
   try{
-    const res=await fetch(`https://us1.locationiq.com/v1/reverse?key=${LOCATIONIQ_TOKEN}&lat=${lat}&lon=${lng}&format=json&accept-language=id`);
+    const res=await fetch(`https://corsproxy.io/?${encodeURIComponent('https://us1.locationiq.com/v1/reverse?key='+LOCATIONIQ_TOKEN+'&lat='+lat+'&lon='+lng+'&format=json&accept-language=id')}`);
     const data=await res.json();
     selectedAddress=data.display_name.split(',').slice(0,4).join(',').trim();
     document.getElementById('mapSelectedAddr').textContent=selectedAddress;
@@ -692,7 +692,7 @@ async function searchAddress(query){
   if(!query||query.length<3){el.innerHTML='';return;}
   searchTimeout=setTimeout(async()=>{
     try{
-      const res=await fetch(`https://us1.locationiq.com/v1/search?key=${LOCATIONIQ_TOKEN}&q=${encodeURIComponent(query+' Surabaya')}&format=json&limit=5&accept-language=id&countrycodes=id`);
+      const res=await fetch(`https://corsproxy.io/?${encodeURIComponent('https://us1.locationiq.com/v1/search?key='+LOCATIONIQ_TOKEN+'&q='+encodeURIComponent(query+' Surabaya')+'&format=json&limit=5&accept-language=id&countrycodes=id')}`);
       const data=await res.json();
       if(!data.length){el.innerHTML='<div class="map-suggestion-item" style="color:var(--muted)">Tidak ditemukan</div>';return;}
       el.innerHTML=data.map(r=>`<div class="map-suggestion-item" onclick="selectSuggestion(${r.lat},${r.lon},'${r.display_name.replace(/'/g,"\\'")}')">📍 ${r.display_name.split(',').slice(0,3).join(',')}</div>`).join('');
