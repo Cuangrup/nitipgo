@@ -741,6 +741,17 @@ async function loginAkun(){
 function masukSebagai(user){
   currentUser=user;
   currentRole=user.role;
+  // Cek status verifikasi mitra
+  if(user.role==='mitra' && user.status_verifikasi==='menunggu'){
+    localStorage.setItem('nitipgo_user',JSON.stringify(user));
+    updateTopbar(user);
+    goScreen('screenMenunggu');
+    return;
+  }
+  if(user.role==='mitra' && user.status_verifikasi==='ditolak'){
+    showAlert('loginAlert','Pendaftaran mitrammu ditolak. Hubungi admin untuk info lebih lanjut.');
+    return;
+  }
   // Simpan session
   localStorage.setItem('nitipgo_user',JSON.stringify(user));
   updateTopbar(user);
