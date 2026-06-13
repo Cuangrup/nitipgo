@@ -266,6 +266,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
       </div>
 
       <div class="field">
+        <label>🤳 Foto Selfie (Foto Wajah)</label>
+        <div class="dok-upload" id="uploadSelfie" onclick="document.getElementById('inputSelfie').click()">
+          <div id="previewSelfie"><div style="font-size:24px">🤳</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk upload foto wajah/selfie</div></div>
+        </div>
+        <input type="file" id="inputSelfie" accept="image/*" capture="user" onchange="previewDok('Selfie',this)">
+      </div>
+
+      <div class="field">
         <label>📄 Foto KTP</label>
         <div class="dok-upload" id="uploadKtp" onclick="document.getElementById('inputKtp').click()">
           <div id="previewKtp"><div style="font-size:24px">📄</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk upload foto KTP</div></div>
@@ -681,7 +689,7 @@ async function kirimWA(hp,pesan){
 // DAFTAR + OTP
 // ═══════════════════════════════════════════
 // Dokumen data
-let dokFiles = {ktp:null, sim:null, stnk:null, kendaraan:null};
+let dokFiles = {ktp:null, sim:null, stnk:null, kendaraan:null, selfie:null};
 
 function toggleDokMitra(){
   const role=document.getElementById('daftarRole').value;
@@ -760,6 +768,7 @@ function fileToBase64Compressed(file, maxSize=400, quality=0.5){
 // Upload dokumen satu per satu ke database
 async function uploadDokumenBase64(userId){
   const types=[
+    {key:'selfie',col:'foto_profil'},
     {key:'ktp',col:'dok_ktp'},
     {key:'sim',col:'dok_sim'},
     {key:'stnk',col:'dok_stnk'},
@@ -775,7 +784,7 @@ async function uploadDokumenBase64(userId){
       else console.log('Saved:',t.key,'size:',Math.round(base64.length/1024)+'KB');
     }catch(e){console.error('Error:',t.key,e);}
   }
-  dokFiles={ktp:null,sim:null,stnk:null,kendaraan:null};
+  dokFiles={ktp:null,sim:null,stnk:null,kendaraan:null,selfie:null};
 }
 
 async function uploadDokumen(userId){
@@ -810,6 +819,14 @@ async function kirimOTP(mode){
     if(!nama){showAlert('daftarAlert','Nama wajib diisi.');return;}
     if(hp.length<10){showAlert('daftarAlert','Nomor HP tidak valid.');return;}
     if(pwd.length<6){showAlert('daftarAlert','Password minimal 6 karakter.');return;}
+    // Validasi dokumen mitra wajib semua
+    if(role==='mitra'){
+      if(!dokFiles.selfie){showAlert('daftarAlert','📸 Foto selfie/wajah wajib diupload.');return;}
+      if(!dokFiles.ktp){showAlert('daftarAlert','📄 Foto KTP wajib diupload.');return;}
+      if(!dokFiles.sim){showAlert('daftarAlert','🪪 Foto SIM wajib diupload.');return;}
+      if(!dokFiles.stnk){showAlert('daftarAlert','🚗 Foto STNK wajib diupload.');return;}
+      if(!dokFiles.kendaraan){showAlert('daftarAlert','📸 Foto kendaraan wajib diupload.');return;}
+    }
     // Cek HP + role sudah terdaftar (boleh punya 2 akun: pengirim & mitra)
     const{data:existing}=await db.from('users').select('id').eq('no_hp',hp).eq('role',role).maybeSingle();
     if(existing){showAlert('daftarAlert','Nomor HP sudah terdaftar sebagai '+role+'. Silakan login.');return;}
@@ -1347,7 +1364,7 @@ async function renderOrderPengirim(o,simple=false){
   let bidsHtml='';
   // Load bids kalau status menunggu konfirmasi
   if(o.status==='mencari'||o.status==='menunggu_konfirmasi'){
-    const{data:bids}=await db.from('bids').select('*,users!bids_mitra_id_fkey(nama,rating,total_order)')
+    const{data:bids}=await db.from('bids').select('*,users!bids_mitra_id_fkey(nama,rating,total_order,foto_profil)')
       .eq('order_id',o.id).eq('status','menunggu').order('created_at',{ascending:true});
     if(bids&&bids.length){
       // Sort: rating → total_order → harga mendekati tawar
@@ -1362,11 +1379,14 @@ async function renderOrderPengirim(o,simple=false){
       bids.map(b=>`
         <div class="bid-card">
           <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <div>
-              <div class="bid-mitra-name">${b.users?.nama||'Mitra'}</div>
-              <div class="bid-rating">⭐ ${b.users?.rating||'5.0'}</div>
-              <div class="bid-stats">📦 ${b.users?.total_order||0} order selesai</div>
-              ${b.pesan?`<div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">"${b.pesan}"</div>`:''}
+            <div style="display:flex;gap:10px;align-items:flex-start">
+              ${b.users?.foto_profil?`<img src="${b.users.foto_profil}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--border)">`:`<div style="width:44px;height:44px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🛵</div>`}
+              <div>
+                <div class="bid-mitra-name">${b.users?.nama||'Mitra'}</div>
+                <div class="bid-rating">⭐ ${b.users?.rating||'5.0'}</div>
+                <div class="bid-stats">📦 ${b.users?.total_order||0} order selesai</div>
+                ${b.pesan?`<div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">"${b.pesan}"</div>`:''}
+              </div>
             </div>
             <div class="bid-harga">${rupiah(b.harga)}</div>
           </div>
@@ -2043,7 +2063,9 @@ async function loadAdminMitra(){
   el.innerHTML=data.map(u=>`
     <div class="card" style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          ${u.foto_profil?`<img src="${u.foto_profil}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0">`:`<div style="width:52px;height:52px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🛵</div>`}
+          <div>
           <div style="font-weight:700;font-size:15px">${u.nama}</div>
           <div style="font-size:12px;color:var(--muted)">+${u.no_hp} • ${u.email||'-'}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:2px">${new Date(u.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</div>
