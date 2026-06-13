@@ -774,27 +774,33 @@ function toggleDokMitra(){
 }
 
 function nextStepDaftar(){
-  const nama=document.getElementById('daftarNama').value.trim();
-  const hp=document.getElementById('daftarHp').value.replace(/\D/g,'');
-  const email=document.getElementById('daftarEmail').value.trim();
-  const pwd=document.getElementById('daftarPwd').value;
-  const role=document.getElementById('daftarRole').value;
+  try{
+    const nama=(document.getElementById('daftarNama')?.value||'').trim();
+    const hp=(document.getElementById('daftarHp')?.value||'').replace(/\D/g,'');
+    const email=(document.getElementById('daftarEmail')?.value||'').trim();
+    const pwd=document.getElementById('daftarPwd')?.value||'';
+    const role=document.getElementById('daftarRole')?.value||'pengirim';
+    const alertEl=document.getElementById('daftarAlert');
 
-  if(!nama){showAlert('daftarAlert','Nama wajib diisi.');return;}
-  if(hp.length<10){showAlert('daftarAlert','Nomor HP tidak valid.');return;}
-  if(!email){showAlert('daftarAlert','Email Gmail wajib diisi.');return;}
-  if(!validasiGmail(email)){showAlert('daftarAlert','Hanya email @gmail.com yang diizinkan.');return;}
-  if(pwd.length<6){showAlert('daftarAlert','Password minimal 6 karakter.');return;}
+    const err=(msg)=>{if(alertEl)alertEl.innerHTML='<div class="alert alert-error">'+msg+'</div>';};
 
-  if(role==='mitra'){
-    // Tampilkan step 2 dokumen
-    document.getElementById('daftarStep1').style.display='none';
-    document.getElementById('daftarStep2').style.display='block';
-    document.getElementById('stepInfo').className='step-item done';
-    document.getElementById('stepDok').className='step-item active';
-  } else {
-    // Pengguna — langsung kirim OTP via email
-    kirimOTP('daftar');
+    if(!nama){err('Nama wajib diisi.');return;}
+    if(hp.length<10){err('Nomor HP tidak valid (minimal 10 digit).');return;}
+    if(!email){err('Email Gmail wajib diisi.');return;}
+    if(!email.toLowerCase().endsWith('@gmail.com')){err('Hanya email @gmail.com yang diizinkan.');return;}
+    if(pwd.length<6){err('Password minimal 6 karakter.');return;}
+
+    if(role==='mitra'){
+      document.getElementById('daftarStep1').style.display='none';
+      document.getElementById('daftarStep2').style.display='block';
+      document.getElementById('stepInfo').className='step-item done';
+      document.getElementById('stepDok').className='step-item active';
+    } else {
+      kirimOTP('daftar');
+    }
+  }catch(e){
+    console.error('nextStepDaftar error:',e);
+    alert('Terjadi kesalahan: '+e.message);
   }
 }
 
