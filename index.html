@@ -956,6 +956,7 @@ function logout(){
   if(realtimeSub)realtimeSub.unsubscribe();
   stopPengirimPolling();
   if(_mitraPollTimer)clearInterval(_mitraPollTimer);
+  stopNotifBerulang();
   if(window._pengirimRefreshTimer)clearInterval(window._pengirimRefreshTimer);
   document.getElementById('userMenu').style.display='none';
   goScreen('screenHome');
@@ -1415,7 +1416,7 @@ async function batalOrder(orderId){
 function mitraTab(tab){
   document.querySelectorAll('.mitra-tab').forEach(t=>t.classList.remove('active'));
   ['mitraTabTersedia','mitraTabAktif','mitraTabSelesai'].forEach(id=>document.getElementById(id).style.display='none');
-  if(tab==='tersedia'){document.querySelectorAll('.mitra-tab')[0].classList.add('active');document.getElementById('mitraTabTersedia').style.display='block';loadOrderTersedia();}
+  if(tab==='tersedia'){document.querySelectorAll('.mitra-tab')[0].classList.add('active');document.getElementById('mitraTabTersedia').style.display='block';loadOrderTersedia();stopNotifBerulang();}
   else if(tab==='aktif'){document.querySelectorAll('.mitra-tab')[1].classList.add('active');document.getElementById('mitraTabAktif').style.display='block';loadOrderAktifMitra();}
   else{document.querySelectorAll('.mitra-tab')[2].classList.add('active');document.getElementById('mitraTabSelesai').style.display='block';loadOrderSelesaiMitra();}
 }
@@ -1650,22 +1651,66 @@ function bunyikanNotif(){
   }catch(e){}
 }
 
+let _notifRepeatTimer=null;
+let _pendingOrderCount=0;
+
 function startMitraPolling(){
   if(_mitraPollTimer)clearInterval(_mitraPollTimer);
+  stopNotifBerulang();
   _mitraPollTimer=setInterval(async()=>{
     if(!currentUser||currentRole!=='mitra')return;
     const{count}=await db.from('orders').select('*',{count:'exact',head:true})
       .in('status',['mencari','menunggu_konfirmasi']).is('mitra_id',null);
     const newCount=count||0;
-    if(newCount>_lastOrderCount){
-      bunyikanNotif();
-      showToast('🔔 Ada order baru masuk!');
-      const idx=Array.from(document.querySelectorAll('.mitra-tab')).findIndex(t=>t.classList.contains('active'));
-      if(idx===0)loadOrderTersedia();
-      else document.getElementById('badgeTersedia').textContent=newCount;
+
+    if(newCount>0){
+      // Ada order tersedia — mulai/lanjutkan notif berulang
+      if(newCount!==_lastOrderCount){
+        // Ada perubahan jumlah order
+        showToast('🔔 Ada '+newCount+' order menunggu!');
+        document.getElementById('badgeTersedia').textContent=newCount;
+        const idx=Array.from(document.querySelectorAll('.mitra-tab')).findIndex(t=>t.classList.contains('active'));
+        if(idx===0)loadOrderTersedia();
+      }
+      _pendingOrderCount=newCount;
+      startNotifBerulang();
+    } else {
+      // Tidak ada order — hentikan notif berulang
+      _pendingOrderCount=0;
+      stopNotifBerulang();
+      document.getElementById('badgeTersedia').textContent='0';
     }
     _lastOrderCount=newCount;
   },5000);
+}
+
+function startNotifBerulang(){
+  if(_notifRepeatTimer)return; // sudah jalan
+  // Bunyi pertama langsung
+  bunyikanNotif();
+  // Lanjut berulang setiap 8 detik
+  _notifRepeatTimer=setInterval(()=>{
+    if(_pendingOrderCount>0){
+      // Cek apakah mitra sedang lihat tab Tersedia
+      const idx=Array.from(document.querySelectorAll('.mitra-tab')).findIndex(t=>t.classList.contains('active'));
+      if(idx!==0){
+        // Mitra tidak di tab Tersedia — terus bunyi
+        bunyikanNotif();
+      } else {
+        // Mitra sudah lihat tab Tersedia — hentikan bunyi
+        stopNotifBerulang();
+      }
+    } else {
+      stopNotifBerulang();
+    }
+  },8000);
+}
+
+function stopNotifBerulang(){
+  if(_notifRepeatTimer){
+    clearInterval(_notifRepeatTimer);
+    _notifRepeatTimer=null;
+  }
 }
 
 function subscribeRealtime(){
