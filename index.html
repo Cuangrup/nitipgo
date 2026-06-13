@@ -2146,11 +2146,14 @@ async function hapusAkun(userId){
 
 async function hapusOrder(orderId){
   if(!confirm('Yakin hapus order ini?'))return;
-  await db.from('bids').delete().eq('order_id',orderId);
-  await db.from('negosiasi').delete().eq('order_id',orderId);
-  await db.from('orders').delete().eq('id',orderId);
-  loadAdminOrders();
-  loadAdminStats();
+  try{
+    await db.from('ratings').delete().eq('order_id',orderId);
+    await db.from('bids').delete().eq('order_id',orderId);
+    await db.from('negosiasi').delete().eq('order_id',orderId);
+    await db.from('orders').delete().eq('id',orderId);
+    loadAdminOrders();
+    loadAdminStats();
+  }catch(e){alert('Gagal hapus: '+e.message);}
 }
 
 function openDokModal(url){
