@@ -2823,14 +2823,22 @@ async function loadChatMessages(){
 async function kirimPesan(){
   const input = document.getElementById('chatInput');
   const pesan = input.value.trim();
-  if(!pesan||!_chatOrderId)return;
+  if(!pesan||!_chatOrderId){
+    alert('Debug: pesan='+pesan+' orderId='+_chatOrderId+' role='+currentRole);
+    return;
+  }
   input.value='';
   
-  await db.from('chats').insert({
+  const{error} = await db.from('chats').insert({
     order_id: _chatOrderId,
     dari: currentRole,
     pesan: pesan
   });
+  
+  if(error){
+    alert('Error: '+error.message+' | code: '+error.code);
+    return;
+  }
   
   loadChatMessages();
 }
