@@ -2472,7 +2472,14 @@ async function loadAdminRatings(){
 
 async function hapusRating(ratingId, kode){
   if(!confirm('Yakin hapus rating ini dari order '+kode+'?'))return;
+  // Ambil info rating dulu
+  const{data:r}=await db.from('ratings').select('*,orders!inner(pengirim_id,mitra_id)').eq('id',ratingId).single();
   await db.from('ratings').delete().eq('id',ratingId);
+  // Recalculate rating user yang terdampak
+  if(r){
+    const userId = r.untuk==='mitra' ? r.orders?.mitra_id : r.orders?.pengirim_id;
+    if(userId) await recalcRating(userId, r.untuk);
+  }
   loadAdminRatings();
   showToast('✅ Rating berhasil dihapus');
 }
@@ -2521,13 +2528,47 @@ function lihatDetailOrder(orderId){
 async function hapusOrder(orderId){
   if(!confirm('Yakin hapus order ini?'))return;
   try{
+    // Ambil data order dulu untuk recalculate rating
+    const{data:order}=await db.from('orders').select('pengirim_id,mitra_id').eq('id',orderId).single();
+
     await db.from('ratings').delete().eq('order_id',orderId);
     await db.from('bids').delete().eq('order_id',orderId);
     await db.from('negosiasi').delete().eq('order_id',orderId);
     await db.from('orders').delete().eq('id',orderId);
+
+    // Recalculate rating untuk pengirim & mitra yang terdampak
+    if(order?.pengirim_id) await recalcRating(order.pengirim_id,'pengirim');
+    if(order?.mitra_id) await recalcRating(order.mitra_id,'mitra');
+
     loadAdminOrders();
     loadAdminStats();
   }catch(e){alert('Gagal hapus: '+e.message);}
+}
+
+async function recalcRating(userId, role){
+  // Ambil semua rating untuk user ini
+  const{data:allRatings}=await db.from('ratings')
+    .select('nilai,orders!inner(pengirim_id,mitra_id)')
+    .eq('untuk',role);
+
+  if(!allRatings){return;}
+
+  const userRatings=allRatings.filter(r=>{
+    const o=r.orders;
+    return role==='mitra'?o?.mitra_id===userId:o?.pengirim_id===userId;
+  });
+
+  if(!userRatings.length){
+    // Tidak ada rating tersisa — reset ke default
+    await db.from('users').update({rating:5.0,total_rating:0}).eq('id',userId);
+    return;
+  }
+
+  const avg=userRatings.reduce((s,r)=>s+r.nilai,0)/userRatings.length;
+  await db.from('users').update({
+    rating:Math.round(avg*10)/10,
+    total_rating:userRatings.length
+  }).eq('id',userId);
 }
 
 function openDokModal(url){
