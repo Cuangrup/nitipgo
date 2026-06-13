@@ -2546,28 +2546,33 @@ async function hapusOrder(orderId){
 }
 
 async function recalcRating(userId, role){
-  // Ambil semua rating untuk user ini
-  const{data:allRatings}=await db.from('ratings')
-    .select('nilai,orders!inner(pengirim_id,mitra_id)')
-    .eq('untuk',role);
+  // Cari semua order milik user ini
+  const orderField = role==='mitra' ? 'mitra_id' : 'pengirim_id';
+  const{data:userOrders}=await db.from('orders').select('id').eq(orderField, userId);
 
-  if(!allRatings){return;}
-
-  const userRatings=allRatings.filter(r=>{
-    const o=r.orders;
-    return role==='mitra'?o?.mitra_id===userId:o?.pengirim_id===userId;
-  });
-
-  if(!userRatings.length){
-    // Tidak ada rating tersisa — reset ke default
+  if(!userOrders||!userOrders.length){
+    // Tidak ada order → reset rating
     await db.from('users').update({rating:5.0,total_rating:0}).eq('id',userId);
     return;
   }
 
-  const avg=userRatings.reduce((s,r)=>s+r.nilai,0)/userRatings.length;
+  const orderIds=userOrders.map(o=>o.id);
+
+  // Ambil semua rating untuk order-order tersebut
+  const{data:ratings}=await db.from('ratings')
+    .select('nilai')
+    .eq('untuk',role)
+    .in('order_id',orderIds);
+
+  if(!ratings||!ratings.length){
+    await db.from('users').update({rating:5.0,total_rating:0}).eq('id',userId);
+    return;
+  }
+
+  const avg=ratings.reduce((s,r)=>s+r.nilai,0)/ratings.length;
   await db.from('users').update({
     rating:Math.round(avg*10)/10,
-    total_rating:userRatings.length
+    total_rating:ratings.length
   }).eq('id',userId);
 }
 
