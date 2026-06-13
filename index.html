@@ -2178,6 +2178,7 @@ async function loadAdminMitra(){
         <span class="status-badge badge-${u.status_verifikasi}">${u.status_verifikasi}</span>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        ${u.foto_profil?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">SELFIE</div><img src="${u.foto_profil}" class="dok-thumb" onclick="openDokModal('${u.foto_profil}')"></div>`:'<div style="font-size:12px;color:var(--muted)">Selfie: belum upload</div>'}
         ${u.dok_ktp?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">KTP</div><img src="${u.dok_ktp}" class="dok-thumb" onclick="openDokModal('${u.dok_ktp}')"></div>`:'<div style="font-size:12px;color:var(--muted)">KTP: belum upload</div>'}
         ${u.dok_sim?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">SIM</div><img src="${u.dok_sim}" class="dok-thumb" onclick="openDokModal('${u.dok_sim}')"></div>`:''}
         ${u.dok_stnk?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">STNK</div><img src="${u.dok_stnk}" class="dok-thumb" onclick="openDokModal('${u.dok_stnk}')"></div>`:''}
@@ -2467,4 +2468,4 @@ checkAdminHash();
   </div>
 </div>
 </body>
-</html>
+</html
