@@ -687,6 +687,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
 const FONNTE_TOKEN='iUzz279oQ3SyMaNTzkqy';
 const EMAILJS_SERVICE='service_zx5x3m1';
 const EMAILJS_TEMPLATE='template_43kyj5s';
+const EMAILJS_TEMPLATE_NOTIF='template_pln993d';
 const EMAILJS_KEY='_3QpYLp5TMtvuaqLN';
 const LOCATIONIQ_TOKEN='pk.7cf48234a34a50d8e692e7e36265bdbd';
 const SUPA_URL='https://ikypjxxufrvdihuoccut.supabase.co';
@@ -2221,21 +2222,84 @@ async function loadAdminAkun(){
   </table>`;
 }
 
+async function kirimEmailNotif(email, nama, status, alasan=''){
+  const messages = {
+    approved: {
+      subject: '✅ Akun Mitra NitipGo Disetujui!',
+      body: `Halo ${nama},
+
+Selamat! Pendaftaran kamu sebagai Mitra Driver NitipGo telah DISETUJUI.
+
+Kamu sekarang bisa mulai menerima order di:
+nitipgo.vercel.app
+
+Login menggunakan nomor WA dan password yang kamu daftarkan.
+
+Salam,
+Tim NitipGo`
+    },
+    ditolak: {
+      subject: '❌ Pendaftaran Mitra NitipGo Ditolak',
+      body: `Halo ${nama},
+
+Maaf, pendaftaran kamu sebagai Mitra Driver NitipGo tidak dapat kami setujui.
+
+Alasan: ${alasan||'Dokumen tidak memenuhi syarat'}
+
+Kamu dapat mendaftar ulang dengan melengkapi dokumen yang valid di:
+nitipgo.vercel.app
+
+Jika ada pertanyaan, silakan hubungi kami.
+
+Salam,
+Tim NitipGo`
+    },
+    banned: {
+      subject: '🚫 Akun NitipGo Dinonaktifkan',
+      body: `Halo ${nama},
+
+Akun kamu di NitipGo telah dinonaktifkan oleh tim kami karena melanggar ketentuan layanan.
+
+Jika kamu merasa ini adalah kesalahan, silakan hubungi kami.
+
+Salam,
+Tim NitipGo`
+    }
+  };
+  const msg = messages[status];
+  if(!msg)return;
+  try{
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_NOTIF,{
+      to_email: email,
+      to_name: nama,
+      subject: msg.subject,
+      body: msg.body,
+      name: 'NitipGo'
+    });
+  }catch(e){console.log('Email notif error:',e);}
+}
+
 async function approveMitra(userId, hp){
-  const{data:u}=await db.from('users').select('nama').eq('id',userId).single();
+  const{data:u}=await db.from('users').select('nama,email').eq('id',userId).single();
   await db.from('users').update({status_verifikasi:'aktif'}).eq('id',userId);
-  if(u)await kirimWA(hp,`✅ *NitipGo*\nHalo ${u.nama}! Akun mitra kamu sudah diverifikasi dan aktif. Kamu sekarang bisa mulai menerima order di nitipgo.vercel.app`);
-  alert('✅ Mitra berhasil di-approve!');
+  // Kirim email notifikasi
+  if(u?.email){
+    await kirimEmailNotif(u.email, u.nama, 'approved');
+  }
+  alert('✅ Mitra berhasil di-approve! Email notifikasi dikirim.');
   loadAdminMitra();
   loadAdminStats();
 }
 
 async function tolakMitra(userId, hp){
-  const{data:u}=await db.from('users').select('nama').eq('id',userId).single();
+  const{data:u}=await db.from('users').select('nama,email').eq('id',userId).single();
   const alasan=prompt('Alasan penolakan (opsional):') || 'Dokumen tidak memenuhi syarat';
   await db.from('users').update({status_verifikasi:'ditolak',catatan_verifikasi:alasan}).eq('id',userId);
-  if(u)await kirimWA(hp,`❌ *NitipGo*\nHalo ${u.nama}, maaf pendaftaran mitra kamu ditolak.\nAlasan: ${alasan}\n\nSilakan daftar ulang dengan dokumen yang valid.`);
-  alert('❌ Mitra berhasil ditolak.');
+  // Kirim email notifikasi
+  if(u?.email){
+    await kirimEmailNotif(u.email, u.nama, 'ditolak', alasan);
+  }
+  alert('❌ Mitra ditolak. Email notifikasi dikirim.');
   loadAdminMitra();
   loadAdminStats();
 }
@@ -2248,8 +2312,10 @@ async function ubahStatusMitra(userId, status){
 }
 
 async function hapusAkun(userId){
-  if(!confirm('Yakin hapus akun ini? Tindakan ini tidak bisa dibatalkan.'))return;
+  if(!confirm('Yakin hapus/banned akun ini? Tindakan ini tidak bisa dibatalkan.'))return;
   try{
+    // Ambil data user dulu untuk kirim email
+    const{data:u}=await db.from('users').select('nama,email,role').eq('id',userId).single();
     // Hapus bids dulu
     await db.from('bids').delete().eq('mitra_id',userId);
     // Set mitra_id null di orders
@@ -2263,10 +2329,14 @@ async function hapusAkun(userId){
       }
       await db.from('orders').delete().eq('pengirim_id',userId);
     }
+    // Kirim email notifikasi banned
+    if(u?.email&&u?.role==='mitra'){
+      await kirimEmailNotif(u.email, u.nama, 'banned');
+    }
     // Baru hapus user
     const{error}=await db.from('users').delete().eq('id',userId);
     if(error){alert('Gagal hapus: '+error.message);return;}
-    alert('✅ Akun berhasil dihapus.');
+    alert('✅ Akun berhasil dihapus. Email notifikasi dikirim.');
     loadAdminAkun();
     loadAdminStats();
   }catch(e){alert('Error: '+e.message);}
@@ -2468,4 +2538,4 @@ checkAdminHash();
   </div>
 </div>
 </body>
-</html
+</html>
