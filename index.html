@@ -468,6 +468,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
     <div class="mitra-tab" onclick="mitraTab('aktif')">Aktifku</div>
     <div class="mitra-tab" onclick="mitraTab('selesai')">Selesai</div>
   </div>
+  <div id="notifAudioBar" style="background:#fff3e0;border-bottom:1px solid #ffe0b2;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-size:13px">
+    <span>🔔 Aktifkan suara notifikasi order</span>
+    <button onclick="aktifkanAudio()" style="background:var(--mitra);color:white;border:none;padding:6px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Aktifkan</button>
+  </div>
   <div id="mitraTabTersedia" class="mitra-content">
     <div id="listTersedia"><div class="loading">Mencari order...</div></div>
   </div>
@@ -940,7 +944,7 @@ async function masukSebagai(user){
   localStorage.setItem('nitipgo_user',JSON.stringify(u));
   updateTopbar(u);
   if(u.role==='pengirim'){goScreen('screenPengirim');pengirimTab('buat');subscribeRealtimePengirim();setTimeout(cekOrderSelesai,2000);}
-  else{goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();}
+  else{goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();setTimeout(cekStatusAudio,500);}
 }
 
 function updateTopbar(user){
@@ -1243,7 +1247,7 @@ async function loginMitra(){
   currentUser=user;currentRole='mitra';
   document.getElementById('topRoleBadge').textContent='🛵 '+user.nama;
   document.getElementById('topRoleBadge').style.display='';
-  goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();
+  goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();setTimeout(cekStatusAudio,500);
 }
 
 // ── PENGIRIM TABS ──
@@ -1631,6 +1635,22 @@ let _lastOrderCount=0;
 let _mitraPollTimer=null;
 let _audioCtx=null;
 
+function aktifkanAudio(){
+  // Inisialisasi AudioContext setelah user interaction
+  try{
+    _audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    // Test bunyi sekali
+    bunyikanNotif();
+    // Sembunyikan bar
+    document.getElementById('notifAudioBar').style.display='none';
+    // Simpan preferensi
+    localStorage.setItem('nitipgo_audio','1');
+    showToast('✅ Notifikasi suara aktif!');
+  }catch(e){
+    showToast('❌ Browser tidak support suara');
+  }
+}
+
 function bunyikanNotif(){
   try{
     if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();
@@ -1653,6 +1673,15 @@ function bunyikanNotif(){
 
 let _notifRepeatTimer=null;
 let _pendingOrderCount=0;
+
+function cekStatusAudio(){
+  if(localStorage.getItem('nitipgo_audio')==='1'){
+    try{
+      if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+      document.getElementById('notifAudioBar').style.display='none';
+    }catch(e){}
+  }
+}
 
 function startMitraPolling(){
   if(_mitraPollTimer)clearInterval(_mitraPollTimer);
