@@ -2459,8 +2459,13 @@ let _ratingScore=0;
 
 async function cekDanBukaRating(orderId, role, btn){
   // Cek apakah sudah pernah beri rating untuk order ini
-  const{data:existing}=await db.from('ratings')
-    .select('id').eq('order_id',orderId).eq('dari',role).maybeSingle();
+  const dariRole = role==='pengirim'?'pengirim':'mitra';
+  const{data:existing,error}=await db.from('ratings')
+    .select('id')
+    .eq('order_id',orderId)
+    .eq('dari',dariRole)
+    .maybeSingle();
+  console.log('cek rating:',orderId, dariRole, existing, error);
   if(existing){
     if(btn){
       btn.textContent='✅ Sudah Dinilai';
@@ -2519,6 +2524,15 @@ function skipRating(){
 async function kirimRating(){
   if(_ratingScore===0){
     alert('Pilih bintang dulu ya!');return;
+  }
+  // Double check - cegah duplikat
+  const dariRole=currentRole==='pengirim'?'pengirim':'mitra';
+  const{data:existing}=await db.from('ratings')
+    .select('id').eq('order_id',_ratingOrderId).eq('dari',dariRole).maybeSingle();
+  if(existing){
+    document.getElementById('notifSelesai').classList.remove('show');
+    showToast('Kamu sudah memberikan rating untuk order ini.');
+    return;
   }
   const komentar=document.getElementById('ratingKomentar').value.trim();
   
