@@ -1818,6 +1818,16 @@ function bulatkanBid(orderId, hargaTawar){
 }
 
 async function ajukanBid(orderId, hargaTawar=0){
+  // Cek apakah mitra masih punya order aktif
+  const{data:orderAktif}=await db.from('orders')
+    .select('id,kode')
+    .eq('mitra_id',currentUser.id)
+    .in('status',['dijemput','diantar'])
+    .maybeSingle();
+  if(orderAktif){
+    showToast('⚠️ Kamu masih punya order aktif ('+orderAktif.kode+'). Selesaikan dulu sebelum ambil order baru.');
+    return;
+  }
   const harga=parseInt(document.getElementById('bidHarga_'+orderId).value)||0;
   const pesan=document.getElementById('bidPesan_'+orderId).value;
   if(!harga||harga<5000){alert('Harga minimal Rp 5.000');return;}
