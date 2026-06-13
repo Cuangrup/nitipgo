@@ -265,7 +265,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
       </div>
     </div>
     <button class="btn btn-go" onclick="resetPassword()">Reset Password →</button>
-    <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">Tidak dapat kode? <a href="#" onclick="kirimOTPLupa()" style="color:var(--go);font-weight:600">Kirim ulang</a></div>
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">Tidak dapat kode? <a href="#" onclick="kirimUlangLupa()" style="color:var(--go);font-weight:600">Kirim ulang</a></div>
   </div>
 </div>
 <!-- DAFTAR -->
@@ -2423,6 +2423,22 @@ async function kirimOTPLupa(){
   document.getElementById('resetPwd2').value='';
   goScreen('screenResetPassword');
   setTimeout(()=>{_lupaOTPPending.kode=null;},300000);
+}
+
+async function kirimUlangLupa(){
+  if(!_lupaOTPPending.email||!_lupaOTPPending.userId){
+    goScreen('screenLupaPassword');return;
+  }
+  const kode=Math.floor(100000+Math.random()*900000).toString();
+  _lupaOTPPending.kode=kode;
+  const sent=await kirimEmail(_lupaOTPPending.email,'Pengguna',kode);
+  if(sent){
+    [0,1,2,3,4,5].forEach(i=>{document.getElementById('rotp'+i).value='';});
+    showAlert('resetAlert','✅ Kode OTP baru dikirim ke email kamu.','success');
+    setTimeout(()=>{_lupaOTPPending.kode=null;},300000);
+  } else {
+    showAlert('resetAlert','Gagal kirim OTP. Coba lagi.');
+  }
 }
 
 async function resetPassword(){
