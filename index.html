@@ -468,7 +468,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
     <div class="mitra-tab" onclick="mitraTab('aktif')">Aktifku</div>
     <div class="mitra-tab" onclick="mitraTab('selesai')">Selesai</div>
   </div>
-  <div id="notifAudioBar" style="background:#fff3e0;border-bottom:1px solid #ffe0b2;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-size:13px">
+  <div id="notifAudioBar" style="background:#fff3e0;border-bottom:1px solid #ffe0b2;padding:8px 16px;display:none;align-items:center;justify-content:space-between;font-size:13px">
     <span>🔔 Aktifkan suara notifikasi order</span>
     <button onclick="aktifkanAudio()" style="background:var(--mitra);color:white;border:none;padding:6px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Aktifkan</button>
   </div>
@@ -1675,11 +1675,25 @@ let _notifRepeatTimer=null;
 let _pendingOrderCount=0;
 
 function cekStatusAudio(){
+  const bar=document.getElementById('notifAudioBar');
+  if(!bar)return;
   if(localStorage.getItem('nitipgo_audio')==='1'){
-    try{
-      if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-      document.getElementById('notifAudioBar').style.display='none';
-    }catch(e){}
+    bar.style.display='none';
+    // Resume AudioContext saat user tap layar pertama kali
+    const resumeAudio=()=>{
+      if(!_audioCtx){
+        try{_audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+      }
+      if(_audioCtx&&_audioCtx.state==='suspended'){
+        _audioCtx.resume();
+      }
+      document.removeEventListener('touchstart',resumeAudio);
+      document.removeEventListener('click',resumeAudio);
+    };
+    document.addEventListener('touchstart',resumeAudio,{once:true});
+    document.addEventListener('click',resumeAudio,{once:true});
+  } else {
+    bar.style.display='flex';
   }
 }
 
