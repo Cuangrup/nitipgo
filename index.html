@@ -222,6 +222,52 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
   </div>
 </div>
 
+<!-- LUPA PASSWORD -->
+<div id="screenLupaPassword" class="screen">
+  <div class="form-wrap">
+    <button class="back-btn" onclick="goScreen('screenLogin')">← Kembali</button>
+    <div class="form-title">Lupa Password</div>
+    <div class="form-sub">Masukkan nomor WA & email Gmail kamu untuk reset password</div>
+    <div id="lupaAlert"></div>
+    <div class="field"><label>Nomor WhatsApp</label><input type="tel" id="lupaHp" placeholder="08xxxxxxxxxx" oninput="formatHP(this)"></div>
+    <div class="field"><label>Email Gmail</label><input type="email" id="lupaEmail" placeholder="nama@gmail.com"></div>
+    <button class="btn btn-go" onclick="kirimOTPLupa()">Kirim Kode OTP via Email →</button>
+  </div>
+</div>
+
+<!-- RESET PASSWORD -->
+<div id="screenResetPassword" class="screen">
+  <div class="form-wrap">
+    <button class="back-btn" onclick="goScreen('screenLupaPassword')">← Kembali</button>
+    <div class="form-title">Reset Password</div>
+    <div class="form-sub" id="resetSubtitle">Masukkan kode OTP yang dikirim ke email kamu</div>
+    <div id="resetAlert"></div>
+    <div class="otp-inputs">
+      <input class="otp-input" type="number" maxlength="1" id="rotp0" oninput="otpNext(this,0,'rotp')">
+      <input class="otp-input" type="number" maxlength="1" id="rotp1" oninput="otpNext(this,1,'rotp')">
+      <input class="otp-input" type="number" maxlength="1" id="rotp2" oninput="otpNext(this,2,'rotp')">
+      <input class="otp-input" type="number" maxlength="1" id="rotp3" oninput="otpNext(this,3,'rotp')">
+      <input class="otp-input" type="number" maxlength="1" id="rotp4" oninput="otpNext(this,4,'rotp')">
+      <input class="otp-input" type="number" maxlength="1" id="rotp5" oninput="otpNext(this,5,'rotp')">
+    </div>
+    <div class="field" style="margin-top:16px">
+      <label>Password Baru</label>
+      <div class="pwd-wrap">
+        <input type="password" id="resetPwd" placeholder="Minimal 6 karakter">
+        <button class="pwd-eye" onclick="togglePwd('resetPwd',this)">👁️</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Konfirmasi Password</label>
+      <div class="pwd-wrap">
+        <input type="password" id="resetPwd2" placeholder="Ulangi password baru">
+        <button class="pwd-eye" onclick="togglePwd('resetPwd2',this)">👁️</button>
+      </div>
+    </div>
+    <button class="btn btn-go" onclick="resetPassword()">Reset Password →</button>
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">Tidak dapat kode? <a href="#" onclick="kirimOTPLupa()" style="color:var(--go);font-weight:600">Kirim ulang</a></div>
+  </div>
+</div>
 <!-- DAFTAR -->
 <div id="screenDaftar" class="screen">
   <div class="form-wrap">
@@ -667,15 +713,15 @@ function togglePwd(id,btn){
   if(el.type==='password'){el.type='text';btn.textContent='🙈';}
   else{el.type='password';btn.textContent='👁️';}
 }
-function otpNext(el,idx){
+function otpNext(el,idx,prefix='otp'){
   const v=el.value.replace(/[^0-9]/g,'');
   el.value=v.slice(-1);
-  if(v&&idx<5)document.getElementById('otp'+(idx+1)).focus();
+  if(v&&idx<5)document.getElementById(prefix+(idx+1)).focus();
 }
-function getOTPValue(){
-  return[0,1,2,3,4,5].map(i=>document.getElementById('otp'+i).value).join('');
+function getOTPValue(prefix='otp'){
+  return[0,1,2,3,4,5].map(i=>document.getElementById(prefix+i).value).join('');
 }
-function clearOTP(){[0,1,2,3,4,5].forEach(i=>{document.getElementById('otp'+i).value='';});document.getElementById('otp0').focus();}
+function clearOTP(prefix='otp'){[0,1,2,3,4,5].forEach(i=>{document.getElementById(prefix+i).value='';});document.getElementById(prefix+'0').focus();}
 
 async function hashPassword(pwd){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pwd));
@@ -697,13 +743,13 @@ async function kirimWA(hp,pesan){
 
 async function kirimEmail(toEmail, toName, otpCode){
   try{
-    emailjs.init(EMAILJS_KEY);
-    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE,{
+    const result=await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE,{
       to_email: toEmail,
       to_name: toName,
       otp_code: otpCode,
       name: 'NitipGo'
     });
+    console.log('Email sent:',result);
     return true;
   }catch(e){
     console.log('Email error:',e);
@@ -2341,6 +2387,50 @@ function showToast(msg){
   setTimeout(()=>toast.remove(),3000);
 }
 
+// Init EmailJS
+emailjs.init(EMAILJS_KEY);
+
+// ── LUPA PASSWORD ──
+let _lupaOTPPending={kode:null,hp:null,email:null};
+
+async function kirimOTPLupa(){
+  const hp=document.getElementById('lupaHp').value.replace(/\D/g,'');
+  const email=document.getElementById('lupaEmail').value.trim();
+  if(hp.length<10){showAlert('lupaAlert','Nomor HP tidak valid.');return;}
+  if(!validasiGmail(email)){showAlert('lupaAlert','Hanya email @gmail.com yang diizinkan.');return;}
+  // Cek akun ada
+  const{data:user}=await db.from('users').select('id,nama,email').eq('no_hp',hp).eq('email',email).maybeSingle();
+  if(!user){showAlert('lupaAlert','Akun tidak ditemukan. Pastikan HP dan email sesuai.');return;}
+  const kode=Math.floor(100000+Math.random()*900000).toString();
+  _lupaOTPPending={kode,hp,email,userId:user.id};
+  const btn=document.querySelector('#screenLupaPassword .btn-go');
+  if(btn){btn.disabled=true;btn.textContent='Mengirim...';}
+  const sent=await kirimEmail(email,user.nama||'Pengguna',kode);
+  if(btn){btn.disabled=false;btn.textContent='Kirim Kode OTP via Email →';}
+  if(!sent){showAlert('lupaAlert','Gagal kirim OTP. Coba lagi.');return;}
+  document.getElementById('resetSubtitle').textContent=`Kode OTP dikirim ke ${email}`;
+  [0,1,2,3,4,5].forEach(i=>{document.getElementById('rotp'+i).value='';});
+  document.getElementById('resetPwd').value='';
+  document.getElementById('resetPwd2').value='';
+  goScreen('screenResetPassword');
+  setTimeout(()=>{_lupaOTPPending.kode=null;},300000);
+}
+
+async function resetPassword(){
+  const kode=[0,1,2,3,4,5].map(i=>document.getElementById('rotp'+i).value).join('');
+  const pwd=document.getElementById('resetPwd').value;
+  const pwd2=document.getElementById('resetPwd2').value;
+  if(kode.length<6){showAlert('resetAlert','Masukkan 6 digit kode OTP.');return;}
+  if(!_lupaOTPPending.kode){showAlert('resetAlert','Kode OTP kadaluarsa. Minta ulang.');return;}
+  if(kode!==_lupaOTPPending.kode){showAlert('resetAlert','Kode OTP salah.');return;}
+  if(pwd.length<6){showAlert('resetAlert','Password minimal 6 karakter.');return;}
+  if(pwd!==pwd2){showAlert('resetAlert','Konfirmasi password tidak cocok.');return;}
+  const pwdHash=await hashPassword(pwd);
+  await db.from('users').update({pwd_hash:pwdHash}).eq('id',_lupaOTPPending.userId);
+  _lupaOTPPending={kode:null,hp:null,email:null,userId:null};
+  showAlert('resetAlert','✅ Password berhasil direset! Silakan login.','success');
+  setTimeout(()=>goScreen('screenLogin'),2000);
+}
 checkSession();
 checkAdminHash();
 </script>
