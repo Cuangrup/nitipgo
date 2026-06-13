@@ -1164,6 +1164,12 @@ function checkSession(){
 function goScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  // Render FAQ saat buka halaman bantuan
+  if(id==='screenBantuan'){
+    renderFAQ();
+    const subtitle = document.getElementById('faqSubtitle');
+    if(subtitle) subtitle.textContent = currentRole==='mitra' ? 'Pertanyaan untuk Mitra Driver' : 'Pertanyaan untuk Pengguna';
+  }
 }
 
 // ── HELPERS ──
@@ -2786,6 +2792,110 @@ async function gantiPassword(){
   setTimeout(()=>goScreen('screenPengaturan'), 1500);
 }
 
+// FAQ data per role
+const FAQ_PENGGUNA = [
+  {
+    q: 'Bagaimana cara membuat order?',
+    a: 'Masuk sebagai Pengguna → klik tab "+ Buat Order" → isi alamat jemput & tujuan → tentukan harga tawar → pasang order. Mitra akan mengajukan penawaran dan kamu bisa memilih mitra terbaik.'
+  },
+  {
+    q: 'Bagaimana cara memilih mitra?',
+    a: 'Setelah order dipasang, daftar penawaran mitra akan muncul otomatis. Kamu bisa melihat rating, jumlah order selesai, dan harga penawaran masing-masing mitra sebelum memilih.'
+  },
+  {
+    q: 'Berapa biaya layanan untuk pengguna?',
+    a: 'Layanan NitipGo untuk pengguna 100% GRATIS. Tidak ada biaya tambahan apapun selain harga yang kamu tawarkan.'
+  },
+  {
+    q: 'Bagaimana cara membatalkan order?',
+    a: 'Buka tab "Order Aktif" → temukan order yang ingin dibatalkan → klik tombol "Batalkan Order". Order hanya bisa dibatalkan sebelum mitra menjemput barang.'
+  },
+  {
+    q: 'Bagaimana jika mitra tidak datang?',
+    a: 'Hubungi mitra via WhatsApp yang tersedia di kartu order. Jika tidak ada respons, batalkan order dan pilih mitra lain.'
+  },
+  {
+    q: 'Apakah ada jaminan keamanan barang?',
+    a: 'Semua mitra NitipGo telah melalui verifikasi identitas (KTP, SIM, STNK) yang bersifat rahasia. Setiap pengiriman dilengkapi foto bukti pickup dan selesai. Apabila terjadi hal yang tidak diinginkan, pihak NitipGo kooperatif untuk bekerjasama seperti penghentian sementara akun dan membantu penyelidikan sesuai prosedur hukum yang berlaku, disertai bukti kuat.'
+  },
+  {
+    q: 'Bagaimana sistem rating bekerja?',
+    a: 'Setelah order selesai, pengguna dan mitra dapat saling memberikan rating bintang 1-5 beserta komentar. Rating bersifat anonim dan hanya bisa diberikan sekali per order. Rating mitra mempengaruhi urutan tampil saat kamu memilih.'
+  },
+  {
+    q: 'Bagaimana cara menjadi mitra driver NitipGo?',
+    a: 'Daftar akun baru dan pilih role "Mitra Driver" → upload foto selfie, KTP, SIM, STNK, dan foto kendaraan → tunggu verifikasi admin maksimal 3x24 jam → setelah disetujui kamu bisa mulai menerima order.'
+  },
+];
+
+const FAQ_MITRA = [
+  {
+    q: 'Bagaimana cara menerima order?',
+    a: 'Masuk sebagai Mitra → buka tab "Tersedia" → akan muncul notifikasi suara saat ada order baru → ajukan penawaran harga → tunggu pengguna memilihmu.'
+  },
+  {
+    q: 'Berapa komisi yang dipotong?',
+    a: 'Komisi sebesar 7,5% dari harga deal per order. Rincian: 5% untuk operasional NitipGo dan 2,5% disalurkan untuk program kemanusiaan. Contoh: harga deal Rp 20.000 → komisi Rp 1.500 → kamu menerima Rp 18.500. Untuk 10 order pertama sejak bergabung, komisi 0% (gratis).'
+  },
+  {
+    q: 'Bagaimana cara upload bukti pengiriman?',
+    a: 'Saat status "Dijemput" → upload foto pickup sebelum berangkat. Saat sudah sampai tujuan → upload foto selesai → klik selesaikan order.'
+  },
+  {
+    q: 'Apakah rating pengguna berpengaruh?',
+    a: 'Ya! Rating pengguna juga dapat menjadi pertimbanganmu dalam menerima atau menolak tawaran. Pengguna dengan rating rendah bisa kamu pertimbangkan sebelum mengajukan penawaran.'
+  },
+  {
+    q: 'Bagaimana sistem rating mitra bekerja?',
+    a: 'Setelah order selesai, pengguna akan memberikan rating 1-5 bintang untuk pelayananmu. Rating bersifat anonim. Semakin tinggi ratingmu, semakin prioritas namamu muncul di daftar pilihan pengguna.'
+  },
+  {
+    q: 'Apakah ada jaminan keamanan identitas mitra?',
+    a: 'Semua dokumen yang kamu upload (KTP, SIM, STNK, foto selfie) bersifat RAHASIA dan hanya bisa diakses oleh admin NitipGo untuk keperluan verifikasi.'
+  },
+  {
+    q: 'Bagaimana jika ada masalah dengan pengguna?',
+    a: 'Kamu bisa melaporkan masalah melalui menu Bantuan → Hubungi Admin → pilih subjek "Laporkan Pengguna/Mitra". Tim NitipGo akan menindaklanjuti laporanmu.'
+  },
+  {
+    q: 'Kapan akun mitra bisa dinonaktifkan?',
+    a: 'Akun mitra dapat dinonaktifkan sementara atau permanen jika terbukti melanggar ketentuan layanan, mendapat laporan dari pengguna, atau terbukti melakukan tindakan yang merugikan. NitipGo kooperatif dalam proses penyelidikan sesuai hukum yang berlaku.'
+  },
+];
+
+function renderFAQ(){
+  const el = document.getElementById('faqSection');
+  if(!el)return;
+  const faqs = currentRole==='mitra' ? FAQ_MITRA : FAQ_PENGGUNA;
+  el.innerHTML = faqs.map(f=>`
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">${f.q} <span class="faq-chevron">▼</span></div>
+      <div class="faq-a">${f.a}</div>
+    </div>`).join('');
+}
+
+async function uploadFotoProfil(input){
+  const file = input.files[0];
+  if(!file)return;
+  const status = document.getElementById('fotoProfllUploadStatus');
+  status.textContent = 'Mengupload...';
+  try{
+    const base64 = await fileToBase64Compressed(file, 400, 0.7);
+    const{error} = await db.from('users').update({foto_profil:base64}).eq('id',currentUser.id);
+    if(error){status.textContent='Gagal upload.';return;}
+    currentUser.foto_profil = base64;
+    localStorage.setItem('nitipgo_user', JSON.stringify(currentUser));
+    // Update avatar di halaman pengaturan
+    document.getElementById('pengaturanAvatar').innerHTML=`<img src="${base64}" class="profil-avatar">`;
+    // Update topbar
+    updateTopbar(currentUser);
+    status.textContent='✅ Foto profil berhasil diupdate!';
+    setTimeout(()=>status.textContent='', 3000);
+  }catch(e){
+    status.textContent='Gagal upload. Coba lagi.';
+  }
+}
+
 function toggleFaq(el){
   const answer = el.nextElementSibling;
   const chevron = el.querySelector('.faq-chevron');
@@ -2899,6 +3009,15 @@ checkAdminHash();
       </div>
     </div>
 
+    <!-- Ganti Foto Profil -->
+    <div style="text-align:center;margin-bottom:16px">
+      <input type="file" id="inputFotoProfil" accept="image/*" capture="user" style="display:none" onchange="uploadFotoProfil(this)">
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('inputFotoProfil').click()" style="font-size:13px">
+        📸 Ganti Foto Profil
+      </button>
+      <div id="fotoProfllUploadStatus" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
+    </div>
+
     <!-- Info Akun -->
     <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:0 16px;margin-bottom:16px">
       <div class="info-row">
@@ -2984,40 +3103,7 @@ checkAdminHash();
     <div class="form-sub">Pertanyaan yang sering ditanyakan</div>
 
     <!-- FAQ -->
-    <div style="margin-bottom:24px">
-      <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">Bagaimana cara membuat order? <span class="faq-chevron">▼</span></div>
-        <div class="faq-a">Masuk sebagai Pengguna → klik tab "+ Buat Order" → isi alamat jemput & tujuan → tentukan harga tawar → pasang order. Mitra akan mengajukan penawaran dan kamu bisa memilih mitra terbaik.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">Bagaimana cara menjadi mitra driver? <span class="faq-chevron">▼</span></div>
-        <div class="faq-a">Daftar akun dan pilih role "Mitra Driver" → upload foto selfie, KTP, SIM, STNK, dan foto kendaraan → tunggu verifikasi admin maksimal 3x24 jam → setelah disetujui kamu bisa mulai menerima order.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">Berapa biaya layanan NitipGo? <span class="faq-chevron">▼</span></div>
-        <div class="faq-a">Untuk pengguna, layanan NitipGo GRATIS tanpa biaya apapun. Untuk mitra driver, dikenakan imbal jasa 7,5% dari harga deal per order. Sebesar 5% untuk operasional NitipGo dan 2,5% disalurkan untuk program kemanusiaan. Untuk 10 order pertama, mitra tidak dikenakan potongan sama sekali.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">Bagaimana jika mitra tidak datang? <span class="faq-chevron">▼</span></div>
-        <div class="faq-a">Kamu bisa membatalkan order kapan saja sebelum barang dijemput. Jika mitra tidak responsif, hubungi mitra via WhatsApp yang tersedia di kartu order, atau batalkan order dan pilih mitra lain.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">Bagaimana cara membatalkan order? <span class="faq-chevron">▼</span></div>
-        <div class="faq-a">Buka tab "Order Aktif" → temukan order yang ingin dibatalkan → klik tombol "Batalkan Order". Order hanya bisa dibatalkan sebelum mitra menjemput barang.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">Apakah ada jaminan keamanan barang? <span class="faq-chevron">▼</span></div>
-        <div class="faq-a">Semua mitra NitipGo telah melalui verifikasi identitas (KTP, SIM, STNK). Setiap pengiriman dilengkapi foto bukti pickup dan selesai. Namun NitipGo tidak bertanggung jawab atas kerusakan atau kehilangan barang. Pastikan barang dikemas dengan baik sebelum dikirim.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">Bagaimana sistem rating bekerja? <span class="faq-chevron">▼</span></div>
-        <div class="faq-a">Setelah order selesai, pengguna dan mitra dapat saling memberikan rating bintang 1-5 beserta komentar. Rating bersifat anonim dan hanya bisa diberikan sekali per order. Rating mempengaruhi urutan mitra yang tampil saat pengguna memilih.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">Berapa komisi yang dipotong dari mitra? <span class="faq-chevron">▼</span></div>
-        <div class="faq-a">Komisi sebesar 7,5% dari harga deal. Contoh: harga deal Rp 20.000 → komisi Rp 1.500 → mitra menerima Rp 18.500. Untuk 10 order pertama sejak bergabung, komisi 0% (gratis).</div>
-      </div>
-    </div>
+    <div style="margin-bottom:24px" id="faqSection"></div>
 
     <!-- Hubungi Admin -->
     <div style="border-top:2px solid var(--border);padding-top:20px">
