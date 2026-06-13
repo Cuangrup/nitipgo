@@ -1478,6 +1478,16 @@ async function buatOrder(){
     setTimeout(()=>logout(),2000);
     return;
   }
+  // Cek apakah pengguna masih punya order aktif
+  const{data:orderAktif}=await db.from('orders')
+    .select('id,kode')
+    .eq('pengirim_id',currentUser.id)
+    .in('status',['mencari','menunggu_konfirmasi','dijemput','diantar'])
+    .maybeSingle();
+  if(orderAktif){
+    showAlert('buatOrderAlert','⚠️ Kamu masih punya order aktif ('+orderAktif.kode+'). Selesaikan atau batalkan dulu sebelum buat order baru.');
+    return;
+  }
   const jenis=document.getElementById('orderJenis').value;
   const pickup=document.getElementById('orderPickup').value.trim();
   const tujuan=document.getElementById('orderTujuan').value.trim();
