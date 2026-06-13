@@ -1560,7 +1560,7 @@ async function renderOrderPengirim(o,simple=false){
     ${!simple&&(o.status==='mencari'||o.status==='menunggu_konfirmasi')?`<button class="btn btn-danger btn-sm" style="margin-top:10px" onclick="batalOrder('${o.id}')">Batalkan Order</button>`:''}
     ${o.foto_pickup?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">📸 Foto Pickup</div><img src="${o.foto_pickup}" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover"></div>`:''}
     ${o.foto_selesai?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">📸 Foto Selesai</div><img src="${o.foto_selesai}" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover"></div>`:''}
-    ${o.status==='selesai'&&simple?`<button class="btn btn-outline btn-sm" style="margin-top:10px;color:var(--go);border-color:var(--go)" onclick="bukaRating('${o.id}','${currentRole}')">⭐ Beri Rating</button>`:''}
+    ${o.status==='selesai'&&simple?`<button class="btn btn-outline btn-sm" style="margin-top:10px;color:var(--go);border-color:var(--go)" onclick="cekDanBukaRating('${o.id}','${currentRole}',this)">⭐ Beri Rating</button>`:''}
   </div>`;
 }
 
@@ -1669,7 +1669,7 @@ function renderOrderMitra(o,done=false,sudahBid=false){
       <div id="bidWarning_${o.id}" style="display:none;font-size:12px;color:#880e4f;background:#fce4ec;padding:8px;border-radius:6px;margin-bottom:8px"></div>
       <input type="text" id="bidPesan_${o.id}" placeholder="Pesan ke pengirim (opsional)" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px">
       <button class="btn btn-mitra" style="margin-top:10px" onclick="ajukanBid('${o.id}',${o.harga_tawar})">Ajukan Penawaran →</button>
-    </div>`):`<div style="font-size:13px;font-weight:700;color:var(--mitra);margin-top:8px">✅ ${rupiah((o.harga_deal||o.harga_tawar)*0.95)} masuk ke kamu</div><button class="btn btn-outline btn-sm" style="margin-top:8px;color:var(--go);border-color:var(--go)" onclick="bukaRating('${o.id}','mitra')">⭐ Beri Rating</button>`}
+    </div>`):`<div style="font-size:13px;font-weight:700;color:var(--mitra);margin-top:8px">✅ ${rupiah((o.harga_deal||o.harga_tawar)*0.95)} masuk ke kamu</div><button class="btn btn-outline btn-sm" style="margin-top:8px;color:var(--go);border-color:var(--go)" onclick="cekDanBukaRating('${o.id}','mitra',this)">⭐ Beri Rating</button>`}
   </div>`;
 }
 
@@ -2402,7 +2402,7 @@ async function loadAdminRatings(){
   const el=document.getElementById('adminRatingsList');
   el.innerHTML='<div class="loading">Memuat...</div>';
   const{data}=await db.from('ratings')
-    .select('*,orders!inner(kode),dari_user:users!ratings_dari_fkey(nama),untuk_user:users!ratings_untuk_fkey(nama)')
+    .select('*,orders!inner(kode,pengirim_id,mitra_id)')
     .order('created_at',{ascending:false})
     .limit(100);
 
@@ -2414,8 +2414,8 @@ async function loadAdminRatings(){
     <tr><th>Order</th><th>Dari</th><th>Untuk</th><th>Nilai</th><th>Komentar</th><th>Waktu</th><th>Aksi</th></tr>
     ${data.map(r=>`<tr>
       <td><b>${r.orders?.kode||'-'}</b></td>
-      <td>${r.dari}</td>
-      <td>${r.untuk}</td>
+      <td><span class="status-badge" style="background:var(--surface)">${r.dari==='pengirim'?'👤 Pengguna':'🛵 Mitra'}</span></td>
+      <td><span class="status-badge" style="background:var(--surface)">${r.untuk==='pengirim'?'👤 Pengguna':'🛵 Mitra'}</span></td>
       <td><b>${'⭐'.repeat(r.nilai)} ${r.nilai}</b></td>
       <td style="font-size:12px;color:var(--muted)">${r.komentar||'-'}</td>
       <td style="font-size:11px;color:var(--muted)">${new Date(r.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
@@ -2456,6 +2456,22 @@ function closeDokModal(){document.getElementById('dokModal').classList.remove('o
 let _ratingOrderId=null;
 let _ratingTarget=null; // 'mitra' or 'pengirim'
 let _ratingScore=0;
+
+async function cekDanBukaRating(orderId, role, btn){
+  // Cek apakah sudah pernah beri rating untuk order ini
+  const{data:existing}=await db.from('ratings')
+    .select('id').eq('order_id',orderId).eq('dari',role).maybeSingle();
+  if(existing){
+    if(btn){
+      btn.textContent='✅ Sudah Dinilai';
+      btn.disabled=true;
+      btn.style.opacity='0.5';
+    }
+    showToast('Kamu sudah memberikan rating untuk order ini.');
+    return;
+  }
+  bukaRating(orderId, role);
+}
 
 function bukaRating(orderId, role){
   showNotifSelesai(orderId, role);
@@ -2519,9 +2535,10 @@ async function kirimRating(){
   await updateRataRating(_ratingOrderId, _ratingTarget);
   
   document.getElementById('notifSelesai').classList.remove('show');
-  
-  // Tampilkan terima kasih
   showToast('⭐ Rating berhasil dikirim! Terima kasih.');
+  // Reload riwayat supaya tombol update
+  if(currentRole==='pengirim')loadRiwayatPengirim();
+  else if(currentRole==='mitra')mitraTab('selesai');
 }
 
 async function updateRataRating(orderId, targetRole){
