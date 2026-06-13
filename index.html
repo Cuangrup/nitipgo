@@ -957,12 +957,21 @@ function logout(){
   if(!confirm('Yakin ingin keluar?'))return;
   localStorage.removeItem('nitipgo_user');
   currentUser=null;currentRole=null;
+  // Stop semua timer & suara
   if(realtimeSub)realtimeSub.unsubscribe();
   stopPengirimPolling();
-  if(_mitraPollTimer)clearInterval(_mitraPollTimer);
+  if(_mitraPollTimer){clearInterval(_mitraPollTimer);_mitraPollTimer=null;}
   stopNotifBerulang();
+  _pendingOrderCount=0;
+  _lastOrderCount=0;
+  // Tutup AudioContext supaya suara benar-benar berhenti
+  if(_audioCtx){
+    try{_audioCtx.close();}catch(e){}
+    _audioCtx=null;
+  }
   if(window._pengirimRefreshTimer)clearInterval(window._pengirimRefreshTimer);
   document.getElementById('userMenu').style.display='none';
+  document.getElementById('notifAudioBar').style.display='none';
   goScreen('screenHome');
 }
 
@@ -1997,19 +2006,33 @@ async function loadAdminOrders(){
   if(status)q=q.eq('status',status);
   const{data}=await q;
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">📭</div><p>Tidak ada order.</p></div>';return;}
-  el.innerHTML=`<table class="admin-table">
-    <tr><th>Kode</th><th>Jenis</th><th>Pengirim</th><th>Mitra</th><th>Harga</th><th>Status</th><th>Waktu</th><th>Aksi</th></tr>
-    ${data.map(o=>`<tr>
-      <td><b>${o.kode}</b></td>
-      <td>${o.jenis}</td>
-      <td>${o.pengirim?.nama||'-'}<br><small style="color:var(--muted)">${o.pengirim?.no_hp||''}</small></td>
-      <td>${o.mitra?.nama||'-'}</td>
-      <td><b>${rupiah(o.harga_deal||o.harga_tawar)}</b></td>
-      <td><span class="status-pill status-${o.status}">${statusLabel(o.status)}</span></td>
-      <td style="font-size:11px;color:var(--muted)">${new Date(o.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
-      <td><button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="hapusOrder('${o.id}')">Hapus</button></td>
-    </tr>`).join('')}
-  </table>`;
+  el.innerHTML=data.map(o=>`
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <b>${o.kode}</b> <span class="order-jenis ${o.jenis}" style="margin-left:6px">${jenisLabel(o.jenis)}</span>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${new Date(o.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+        <span class="status-pill status-${o.status}">${statusLabel(o.status)}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:8px">
+        <div><span style="color:var(--muted)">Pengguna:</span> <b>${o.pengirim?.nama||'-'}</b><br><span style="color:var(--muted)">${o.pengirim?.no_hp||''}</span></div>
+        <div><span style="color:var(--muted)">Mitra:</span> <b>${o.mitra?.nama||'-'}</b><br><span style="color:var(--muted)">${o.mitra?.no_hp||''}</span></div>
+        <div><span style="color:var(--muted)">Pickup:</span> ${o.alamat_pickup}</div>
+        <div><span style="color:var(--muted)">Tujuan:</span> ${o.alamat_tujuan}</div>
+        ${o.nama_penerima?`<div><span style="color:var(--muted)">Penerima:</span> ${o.nama_penerima}</div>`:''}
+        ${o.hp_penerima?`<div><span style="color:var(--muted)">HP Penerima:</span> ${o.hp_penerima}</div>`:''}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <b style="color:var(--go)">${rupiah(o.harga_deal||o.harga_tawar)}</b>
+        <button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="hapusOrder('${o.id}')">Hapus</button>
+      </div>
+      ${o.foto_pickup||o.foto_selesai?`
+      <div style="display:flex;gap:8px;margin-top:8px">
+        ${o.foto_pickup?`<div style="flex:1"><div style="font-size:10px;color:var(--muted);margin-bottom:3px">FOTO PICKUP</div><img src="${o.foto_pickup}" onclick="openDokModal('${o.foto_pickup}')" style="width:100%;height:80px;object-fit:cover;border-radius:6px;cursor:pointer"></div>`:''}
+        ${o.foto_selesai?`<div style="flex:1"><div style="font-size:10px;color:var(--muted);margin-bottom:3px">FOTO SELESAI</div><img src="${o.foto_selesai}" onclick="openDokModal('${o.foto_selesai}')" style="width:100%;height:80px;object-fit:cover;border-radius:6px;cursor:pointer"></div>`:''}
+      </div>`:''}
+    </div>`).join('');
 }
 
 async function loadAdminMitra(){
