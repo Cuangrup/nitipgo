@@ -2590,6 +2590,7 @@ async function hapusOrder(orderId){
     // Ambil data order dulu untuk recalculate rating
     const{data:order}=await db.from('orders').select('pengirim_id,mitra_id').eq('id',orderId).single();
 
+    await db.from('chats').delete().eq('order_id',orderId);
     await db.from('ratings').delete().eq('order_id',orderId);
     await db.from('bids').delete().eq('order_id',orderId);
     await db.from('negosiasi').delete().eq('order_id',orderId);
