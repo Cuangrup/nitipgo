@@ -1653,7 +1653,14 @@ function aktifkanAudio(){
 
 function bunyikanNotif(){
   try{
-    if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(!_audioCtx){
+      // Jangan buat AudioContext baru tanpa interaksi user
+      console.log('Audio belum siap');return;
+    }
+    if(_audioCtx.state==='suspended'){
+      _audioCtx.resume().then(()=>bunyikanNotif());
+      return;
+    }
     const ctx=_audioCtx;
     const o1=ctx.createOscillator(),g1=ctx.createGain();
     o1.connect(g1);g1.connect(ctx.destination);
@@ -1679,19 +1686,22 @@ function cekStatusAudio(){
   if(!bar)return;
   if(localStorage.getItem('nitipgo_audio')==='1'){
     bar.style.display='none';
-    // Resume AudioContext saat user tap layar pertama kali
-    const resumeAudio=()=>{
-      if(!_audioCtx){
-        try{_audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
-      }
-      if(_audioCtx&&_audioCtx.state==='suspended'){
-        _audioCtx.resume();
-      }
-      document.removeEventListener('touchstart',resumeAudio);
-      document.removeEventListener('click',resumeAudio);
+    // Pasang listener — buat AudioContext saat user tap pertama kali
+    const initAudio=()=>{
+      try{
+        if(!_audioCtx){
+          _audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+        }
+        if(_audioCtx.state==='suspended'){
+          _audioCtx.resume();
+        }
+        console.log('AudioContext ready:',_audioCtx.state);
+      }catch(e){console.log('Audio error:',e);}
     };
-    document.addEventListener('touchstart',resumeAudio,{once:true});
-    document.addEventListener('click',resumeAudio,{once:true});
+    // Pasang ke semua kemungkinan interaksi
+    ['touchstart','touchend','click','keydown'].forEach(ev=>{
+      document.addEventListener(ev,initAudio,{once:true,passive:true});
+    });
   } else {
     bar.style.display='flex';
   }
