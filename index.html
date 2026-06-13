@@ -2537,16 +2537,8 @@ async function hapusOrder(orderId){
     await db.from('orders').delete().eq('id',orderId);
 
     // Recalculate rating untuk pengirim & mitra yang terdampak
-    console.log('order data:', order);
-    if(order?.pengirim_id){
-      console.log('recalc pengirim:', order.pengirim_id);
-      await recalcRating(order.pengirim_id,'pengirim');
-    }
-    if(order?.mitra_id){
-      console.log('recalc mitra:', order.mitra_id);
-      await recalcRating(order.mitra_id,'mitra');
-    }
-    alert('Recalc done. Pengirim: '+(order?.pengirim_id||'null')+' Mitra: '+(order?.mitra_id||'null'));
+    if(order?.pengirim_id) await recalcRating(order.pengirim_id,'pengirim');
+    if(order?.mitra_id) await recalcRating(order.mitra_id,'mitra');
 
     loadAdminOrders();
     loadAdminStats();
