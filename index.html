@@ -770,7 +770,7 @@ let dokFiles = {ktp:null, sim:null, stnk:null, kendaraan:null, selfie:null};
 function toggleDokMitra(){
   const role=document.getElementById('daftarRole').value;
   const step2Btn=document.querySelector('#daftarStep1 .btn-go');
-  step2Btn.textContent = role==='mitra' ? 'Lanjut Upload Dokumen →' : 'Kirim Kode OTP via WhatsApp →';
+  step2Btn.textContent = role==='mitra' ? 'Lanjut Upload Dokumen →' : 'Kirim Kode OTP via Email →';
 }
 
 function nextStepDaftar(){
@@ -782,7 +782,8 @@ function nextStepDaftar(){
 
   if(!nama){showAlert('daftarAlert','Nama wajib diisi.');return;}
   if(hp.length<10){showAlert('daftarAlert','Nomor HP tidak valid.');return;}
-  if(!email||!email.includes('@')){showAlert('daftarAlert','Email tidak valid.');return;}
+  if(!email){showAlert('daftarAlert','Email Gmail wajib diisi.');return;}
+  if(!validasiGmail(email)){showAlert('daftarAlert','Hanya email @gmail.com yang diizinkan.');return;}
   if(pwd.length<6){showAlert('daftarAlert','Password minimal 6 karakter.');return;}
 
   if(role==='mitra'){
@@ -792,7 +793,7 @@ function nextStepDaftar(){
     document.getElementById('stepInfo').className='step-item done';
     document.getElementById('stepDok').className='step-item active';
   } else {
-    // Langsung kirim OTP
+    // Pengguna — langsung kirim OTP via email
     kirimOTP('daftar');
   }
 }
@@ -919,10 +920,13 @@ async function kirimOTP(mode){
 
   // Kirim OTP via Email
   const emailAddr=document.getElementById('daftarEmail')?.value?.trim()||otpPending.email||'';
-  const btn=document.querySelector('#daftarStep2 .btn-go')||document.querySelector('#daftarStep1 .btn-go');
+  // Cari tombol yang aktif
+  const btn=document.querySelector('#daftarStep2:not([style*="none"]) .btn-go')||
+            document.querySelector('#daftarStep1:not([style*="none"]) .btn-go')||
+            document.querySelector('#screenLogin .btn-go');
   if(btn){btn.disabled=true;btn.textContent='Mengirim OTP...';}
   const sent=await kirimEmail(emailAddr, nama, kode);
-  if(btn){btn.disabled=false;btn.textContent=mode==='daftar'?'Kirim OTP Verifikasi →':'Kirim OTP →';}
+  if(btn){btn.disabled=false;btn.textContent=btn.dataset.origText||'Kirim OTP →';}
   if(!sent){
     const alertEl=document.getElementById('daftarStep2Alert')||document.getElementById('daftarAlert')||document.getElementById('loginAlert');
     if(alertEl)alertEl.innerHTML='<div class="alert alert-error">Gagal kirim OTP. Cek email kamu dan coba lagi.</div>';
