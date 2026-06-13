@@ -400,8 +400,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
 <div id="screenOTP" class="screen">
   <div class="form-wrap">
     <button class="back-btn" id="otpBackBtn" onclick="goScreen('screenDaftar')">← Kembali</button>
-    <div class="form-title">Verifikasi WhatsApp</div>
-    <div class="form-sub" id="otpSubtitle">Masukkan kode 6 digit yang dikirim ke WhatsApp kamu</div>
+    <div class="form-title">Verifikasi Email</div>
+    <div class="form-sub" id="otpSubtitle">Masukkan kode 6 digit yang dikirim ke email kamu</div>
     <div id="otpAlert"></div>
     <div class="otp-inputs">
       <input class="otp-input" type="number" maxlength="1" id="otp0" oninput="otpNext(this,0)">
@@ -954,7 +954,7 @@ async function kirimOTP(mode){
   }
   clearOTP();
   goScreen('screenOTP');
-  showAlert('otpAlert',`✅ Kode OTP dikirim ke +${hp}`,'success');
+  showAlert('otpAlert',`✅ Kode OTP dikirim ke email kamu`,'success');
 
   // Auto expire 5 menit
   setTimeout(()=>{otpPending.kode=null;},300000);
@@ -998,13 +998,12 @@ async function verifikasiOTP(){
 }
 
 async function kirimOTPUlang(){
-  if(!otpPending.hp){goScreen('screenDaftar');return;}
+  if(!otpPending.email){goScreen('screenDaftar');return;}
   const kode=Math.floor(100000+Math.random()*900000).toString();
   otpPending.kode=kode;
-  const pesan=`*NitipGo*\nKode OTP baru kamu: *${kode}*\n\nJangan berikan kode ini ke siapapun.`;
-  await kirimWA(otpPending.hp,pesan);
+  await kirimEmail(otpPending.email, otpPending.nama||'Pengguna', kode);
   clearOTP();
-  showAlert('otpAlert','✅ Kode OTP baru sudah dikirim.','success');
+  showAlert('otpAlert','✅ Kode OTP baru sudah dikirim ke email kamu.','success');
   setTimeout(()=>{otpPending.kode=null;},300000);
 }
 
@@ -1038,7 +1037,7 @@ async function loginAkun(){
   document.getElementById('otpBackBtn').onclick=()=>goScreen('screenLogin');
   clearOTP();
   goScreen('screenOTP');
-  showAlert('otpAlert',`✅ Kode OTP dikirim ke +${hp}`,'success');
+  showAlert('otpAlert',`✅ Kode OTP dikirim ke email kamu`,'success');
   setTimeout(()=>{otpPending.kode=null;},300000);
 }
 
