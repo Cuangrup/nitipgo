@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NitipGo — Kirim Cepat, Harga Sepakat</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
@@ -241,7 +242,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
     <div id="daftarStep1">
       <div class="field"><label>Nama Lengkap</label><input type="text" id="daftarNama" placeholder="Nama lengkap kamu"></div>
       <div class="field"><label>Nomor WhatsApp</label><input type="tel" id="daftarHp" placeholder="08xxxxxxxxxx" oninput="formatHP(this)"></div>
-      <div class="field"><label>Email</label><input type="email" id="daftarEmail" placeholder="email@kamu.com"></div>
+      <div class="field"><label>Email Gmail</label><input type="email" id="daftarEmail" placeholder="nama@gmail.com"></div>
       <div class="field">
         <label>Password</label>
         <div class="pwd-wrap">
@@ -305,6 +306,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
         <input type="file" id="inputKendaraan" accept="image/*" onchange="previewDok('Kendaraan',this)">
       </div>
 
+      <div id="daftarStep2Alert"></div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-outline" onclick="backStepDaftar()">← Kembali</button>
         <button class="btn btn-go" onclick="kirimOTP('daftar')">Kirim OTP Verifikasi →</button>
@@ -343,6 +345,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
       </div>
     </div>
     <button class="btn btn-go" onclick="loginAkun()">Masuk →</button>
+    <div style="text-align:center;margin-top:12px;font-size:13px;color:var(--muted)">Lupa password? <a href="#" onclick="goScreen('screenLupaPassword')" style="color:var(--go);font-weight:600">Reset di sini</a></div>
     <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">Belum punya akun? <a href="#" onclick="goScreen('screenDaftar')" style="color:var(--go);font-weight:600">Daftar di sini</a></div>
   </div>
 </div>
@@ -424,6 +427,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
         <input type="text" id="orderTujuan" placeholder="Ketik alamat lengkap...">
         <button class="addr-map-btn" onclick="openMap('tujuan')" title="Pilih di peta">📍</button>
       </div>
+    </div>
+    <div class="field">
+      <label>Nomor HP Pengirim</label>
+      <input type="tel" id="orderHpPengirim" placeholder="08xxxxxxxxxx (nomor WA pengirim)" oninput="formatHP(this)">
     </div>
     <div class="field">
       <label>Nama Pengantar</label>
@@ -632,6 +639,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
 // CONFIG
 // ═══════════════════════════════════════════
 const FONNTE_TOKEN='iUzz279oQ3SyMaNTzkqy';
+const EMAILJS_SERVICE='service_zx5x3m1';
+const EMAILJS_TEMPLATE='f4lbubr';
+const EMAILJS_KEY='_3QpYLp5TMtvuaqLN';
 const LOCATIONIQ_TOKEN='pk.7cf48234a34a50d8e692e7e36265bdbd';
 const SUPA_URL='https://ikypjxxufrvdihuoccut.supabase.co';
 const SUPA_KEY='sb_publishable_Z16QnBPhF7Mdge2iITcqdA_n4Mu3-dG';
@@ -683,6 +693,26 @@ async function kirimWA(hp,pesan){
       body:new URLSearchParams({target:hp,message:pesan})
     });
   }catch(e){console.log('WA error:',e);}
+}
+
+async function kirimEmail(toEmail, toName, otpCode){
+  try{
+    emailjs.init(EMAILJS_KEY);
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE,{
+      to_email: toEmail,
+      to_name: toName,
+      otp_code: otpCode,
+      name: 'NitipGo'
+    });
+    return true;
+  }catch(e){
+    console.log('Email error:',e);
+    return false;
+  }
+}
+
+function validasiGmail(email){
+  return email && email.toLowerCase().endsWith('@gmail.com');
 }
 
 // ═══════════════════════════════════════════
@@ -819,13 +849,17 @@ async function kirimOTP(mode){
     if(!nama){showAlert('daftarAlert','Nama wajib diisi.');return;}
     if(hp.length<10){showAlert('daftarAlert','Nomor HP tidak valid.');return;}
     if(pwd.length<6){showAlert('daftarAlert','Password minimal 6 karakter.');return;}
+    const emailVal=document.getElementById('daftarEmail')?.value?.trim()||'';
+    if(!emailVal){showAlert('daftarAlert','Email Gmail wajib diisi.');return;}
+    if(!validasiGmail(emailVal)){showAlert('daftarAlert','Hanya email @gmail.com yang diizinkan.');return;}
     // Validasi dokumen mitra wajib semua
     if(role==='mitra'){
-      if(!dokFiles.selfie){showAlert('daftarAlert','📸 Foto selfie/wajah wajib diupload.');return;}
-      if(!dokFiles.ktp){showAlert('daftarAlert','📄 Foto KTP wajib diupload.');return;}
-      if(!dokFiles.sim){showAlert('daftarAlert','🪪 Foto SIM wajib diupload.');return;}
-      if(!dokFiles.stnk){showAlert('daftarAlert','🚗 Foto STNK wajib diupload.');return;}
-      if(!dokFiles.kendaraan){showAlert('daftarAlert','📸 Foto kendaraan wajib diupload.');return;}
+      const alertEl=document.getElementById('daftarStep2Alert')||document.getElementById('daftarAlert');
+      if(!dokFiles.selfie){alertEl.innerHTML='<div class="alert alert-error">📸 Foto selfie/wajah wajib diupload.</div>';return;}
+      if(!dokFiles.ktp){alertEl.innerHTML='<div class="alert alert-error">📄 Foto KTP wajib diupload.</div>';return;}
+      if(!dokFiles.sim){alertEl.innerHTML='<div class="alert alert-error">🪪 Foto SIM wajib diupload.</div>';return;}
+      if(!dokFiles.stnk){alertEl.innerHTML='<div class="alert alert-error">🚗 Foto STNK wajib diupload.</div>';return;}
+      if(!dokFiles.kendaraan){alertEl.innerHTML='<div class="alert alert-error">📸 Foto kendaraan wajib diupload.</div>';return;}
     }
     // Cek HP + role sudah terdaftar (boleh punya 2 akun: pengirim & mitra)
     const{data:existing}=await db.from('users').select('id').eq('no_hp',hp).eq('role',role).maybeSingle();
@@ -837,11 +871,18 @@ async function kirimOTP(mode){
   const email=document.getElementById('daftarEmail')?.value||'';
   otpPending={kode,hp,nama,role,pwd,email};
 
-  // Kirim via Fonnte
-  const pesan=`*NitipGo*\nKode OTP kamu: *${kode}*\n\nJangan berikan kode ini ke siapapun.\nBerlaku 5 menit.`;
-  await kirimWA(hp,pesan);
-
-  document.getElementById('otpSubtitle').textContent=`Kode dikirim ke WhatsApp +${hp}`;
+  // Kirim OTP via Email
+  const emailAddr=document.getElementById('daftarEmail')?.value?.trim()||otpPending.email||'';
+  const btn=document.querySelector('#daftarStep2 .btn-go')||document.querySelector('#daftarStep1 .btn-go');
+  if(btn){btn.disabled=true;btn.textContent='Mengirim OTP...';}
+  const sent=await kirimEmail(emailAddr, nama, kode);
+  if(btn){btn.disabled=false;btn.textContent=mode==='daftar'?'Kirim OTP Verifikasi →':'Kirim OTP →';}
+  if(!sent){
+    const alertEl=document.getElementById('daftarStep2Alert')||document.getElementById('daftarAlert')||document.getElementById('loginAlert');
+    if(alertEl)alertEl.innerHTML='<div class="alert alert-error">Gagal kirim OTP. Cek email kamu dan coba lagi.</div>';
+    return;
+  }
+  document.getElementById('otpSubtitle').textContent=`Kode OTP dikirim ke email ${emailAddr}`;
   document.getElementById('otpBackBtn').onclick=()=>{
     if(mode==='daftar'&&role==='mitra'){
       goScreen('screenDaftar');
@@ -929,9 +970,15 @@ async function loginAkun(){
   // Password benar → kirim OTP untuk verifikasi
   const kode=Math.floor(100000+Math.random()*900000).toString();
   otpPending={kode,hp,nama:user.nama,role:user.role,pwd:null,userId:user.id};
-  const pesan=`*NitipGo*\nKode verifikasi login kamu: *${kode}*\n\nJangan berikan kode ini ke siapapun.\nBerlaku 5 menit.`;
-  await kirimWA(hp,pesan);
-  document.getElementById('otpSubtitle').textContent=`Kode verifikasi dikirim ke WhatsApp +${hp}`;
+  // Ambil email dari DB
+  const{data:userEmail}=await db.from('users').select('email').eq('id',user.id).single();
+  const loginEmail=userEmail?.email||'';
+  if(!loginEmail){showAlert('loginAlert','Email tidak ditemukan. Hubungi admin.');return;}
+  const loginBtn=document.querySelector('#screenLogin .btn-go');
+  if(loginBtn){loginBtn.disabled=true;loginBtn.textContent='Mengirim OTP...';}
+  await kirimEmail(loginEmail, user.nama, kode);
+  if(loginBtn){loginBtn.disabled=false;loginBtn.textContent='Masuk →';}
+  document.getElementById('otpSubtitle').textContent=`Kode OTP dikirim ke email ${loginEmail}`;
   document.getElementById('otpBackBtn').onclick=()=>goScreen('screenLogin');
   clearOTP();
   goScreen('screenOTP');
@@ -1312,6 +1359,7 @@ async function buatOrder(){
   if(!pickup||!tujuan){showAlert('buatOrderAlert','Alamat penjemputan & tujuan wajib diisi.');return;}
   if(harga<5000){showAlert('buatOrderAlert','Harga tawar minimal Rp 5.000.');return;}
   btn.disabled=true;btn.textContent='Memasang order...';
+  const hpPengirim=document.getElementById('orderHpPengirim').value.trim()||currentUser.no_hp||'';
   const namaPengantar=document.getElementById('orderNamaPengantar').value.trim()||currentUser.nama;
   const namaPenerima=document.getElementById('orderNamaPenerima').value.trim();
   const hpPenerima=document.getElementById('orderHpPenerima').value.trim();
@@ -1322,6 +1370,7 @@ async function buatOrder(){
     nama_pengantar:namaPengantar,
     nama_penerima:namaPenerima||null,
     hp_penerima:hpPenerima||null,
+    hp_pengirim:hpPengirim||null,
   };
   if(pickupCoords){orderData.pickup_lat=pickupCoords.lat;orderData.pickup_lng=pickupCoords.lng;}
   if(tujuanCoords){orderData.tujuan_lat=tujuanCoords.lat;orderData.tujuan_lng=tujuanCoords.lng;}
@@ -1332,6 +1381,7 @@ async function buatOrder(){
   document.getElementById('orderTujuan').value='';
   document.getElementById('orderDesc').value='';
   document.getElementById('orderHarga').value='';
+  document.getElementById('orderHpPengirim').value='';
   document.getElementById('orderNamaPengantar').value='';
   document.getElementById('orderNamaPenerima').value='';
   document.getElementById('orderHpPenerima').value='';
