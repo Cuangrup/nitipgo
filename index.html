@@ -309,7 +309,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
     <!-- STEP 2: Dokumen Mitra (hanya tampil kalau pilih mitra) -->
     <div id="daftarStep2" style="display:none">
       <div style="background:var(--go-light);border:1.5px solid #ffc5cf;border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--go)">
-        🛵 Sebagai mitra driver, kamu wajib upload dokumen berikut untuk verifikasi.
+        🛵 Sebagai mitra driver, kamu wajib mengisi data kendaraan dan upload dokumen berikut untuk verifikasi.
+      </div>
+
+      <input type="hidden" id="daftarJenisKendaraan" value="Kendaraan Bermotor R2">
+      <div class="field">
+        <label>Plat Nomor Kendaraan</label>
+        <input type="text" id="daftarPlatNomor" placeholder="Contoh: L 1234 ABC" style="text-transform:uppercase">
       </div>
 
       <div class="field">
@@ -699,7 +705,7 @@ let currentUser=null,currentRole=null,realtimeSub=null;
 let mapInstance=null,mapMarker=null,mapTarget=null,selectedLatLng=null,selectedAddress='',searchTimeout=null;
 let fotoCallback=null,fotoOrderId=null,fotoType=null,fotoDataUrl=null;
 let pickupCoords=null,tujuanCoords=null;
-let otpPending={kode:null,hp:null,nama:null,role:null,pwd:null,userId:null,email:null};
+let otpPending={kode:null,hp:null,nama:null,role:null,pwd:null,userId:null,email:null,jenisKendaraan:null,platNomor:null};
 
 // ═══════════════════════════════════════════
 // AUTH — HELPER
@@ -909,6 +915,9 @@ async function kirimOTP(mode){
     // Validasi dokumen mitra wajib semua
     if(role==='mitra'){
       const alertEl=document.getElementById('daftarStep2Alert')||document.getElementById('daftarAlert');
+      const jenisKendaraan=document.getElementById('daftarJenisKendaraan')?.value||'';
+      const platNomor=document.getElementById('daftarPlatNomor')?.value.trim()||'';
+      if(!platNomor){alertEl.innerHTML='<div class="alert alert-error">🔢 Plat nomor kendaraan wajib diisi.</div>';return;}
       if(!dokFiles.selfie){alertEl.innerHTML='<div class="alert alert-error">📸 Foto selfie/wajah wajib diupload.</div>';return;}
       if(!dokFiles.ktp){alertEl.innerHTML='<div class="alert alert-error">📄 Foto KTP wajib diupload.</div>';return;}
       if(!dokFiles.sim){alertEl.innerHTML='<div class="alert alert-error">🪪 Foto SIM wajib diupload.</div>';return;}
@@ -923,7 +932,9 @@ async function kirimOTP(mode){
   // Generate OTP
   const kode=Math.floor(100000+Math.random()*900000).toString();
   const email=document.getElementById('daftarEmail')?.value||'';
-  otpPending={kode,hp,nama,role,pwd,email};
+  const jenisKendaraan=document.getElementById('daftarJenisKendaraan')?.value||'';
+  const platNomor=(document.getElementById('daftarPlatNomor')?.value||'').toUpperCase();
+  otpPending={kode,hp,nama,role,pwd,email,jenisKendaraan,platNomor};
 
   // Kirim OTP via Email
   const emailAddr=document.getElementById('daftarEmail')?.value?.trim()||otpPending.email||'';
@@ -980,7 +991,9 @@ async function verifikasiOTP(){
     const{data:user,error}=await db.from('users').insert({
       nama:otpPending.nama,no_hp:otpPending.hp,email:otpPending.email||null,
       role:otpPending.role,pwd_hash:pwdHash,verified:true,
-      status_verifikasi:isMitra?'menunggu':'aktif'
+      status_verifikasi:isMitra?'menunggu':'aktif',
+      jenis_kendaraan:otpPending.jenisKendaraan||null,
+      plat_nomor:otpPending.platNomor||null,
     }).select().single();
     if(error){showAlert('otpAlert','Gagal buat akun: '+error.message);return;}
     // Upload dokumen kalau mitra
@@ -1450,7 +1463,7 @@ async function buatOrder(){
 async function loadOrderAktifPengirim(){
   const el=document.getElementById('listOrderAktif');
   el.innerHTML='<div class="loading">Memuat...</div>';
-  const{data}=await db.from('orders').select('*,mitra:users!orders_mitra_id_fkey(no_hp)').eq('pengirim_id',currentUser.id)
+  const{data}=await db.from('orders').select('*,mitra:users!orders_mitra_id_fkey(no_hp,jenis_kendaraan,plat_nomor)').eq('pengirim_id',currentUser.id)
     .in('status',['mencari','menunggu_konfirmasi','dijemput','diantar']).order('created_at',{ascending:false});
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">📭</div><p>Belum ada order aktif.</p></div>';return;}
   const html=await Promise.all(data.map(o=>renderOrderPengirim(o)));
@@ -1523,6 +1536,10 @@ async function renderOrderPengirim(o,simple=false){
       <div><div style="font-size:11px;color:var(--muted)">Harga tawar</div><div class="harga-tawar">${rupiah(o.harga_tawar)}</div></div>
         ${o.harga_deal?`<div style="text-align:right"><div style="font-size:11px;color:var(--muted)">Harga deal</div><div style="font-size:18px;font-weight:800;color:var(--mitra)">${rupiah(o.harga_deal)}</div></div>`:''}
     </div>
+    ${(o.mitra?.plat_nomor||o.mitra?.jenis_kendaraan)?`<div style="background:var(--surface);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px;display:flex;gap:16px">
+      ${o.mitra?.jenis_kendaraan?`<div><span style="color:var(--muted);font-size:11px">KENDARAAN</span><br><b>${o.mitra.jenis_kendaraan}</b></div>`:''}
+      ${o.mitra?.plat_nomor?`<div><span style="color:var(--muted);font-size:11px">PLAT NOMOR</span><br><b>${o.mitra.plat_nomor}</b></div>`:''}
+    </div>`:''} 
     ${o.mitra?.no_hp?`<div style="background:var(--mitra-light);border:1.5px solid #b2dfdb;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px"><span style="color:var(--muted);font-size:11px">HUB MITRA</span><br><a href="https://wa.me/${o.mitra?.no_hp}" target="_blank" style="color:#25D366;font-weight:700;text-decoration:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="#25D366" style="vertical-align:middle;margin-right:4px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.998 2C6.477 2 2 6.477 2 12c0 1.989.574 3.842 1.562 5.408L2 22l4.744-1.521A9.96 9.96 0 0011.998 22c5.521 0 10-4.477 10-10S17.519 2 11.998 2zm0 18c-1.72 0-3.32-.463-4.699-1.268l-.333-.198-3.46 1.109 1.13-3.364-.217-.347A7.96 7.96 0 014 12c0-4.411 3.589-8 7.998-8C16.41 4 20 7.589 20 12s-3.59 8-8.002 8z"/></svg>${o.mitra?.no_hp}</a></div>`:''}
     ${bidsHtml}
     ${!simple&&(o.status==='mencari'||o.status==='menunggu_konfirmasi')?`<button class="btn btn-danger btn-sm" style="margin-top:10px" onclick="batalOrder('${o.id}')">Batalkan Order</button>`:''}
