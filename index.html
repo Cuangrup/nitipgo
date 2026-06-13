@@ -938,7 +938,7 @@ async function kirimOTP(mode){
     if(alertEl)alertEl.innerHTML='<div class="alert alert-error">Gagal kirim OTP. Cek email kamu dan coba lagi.</div>';
     return;
   }
-  document.getElementById('otpSubtitle').textContent=`Kode OTP dikirim ke email ${emailAddr}`;
+  document.getElementById('otpSubtitle').innerHTML=`Kode OTP dikirim ke <b>${emailAddr}</b><br><span style="font-size:12px;color:#e65100">⚠️ Tidak ada di inbox? Cek folder <b>Spam/Junk</b> di email kamu.</span>`;
   document.getElementById('otpBackBtn').onclick=()=>{
     if(mode==='daftar'&&role==='mitra'){
       goScreen('screenDaftar');
@@ -2417,7 +2417,7 @@ async function kirimOTPLupa(){
   const sent=await kirimEmail(email,user.nama||'Pengguna',kode);
   if(btn){btn.disabled=false;btn.textContent='Kirim Kode OTP via Email →';}
   if(!sent){showAlert('lupaAlert','Gagal kirim OTP. Coba lagi.');return;}
-  document.getElementById('resetSubtitle').textContent=`Kode OTP dikirim ke ${email}`;
+  document.getElementById('resetSubtitle').innerHTML=`Kode OTP dikirim ke <b>${email}</b><br><span style="font-size:12px;color:#e65100">⚠️ Tidak ada di inbox? Cek folder <b>Spam/Junk</b> di email kamu.</span>`;
   [0,1,2,3,4,5].forEach(i=>{document.getElementById('rotp'+i).value='';});
   document.getElementById('resetPwd').value='';
   document.getElementById('resetPwd2').value='';
