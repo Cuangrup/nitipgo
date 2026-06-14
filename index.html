@@ -4428,7 +4428,7 @@ function setLoginRole(role){
 }
 
 async function homeLogin(){
-  const hp = document.getElementById('homeLoginHp').value.replace(/\D/g,'');
+  const hp = document.getElementById('homeLoginHp').value.replace(/\D/g,'').replace(/^0/,'62');
   const pwd = document.getElementById('homeLoginPwd').value;
   const alertEl = document.getElementById('homeLoginAlert');
 
@@ -4436,12 +4436,23 @@ async function homeLogin(){
   if(!pwd){showAlert('homeLoginAlert','Masukkan password kamu.');return;}
 
   const pwdHash = await hashPassword(pwd);
-  const{data:user} = await db.from('users')
+  // Coba login dengan format HP asli, fallback dengan +
+  let{data:user} = await db.from('users')
     .select('*')
     .eq('no_hp', hp)
     .eq('role', _homeLoginRole)
     .eq('pwd_hash', pwdHash)
     .maybeSingle();
+  // Kalau tidak ketemu, coba dengan format +62
+  if(!user){
+    const{data:user2} = await db.from('users')
+      .select('*')
+      .eq('no_hp', '+'+hp)
+      .eq('role', _homeLoginRole)
+      .eq('pwd_hash', pwdHash)
+      .maybeSingle();
+    user = user2;
+  }
 
   if(!user){showAlert('homeLoginAlert','Nomor HP atau password salah.');return;}
   if(!user.verified){showAlert('homeLoginAlert','Akun belum terverifikasi. Cek email kamu.');return;}
