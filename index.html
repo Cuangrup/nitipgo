@@ -1923,8 +1923,13 @@ async function buatOrder(){
   document.getElementById('orderNamaPenerima').value='';
   document.getElementById('orderHpPenerima').value='';
   pickupCoords=null;tujuanCoords=null;
-  showAlert('buatOrderAlert',`✅ Order ${data.kode} berhasil dipasang! Tunggu bid dari mitra.`,'success');
-  pengirimTab('aktif');
+  // Reset step form
+  document.getElementById('orderStep2').style.display='none';
+  document.getElementById('orderStep1').style.display='block';
+  document.getElementById('estimasiBox').style.display='none';
+  document.getElementById('btnLanjutStep2').style.display='none';
+  // Pindah ke tab aktif
+  setTimeout(()=>pengirimTab('aktif'), 500);
 }
 
 // ── LOAD ORDER PENGIRIM ──
