@@ -1342,9 +1342,23 @@ async function masukSebagai(user){
   updateTopbar(u);
   if(u.role==='pengirim'){
     document.getElementById('mainTopbar').style.display='none';
-    goScreen('screenPengirim');pengirimTab('buat');subscribeRealtimePengirim();setTimeout(cekOrderSelesai,2000);startFlagOrderCheck();
+    goScreen('screenPengirim');
+    setTimeout(()=>{
+      pengirimTab('buat');
+      subscribeRealtimePengirim();
+      setTimeout(cekOrderSelesai,2000);
+      startFlagOrderCheck();
+    },100);
   }
-  else{goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();setTimeout(cekStatusAudio,500);startFlagOrderCheck();}
+  else{
+    goScreen('screenMitra');
+    setTimeout(()=>{
+      mitraTab('tersedia');
+      subscribeRealtime();
+      cekStatusAudio();
+      startFlagOrderCheck();
+    },100);
+  }
 }
 
 function updateTopbar(user){
