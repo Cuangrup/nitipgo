@@ -1247,7 +1247,7 @@ async function verifikasiOTP(){
     // Mode LOGIN — langsung masuk
     const{data:user}=await db.from('users').select('*').eq('id',otpPending.userId).single();
     otpPending={kode:null,hp:null,nama:null,role:null,pwd:null,userId:null};
-    if(user)masukSebagai(user);
+    if(user)await await masukSebagai(user);
   } else {
     // Mode DAFTAR — buat akun baru
     const pwdHash=await hashPassword(otpPending.pwd);
@@ -1270,7 +1270,7 @@ async function verifikasiOTP(){
     if(isMitra){
       goScreen('screenMenunggu');
     } else {
-      masukSebagai(user);
+      await masukSebagai(user);
     }
   }
 }
@@ -1363,10 +1363,15 @@ async function masukSebagai(user){
 
 function updateTopbar(user){
   const icon=user.role==='pengirim'?'👤':'🛵';
-  document.getElementById('topRoleBadge').textContent=icon+' '+user.nama;
-  document.getElementById('topRoleBadge').onclick=()=>bukaHalamanPengaturan();
-  document.getElementById('userMenu').style.display='flex';
-  document.getElementById('mainTopbar').style.display='flex';
+  const topRoleBadge = document.getElementById('topRoleBadge');
+  if(topRoleBadge) topRoleBadge.textContent=icon+' '+user.nama;
+  const topRoleBadgeEl = document.getElementById('topRoleBadge');
+  if(topRoleBadgeEl) topRoleBadgeEl.onclick=()=>bukaHalamanPengaturan();
+  const userMenu = document.getElementById('userMenu');
+  if(userMenu) userMenu.style.display='flex';
+  // mainTopbar disembunyikan - setiap dashboard punya header sendiri
+  const mainTopbar = document.getElementById('mainTopbar');
+  if(mainTopbar) mainTopbar.style.display='none';
   // Update nama di header dashboard pengguna
   const headerNama = document.getElementById('pengirimHeaderNama');
   if(headerNama) headerNama.textContent = user.nama;
@@ -1378,7 +1383,6 @@ function updateTopbar(user){
 }
 
 function logout(){
-  document.getElementById('mainTopbar').style.display='none';
   if(!confirm('Yakin ingin keluar?'))return;
   localStorage.removeItem('nitipgo_user');
   currentUser=null;currentRole=null;
@@ -1402,7 +1406,7 @@ function logout(){
 }
 
 // Auto login saat reload
-function checkSession(){
+async function checkSession(){
   const saved=localStorage.getItem('nitipgo_user');
   if(saved){
     try{
@@ -1412,7 +1416,7 @@ function checkSession(){
         if(data){
           // Update localStorage dengan data terbaru
           localStorage.setItem('nitipgo_user',JSON.stringify(data));
-          masukSebagai(data);
+          await masukSebagai(data);
         } else {
           localStorage.removeItem('nitipgo_user');
         }
@@ -1425,12 +1429,8 @@ function checkSession(){
 // ── NAVIGATION ──
 function goScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  // Topbar: tampilkan hanya untuk mitra
-  const topbar = document.getElementById('mainTopbar');
-  if(topbar){
-    topbar.style.display = (id==='screenMitra') ? 'flex' : 'none';
-  }
+  const el = document.getElementById(id);
+  if(el) el.classList.add('active');
   // Render FAQ saat buka halaman bantuan
   if(id==='screenBantuan'){
     renderFAQ();
@@ -3381,12 +3381,14 @@ function stopChatPolling(){
 let _prevScreen = 'screenPengirim';
 
 function goBackFromPengaturan(){
-  goScreen(_prevScreen);
+  goScreen(_prevScreen||'screenHome');
+  window.scrollTo(0,0);
 }
 
 async function bukaHalamanPengaturan(){
   _prevScreen = currentRole==='mitra' ? 'screenMitra' : 'screenPengirim';
   goScreen('screenPengaturan');
+  window.scrollTo(0,0);
 
   // Isi data profil
   const u = currentUser;
