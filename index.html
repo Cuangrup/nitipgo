@@ -1910,6 +1910,12 @@ function bukaOrderJenis(jenis){
     document.getElementById('beliStep1').style.display='block';
     document.getElementById('beliStep2').style.display='none';
     document.getElementById('beliStep3').style.display='none';
+    // Tampilkan estimasi box langsung (kosong dulu, isi setelah titik dipilih)
+    document.getElementById('beliEstimasiBox').style.display='block';
+    document.getElementById('beliEstimasiHargaJasa').textContent='Pilih titik pembelian & pengantaran';
+    document.getElementById('beliEstimasiJarak').textContent='';
+    document.getElementById('beliJasaInput').style.display='none';
+    document.getElementById('btnBeliLanjut').style.display='none';
   } else {
     if(alamatSection) alamatSection.style.display='block';
   }
@@ -3008,11 +3014,17 @@ async function ajukanBid(orderId, hargaTawar=0){
   if(!harga||harga<5000){alert('Harga minimal Rp 5.000');return;}
   if(hargaTawar>0){
     const maxBid=bulatkan500(hargaTawar*1.2);
+    const minBid=bulatkan500(hargaTawar*0.8);
+    const w=document.getElementById('bidWarning_'+orderId);
     if(harga>maxBid){
-      const w=document.getElementById('bidWarning_'+orderId);
       if(w){w.style.display='block';w.textContent='⚠️ Maksimal bid '+rupiah(maxBid)+' (120% dari harga tawar pengirim)';}
       return;
     }
+    if(harga<minBid){
+      if(w){w.style.display='block';w.textContent='⚠️ Minimal bid '+rupiah(minBid)+' (80% dari harga tawar pengirim)';}
+      return;
+    }
+    if(w) w.style.display='none';
   }
   // Cek apakah sudah bid sebelumnya
   const{data:existing}=await db.from('bids').select('id').eq('order_id',orderId).eq('mitra_id',currentUser.id).eq('status','menunggu');
