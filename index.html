@@ -733,6 +733,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--surface);color
 // ═══════════════════════════════════════════
 const FONNTE_TOKEN='iUzz279oQ3SyMaNTzkqy';
 const EMAILJS_SERVICE='service_zx5x3m1';
+// FLAG ORDER — ubah ke nilai asli setelah test
+const FLAG_MENCARI_MENIT = 2;    // ASLI: 15 menit
+const FLAG_DIANTAR_JAM = 0.033;  // ASLI: 3 (jam) — 0.033 = 2 menit untuk test
 const EMAILJS_TEMPLATE='template_43kyj5s';
 const EMAILJS_TEMPLATE_NOTIF='template_pln993d';
 const EMAILJS_KEY='_3QpYLp5TMtvuaqLN';
@@ -1117,8 +1120,8 @@ async function masukSebagai(user){
   // Simpan session
   localStorage.setItem('nitipgo_user',JSON.stringify(u));
   updateTopbar(u);
-  if(u.role==='pengirim'){goScreen('screenPengirim');pengirimTab('buat');subscribeRealtimePengirim();setTimeout(cekOrderSelesai,2000);}
-  else{goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();setTimeout(cekStatusAudio,500);}
+  if(u.role==='pengirim'){goScreen('screenPengirim');pengirimTab('buat');subscribeRealtimePengirim();setTimeout(cekOrderSelesai,2000);startFlagOrderCheck();}
+  else{goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();setTimeout(cekStatusAudio,500);startFlagOrderCheck();}
 }
 
 function updateTopbar(user){
@@ -1137,6 +1140,7 @@ function logout(){
   stopPengirimPolling();
   if(_mitraPollTimer){clearInterval(_mitraPollTimer);_mitraPollTimer=null;}
   stopNotifBerulang();
+  stopFlagOrderCheck();
   _pendingOrderCount=0;
   _lastOrderCount=0;
   // Tutup AudioContext supaya suara benar-benar berhenti
@@ -1904,7 +1908,7 @@ function bukabantuanDariOrder(orderId, kode){
 }
 
 async function updateStatus(orderId,status){
-  await db.from('orders').update({status}).eq('id',orderId);
+  await db.from('orders').update({status, updated_at: new Date().toISOString()}).eq('id',orderId);
   if(status==='selesai'){
     // Update total order mitra
     const{data:u}=await db.from('users').select('total_order').eq('id',currentUser.id).single();
@@ -2820,6 +2824,66 @@ function showToast(msg){
 emailjs.init(EMAILJS_KEY);
 
 
+
+
+// ═══════════════════════════════════════════
+// FLAG ORDER OTOMATIS
+// ═══════════════════════════════════════════
+let _flagOrderTimer = null;
+
+function startFlagOrderCheck(){
+  if(_flagOrderTimer)clearInterval(_flagOrderTimer);
+  // Cek setiap 1 menit
+  _flagOrderTimer = setInterval(cekFlagOrder, 60000);
+  // Langsung cek pertama kali
+  cekFlagOrder();
+}
+
+function stopFlagOrderCheck(){
+  if(_flagOrderTimer){clearInterval(_flagOrderTimer);_flagOrderTimer=null;}
+}
+
+async function cekFlagOrder(){
+  const now = new Date();
+
+  // 1. Cek order MENCARI > FLAG_MENCARI_MENIT → batal
+  const batasMencari = new Date(now - FLAG_MENCARI_MENIT * 60 * 1000).toISOString();
+  const{data:ordersMencari} = await db.from('orders')
+    .select('id,kode,pengirim_id')
+    .eq('status','mencari')
+    .lt('created_at', batasMencari);
+
+  for(const o of ordersMencari||[]){
+    await db.from('orders').update({status:'batal'}).eq('id',o.id);
+    console.log('Order batal (tidak ada mitra):', o.kode);
+    // Notif ke pengguna kalau sedang online
+    if(currentUser?.id === o.pengirim_id){
+      showToast('⏰ Order '+o.kode+' otomatis dibatalkan karena tidak ada mitra dalam '+FLAG_MENCARI_MENIT+' menit.');
+      loadOrderAktifPengirim();
+    }
+  }
+
+  // 2. Cek order DIANTAR > FLAG_DIANTAR_JAM → otomatis selesai
+  const batasDiantar = new Date(now - FLAG_DIANTAR_JAM * 60 * 60 * 1000).toISOString();
+  const{data:ordersDiantar} = await db.from('orders')
+    .select('id,kode,pengirim_id,mitra_id')
+    .eq('status','diantar')
+    .lt('updated_at', batasDiantar);
+
+  for(const o of ordersDiantar||[]){
+    // Update total order mitra
+    const{data:mitra} = await db.from('users').select('total_order').eq('id',o.mitra_id).single();
+    if(mitra) await db.from('users').update({total_order:(mitra.total_order||0)+1}).eq('id',o.mitra_id);
+    await db.from('orders').update({status:'selesai'}).eq('id',o.id);
+    console.log('Order selesai otomatis:', o.kode);
+    // Notif ke pengguna atau mitra kalau sedang online
+    if(currentUser?.id === o.pengirim_id || currentUser?.id === o.mitra_id){
+      showToast('✅ Order '+o.kode+' otomatis ditandai selesai.');
+      if(currentRole==='pengirim') loadOrderAktifPengirim();
+      else if(currentRole==='mitra') loadOrderAktifMitra();
+    }
+  }
+}
 
 // ═══════════════════════════════════════════
 // CHAT
