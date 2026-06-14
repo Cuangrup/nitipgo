@@ -309,14 +309,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <label>Password Baru</label>
       <div class="pwd-wrap">
         <input type="password" id="resetPwd" placeholder="Minimal 6 karakter">
-        <button class="pwd-eye" onclick="togglePwd('resetPwd',this)">👁️</button>
+        <button class="pwd-eye" onclick="togglePwd('resetPwd',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
       </div>
     </div>
     <div class="field">
       <label>Konfirmasi Password</label>
       <div class="pwd-wrap">
         <input type="password" id="resetPwd2" placeholder="Ulangi password baru">
-        <button class="pwd-eye" onclick="togglePwd('resetPwd2',this)">👁️</button>
+        <button class="pwd-eye" onclick="togglePwd('resetPwd2',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
       </div>
     </div>
     <button class="btn btn-go" onclick="resetPassword()">Reset Password →</button>
@@ -348,7 +348,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <label>Password</label>
         <div class="pwd-wrap">
           <input type="password" id="daftarPwd" placeholder="Minimal 6 karakter">
-          <button class="pwd-eye" onclick="togglePwd('daftarPwd',this)">👁️</button>
+          <button class="pwd-eye" onclick="togglePwd('daftarPwd',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
         </div>
       </div>
       <div class="field">
@@ -448,7 +448,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <label>Password</label>
       <div class="pwd-wrap">
         <input type="password" id="loginPwd" placeholder="Password kamu">
-        <button class="pwd-eye" onclick="togglePwd('loginPwd',this)">👁️</button>
+        <button class="pwd-eye" onclick="togglePwd('loginPwd',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
       </div>
     </div>
     <button class="btn btn-go" onclick="loginAkun()">Masuk →</button>
@@ -498,15 +498,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
     <!-- ILUSTRASI -->
     <div style="text-align:center;padding:0 24px 20px">
-      <svg width="120" height="90" viewBox="0 0 120 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="32" cy="14" r="12" fill="white" opacity="0.9"/>
-        <rect x="22" y="26" width="20" height="36" rx="10" fill="white" opacity="0.9"/>
-        <circle cx="88" cy="14" r="12" fill="#93C5FD"/>
-        <rect x="78" y="26" width="20" height="36" rx="10" fill="#93C5FD"/>
-        <path d="M42 52 Q60 32 78 52" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
-        <circle cx="60" cy="44" r="3" fill="white"/>
-        <circle cx="52" cy="48" r="2" fill="white" opacity="0.6"/>
-        <circle cx="68" cy="48" r="2" fill="white" opacity="0.6"/>
+      <svg width="140" height="80" viewBox="0 0 140 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Pengguna kiri -->
+        <circle cx="28" cy="18" r="11" fill="white" opacity="0.95"/>
+        <rect x="18" y="30" width="20" height="30" rx="10" fill="white" opacity="0.95"/>
+        <!-- Mitra kanan -->
+        <circle cx="112" cy="18" r="11" fill="#93C5FD"/>
+        <rect x="102" y="30" width="20" height="30" rx="10" fill="#93C5FD"/>
+        <!-- Tangan kiri -->
+        <path d="M38 50 L58 50" stroke="white" stroke-width="3" stroke-linecap="round"/>
+        <!-- Tangan kanan -->
+        <path d="M82 50 L102 50" stroke="#93C5FD" stroke-width="3" stroke-linecap="round"/>
+        <!-- Jabatan tangan tengah -->
+        <circle cx="70" cy="50" r="10" fill="white" opacity="0.2"/>
+        <path d="M58 50 C62 44 78 44 82 50" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <circle cx="70" cy="44" r="3" fill="white"/>
       </svg>
     </div>
 
@@ -541,7 +547,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div class="pwd-wrap">
           <input type="password" id="homeLoginPwd" placeholder="Password kamu"
             onkeydown="if(event.key==='Enter')homeLogin()">
-          <button class="pwd-eye" onclick="togglePwd('homeLoginPwd',this)">👁️</button>
+          <button class="pwd-eye" onclick="togglePwd('homeLoginPwd',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
         </div>
       </div>
 
@@ -568,7 +574,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div style="text-align:center">
         <a href="#" onclick="goScreen('screenTracking')" 
           style="font-size:13px;color:#64748B;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
-          📍 Lacak kiriman tanpa login
+          <i class="ti ti-map-pin" style="font-size:14px;color:#64748B" aria-hidden="true"></i> Lacak kiriman tanpa login
         </a>
       </div>
 
@@ -593,7 +599,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <button onclick="bukaHalamanPengaturan()" style="background:rgba(255,255,255,0.15);border:none;border-radius:20px;padding:6px 12px;color:white;font-size:12px;cursor:pointer">
-          ⚙️ Akun
+          <i class="ti ti-user-circle" style="font-size:14px" aria-hidden="true"></i> Akun
         </button>
       </div>
     </div>
@@ -602,19 +608,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:0;padding-bottom:16px">
       <div onclick="bukaOrderJenis('kirim')" 
         style="background:rgba(255,255,255,0.15);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer">
-        <div style="font-size:20px;margin-bottom:4px">📦</div>
+        <i class="ti ti-package" style="font-size:22px;color:white;display:block;margin-bottom:4px" aria-hidden="true"></i>
         <div style="font-size:10px;font-weight:600;color:white">NitipKirim</div>
         <div style="font-size:9px;color:#BFDBFE">Delivery</div>
       </div>
       <div onclick="bukaOrderJenis('beli')"
         style="background:rgba(255,255,255,0.15);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer">
-        <div style="font-size:20px;margin-bottom:4px">🛍️</div>
+        <i class="ti ti-shopping-bag" style="font-size:22px;color:white;display:block;margin-bottom:4px" aria-hidden="true"></i>
         <div style="font-size:10px;font-weight:600;color:white">NitipBeli</div>
         <div style="font-size:9px;color:#BFDBFE">Buying</div>
       </div>
       <div onclick="bukaOrderJenis('suruh')"
         style="background:rgba(255,255,255,0.15);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer">
-        <div style="font-size:20px;margin-bottom:4px">🧾</div>
+        <i class="ti ti-clipboard-list" style="font-size:22px;color:white;display:block;margin-bottom:4px" aria-hidden="true"></i>
         <div style="font-size:10px;font-weight:600;color:white">NitipSuruh</div>
         <div style="font-size:9px;color:#BFDBFE">Tasks</div>
       </div>
@@ -633,7 +639,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <!-- STEP 1: ALAMAT & ESTIMASI -->
   <div id="orderStep1" class="form-wrap">
     <div id="step1JenisLabel" style="display:inline-flex;align-items:center;gap:8px;background:#EEF4FF;border-radius:20px;padding:6px 14px;margin-bottom:16px">
-      <span id="step1JenisIcon">📦</span>
+      <i id="step1JenisIcon" class="ti ti-package" style="font-size:16px;color:#0047AB" aria-hidden="true"></i>
       <span style="font-size:13px;font-weight:600;color:#0047AB" id="step1JenisText">NitipKirim</span>
       <a href="#" onclick="batalStep1()" style="font-size:11px;color:#64748B;margin-left:4px">Ganti</a>
     </div>
@@ -646,7 +652,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <label>Alamat Penjemputan</label>
       <div class="addr-wrap">
         <input type="text" id="orderPickup" placeholder="Ketik alamat lengkap...">
-        <button class="addr-map-btn" onclick="openMap('pickup')" title="Pilih di peta">📍</button>
+        <button class="addr-map-btn" onclick="openMap('pickup')" title="Pilih di peta"><i class="ti ti-map-pin" style="font-size:16px;color:#0047AB" aria-hidden="true"></i></button>
       </div>
     </div>
 
@@ -654,7 +660,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <label>Alamat Tujuan</label>
       <div class="addr-wrap">
         <input type="text" id="orderTujuan" placeholder="Ketik alamat lengkap...">
-        <button class="addr-map-btn" onclick="openMap('tujuan')" title="Pilih di peta">📍</button>
+        <button class="addr-map-btn" onclick="openMap('tujuan')" title="Pilih di peta"><i class="ti ti-map-pin" style="font-size:16px;color:#0047AB" aria-hidden="true"></i></button>
       </div>
     </div>
 
@@ -677,11 +683,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div style="background:#EEF4FF;border-radius:12px;padding:12px;margin-bottom:20px">
       <div style="font-size:11px;color:#64748B;margin-bottom:6px">Rute pengiriman</div>
       <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px">
-        <div style="width:8px;height:8px;border-radius:50%;background:#0047AB;flex-shrink:0;margin-top:4px"></div>
+        <i class="ti ti-circle-dot" style="font-size:14px;color:#0047AB;flex-shrink:0" aria-hidden="true"></i>
         <div style="font-size:12px;color:#0F172A" id="step2Pickup">-</div>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start">
-        <div style="width:8px;height:8px;border-radius:50%;background:#0F172A;flex-shrink:0;margin-top:4px"></div>
+        <i class="ti ti-map-pin" style="font-size:14px;color:#0047AB;flex-shrink:0" aria-hidden="true"></i>
         <div style="font-size:12px;color:#0F172A" id="step2Tujuan">-</div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid #BFDBFE">
@@ -729,7 +735,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div id="hargaWarning" style="display:none;font-size:12px;color:#DC2626;margin-top:6px;background:#FEF2F2;padding:8px;border-radius:8px"></div>
     </div>
 
-    <button class="btn btn-go" id="btnPasangOrder" onclick="buatOrder()" style="opacity:1">Pasang Order 🚀</button>
+    <button class="btn btn-go" id="btnPasangOrder" onclick="buatOrder()" style="opacity:1">Pasang Order <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
   </div>
 
 <div id="tabOrderAktif" style="display:none" class="mitra-content">
@@ -776,7 +782,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <label>Password Admin</label>
       <div class="pwd-wrap">
         <input type="password" id="adminPwd" placeholder="Password developer" onkeydown="if(event.key==='Enter')loginAdmin()">
-        <button class="pwd-eye" onclick="togglePwd('adminPwd',this)">👁️</button>
+        <button class="pwd-eye" onclick="togglePwd('adminPwd',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
       </div>
     </div>
     <button class="btn btn-go" onclick="loginAdmin()">Masuk →</button>
@@ -947,7 +953,7 @@ function formatHP(input){
 function togglePwd(id,btn){
   const el=document.getElementById(id);
   if(el.type==='password'){el.type='text';btn.textContent='🙈';}
-  else{el.type='password';btn.textContent='👁️';}
+  else{el.type='password';btn.textContent='<i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i>';}
 }
 function otpNext(el,idx,prefix='otp'){
   const v=el.value.replace(/[^0-9]/g,'');
@@ -1463,9 +1469,11 @@ let _estimasiJarak = 0;
 
 function bukaOrderJenis(jenis){
   _orderJenis = jenis;
-  const icons = {kirim:'📦', beli:'🛍️', suruh:'🧾'};
+  const icons = {kirim:'ti-package', beli:'ti-shopping-bag', suruh:'ti-clipboard-list'};
   const texts = {kirim:'NitipKirim', beli:'NitipBeli', suruh:'NitipSuruh'};
-  document.getElementById('step1JenisIcon').textContent = icons[jenis];
+  const iconEl = document.getElementById('step1JenisIcon');
+  iconEl.className = 'ti ' + icons[jenis];
+  iconEl.style.cssText = 'font-size:16px;color:#0047AB';
   document.getElementById('step1JenisText').textContent = texts[jenis];
   document.getElementById('orderStep1').style.display='block';
   document.getElementById('orderStep2').style.display='none';
@@ -1476,7 +1484,9 @@ function bukaOrderJenis(jenis){
 
 function batalStep1(){
   _orderJenis = 'kirim';
-  document.getElementById('step1JenisIcon').textContent='📦';
+  const iconEl2 = document.getElementById('step1JenisIcon');
+  iconEl2.className = 'ti ti-package';
+  iconEl2.style.cssText = 'font-size:16px;color:#0047AB';
   document.getElementById('step1JenisText').textContent='NitipKirim';
 }
 
@@ -1804,7 +1814,7 @@ async function buatOrder(){
   if(pickupCoords){orderData.pickup_lat=pickupCoords.lat;orderData.pickup_lng=pickupCoords.lng;}
   if(tujuanCoords){orderData.tujuan_lat=tujuanCoords.lat;orderData.tujuan_lng=tujuanCoords.lng;}
   const{data,error}=await db.from('orders').insert(orderData).select().single();
-  btn.disabled=false;btn.textContent='Pasang Order 🚀';
+  btn.disabled=false;btn.textContent='Pasang Order <i class="ti ti-arrow-right" aria-hidden="true"></i>';
   if(error){showAlert('buatOrderAlert','Gagal buat order: '+error.message);return;}
   document.getElementById('orderPickup').value='';
   document.getElementById('orderTujuan').value='';
@@ -1897,9 +1907,9 @@ async function renderOrderPengirim(o,simple=false){
         ${o.harga_deal?`<div style="text-align:right"><div style="font-size:11px;color:var(--muted)">Harga deal</div><div style="font-size:18px;font-weight:800;color:var(--mitra)">${rupiah(o.harga_deal)}</div></div>`:''}
     </div>
     ${o.mitra?.plat_nomor?`<div style="background:var(--surface);border-radius:8px;padding:8px 12px;margin-top:10px;font-size:13px"><span style="color:var(--muted);font-size:11px">PLAT NOMOR</span><br><b style="font-size:15px;letter-spacing:1px">${o.mitra.plat_nomor}</b></div>`:''} 
-    ${['dijemput','diantar'].includes(o.status)?`<button onclick="bukaChat('${o.id}','${o.kode}','mitra')" style="width:100%;margin-top:10px;padding:10px;background:#1a5f3f;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg> Chat dengan Mitra</button>`:''} 
+    ${['dijemput','diantar'].includes(o.status)?`<button onclick="bukaChat('${o.id}','${o.kode}','mitra')" style="width:100%;margin-top:10px;padding:10px;background:#1a5f3f;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-message-circle" style="font-size:16px" aria-hidden="true"></i> Chat dengan Mitra</button>`:''} 
     ${o.mitra?.no_hp?`<div style="background:var(--mitra-light);border:1.5px solid #b2dfdb;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px"><span style="color:var(--muted);font-size:11px">HUB MITRA</span><br><a href="https://wa.me/${o.mitra?.no_hp}" target="_blank" style="color:#25D366;font-weight:700;text-decoration:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="#25D366" style="vertical-align:middle;margin-right:4px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.998 2C6.477 2 2 6.477 2 12c0 1.989.574 3.842 1.562 5.408L2 22l4.744-1.521A9.96 9.96 0 0011.998 22c5.521 0 10-4.477 10-10S17.519 2 11.998 2zm0 18c-1.72 0-3.32-.463-4.699-1.268l-.333-.198-3.46 1.109 1.13-3.364-.217-.347A7.96 7.96 0 014 12c0-4.411 3.589-8 7.998-8C16.41 4 20 7.589 20 12s-3.59 8-8.002 8z"/></svg>${o.mitra?.no_hp}</a></div>`:''}
-    <button onclick="bukabantuanDariOrder('${o.id}','${o.kode}')" style="width:100%;margin-top:8px;padding:8px;background:none;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--muted);cursor:pointer">❓ Butuh Bantuan</button>
+    <button onclick="bukabantuanDariOrder('${o.id}','${o.kode}')" style="width:100%;margin-top:8px;padding:8px;background:none;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--muted);cursor:pointer"><i class="ti ti-help-circle" style="font-size:14px;color:var(--muted)" aria-hidden="true"></i> Butuh Bantuan</button>
     ${bidsHtml}
     ${!simple&&(o.status==='mencari'||o.status==='menunggu_konfirmasi')?`<button class="btn btn-danger btn-sm" style="margin-top:10px" onclick="batalOrder('${o.id}')">Batalkan Order</button>`:''}
     ${o.foto_pickup?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">📸 Foto Pickup</div><img src="${o.foto_pickup}" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover"></div>`:''}
@@ -2029,7 +2039,7 @@ function renderOrderAktifMitra(o){
       </div>
     </div>
     <div class="harga-row" style="margin-bottom:12px"><div class="harga-tawar">${rupiah(o.harga_deal||o.harga_tawar)}</div></div>
-    <button onclick="bukaChat('${o.id}','${o.kode}','pengirim')" style="width:100%;margin-bottom:10px;padding:10px;background:#1a5f3f;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg> Chat dengan Pengguna</button>
+    <button onclick="bukaChat('${o.id}','${o.kode}','pengirim')" style="width:100%;margin-bottom:10px;padding:10px;background:#1a5f3f;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-message-circle" style="font-size:16px" aria-hidden="true"></i> Chat dengan Pengguna</button>
     <div style="background:var(--surface);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px">
       <div style="display:grid;gap:4px">
         ${o.nama_pengantar?`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><span><span style="color:var(--muted);font-size:11px;margin-right:6px">PENGANTAR</span><b>${o.nama_pengantar}</b></span>${o.pengirim?.no_hp?`<a href="https://wa.me/${o.pengirim.no_hp}" target="_blank" style="color:#25D366;font-weight:700;text-decoration:none;font-size:12px;white-space:nowrap"><svg width="13" height="13" viewBox="0 0 24 24" fill="#25D366" style="vertical-align:middle;margin-right:3px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.998 2C6.477 2 2 6.477 2 12c0 1.989.574 3.842 1.562 5.408L2 22l4.744-1.521A9.96 9.96 0 0011.998 22c5.521 0 10-4.477 10-10S17.519 2 11.998 2zm0 18c-1.72 0-3.32-.463-4.699-1.268l-.333-.198-3.46 1.109 1.13-3.364-.217-.347A7.96 7.96 0 014 12c0-4.411 3.589-8 7.998-8C16.41 4 20 7.589 20 12s-3.59 8-8.002 8z"/></svg>${o.pengirim.no_hp}</a>`:'' }</div>`:''}
@@ -2040,7 +2050,7 @@ function renderOrderAktifMitra(o){
       ${o.foto_pickup?
         `<button class="btn btn-mitra" onclick="updateStatus('${o.id}','diantar')">📦 Barang Dijemput — Mulai Antar</button>`:
         `<div style="display:flex;gap:8px;margin-top:4px">
-          <button class="btn btn-go" style="flex:2" onclick="uploadFotoPickup('${o.id}')">📸 Upload Foto Pickup</button>
+          <button class="btn btn-go" style="flex:2" onclick="uploadFotoPickup('${o.id}')"><i class="ti ti-camera" style="font-size:14px" aria-hidden="true"></i> Upload Foto Pickup</button>
           <button class="btn btn-outline" style="flex:1;color:#e53935;border-color:#e53935;font-size:13px" onclick="batalMitra('${o.id}','${o.kode}')">Batalkan</button>
         </div>`
       }`:''
@@ -2048,11 +2058,11 @@ function renderOrderAktifMitra(o){
     ${o.status==='diantar'?`
       ${o.foto_selesai?
         `<button class="btn btn-mitra" onclick="updateStatus('${o.id}','selesai')">🏁 Tandai Selesai</button>`:
-        `<button class="btn btn-go" onclick="uploadFotoSelesai('${o.id}')">📸 Upload Foto Bukti Selesai</button>`
+        `<button class="btn btn-go" onclick="uploadFotoSelesai('${o.id}')"><i class="ti ti-camera" style="font-size:14px" aria-hidden="true"></i> Upload Foto Bukti Selesai</button>`
       }`:''
     }
     ${o.foto_pickup?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">📸 Foto Pickup</div><img src="${o.foto_pickup}" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover"></div>`:''}
-    <button onclick="bukabantuanDariOrder('${o.id}','${o.kode}')" style="width:100%;margin-top:8px;padding:8px;background:none;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--muted);cursor:pointer">❓ Butuh Bantuan</button>
+    <button onclick="bukabantuanDariOrder('${o.id}','${o.kode}')" style="width:100%;margin-top:8px;padding:8px;background:none;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--muted);cursor:pointer"><i class="ti ti-help-circle" style="font-size:14px;color:var(--muted)" aria-hidden="true"></i> Butuh Bantuan</button>
   </div>`;
 }
 
@@ -3660,7 +3670,7 @@ checkAdminHash();
     <div style="text-align:center;margin-bottom:16px">
       <input type="file" id="inputFotoProfil" accept="image/*" capture="user" style="display:none" onchange="uploadFotoProfil(this)">
       <button class="btn btn-outline btn-sm" onclick="document.getElementById('inputFotoProfil').click()" style="font-size:13px">
-        📸 Ganti Foto Profil
+        <i class="ti ti-camera" style="font-size:14px" aria-hidden="true"></i> Ganti Foto Profil
       </button>
       <div id="fotoProfllUploadStatus" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
     </div>
@@ -3721,21 +3731,21 @@ checkAdminHash();
       <label>Password Lama</label>
       <div class="pwd-wrap">
         <input type="password" id="gantiPwdLama" placeholder="Password saat ini">
-        <button class="pwd-eye" onclick="togglePwd('gantiPwdLama',this)">👁️</button>
+        <button class="pwd-eye" onclick="togglePwd('gantiPwdLama',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
       </div>
     </div>
     <div class="field">
       <label>Password Baru</label>
       <div class="pwd-wrap">
         <input type="password" id="gantiPwdBaru" placeholder="Minimal 6 karakter">
-        <button class="pwd-eye" onclick="togglePwd('gantiPwdBaru',this)">👁️</button>
+        <button class="pwd-eye" onclick="togglePwd('gantiPwdBaru',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
       </div>
     </div>
     <div class="field">
       <label>Konfirmasi Password Baru</label>
       <div class="pwd-wrap">
         <input type="password" id="gantiPwdKonfirmasi" placeholder="Ulangi password baru">
-        <button class="pwd-eye" onclick="togglePwd('gantiPwdKonfirmasi',this)">👁️</button>
+        <button class="pwd-eye" onclick="togglePwd('gantiPwdKonfirmasi',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
       </div>
     </div>
     <button class="btn btn-go" onclick="gantiPassword()">Simpan Password →</button>
@@ -3794,7 +3804,7 @@ checkAdminHash();
         style="flex:1;padding:8px 14px;border-radius:20px;border:0.5px solid var(--border);font-size:14px;outline:none"
         onkeydown="if(event.key==='Enter')kirimPesan()">
       <button class="chat-send-btn" onclick="kirimPesan()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+        <i class="ti ti-send" style="font-size:16px;color:white" aria-hidden="true"></i>
       </button>
     </div>
   </div>
