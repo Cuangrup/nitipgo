@@ -2624,7 +2624,7 @@ function checkAdminHash(){
   }
 }
 
-async async function loginAdmin(){
+async function loginAdmin(){
   const pwd=document.getElementById('adminPwd').value;
   if(!pwd){showAlert('adminLoginAlert','Password wajib diisi.');return;}
   const hash=await hashPassword(pwd);
