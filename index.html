@@ -1908,8 +1908,21 @@ function bukaOrderJenis(jenis){
 
   document.getElementById('orderStep1').style.display='block';
   document.getElementById('orderStep2').style.display='none';
-  document.getElementById('estimasiBox').style.display='none';
-  document.getElementById('btnLanjutStep2').style.display='none';
+
+  // Sembunyikan estimasi & tombol cek estimasi kalau bukan kirim
+  const estimasiBox=document.getElementById('estimasiBox');
+  const btnLanjut=document.getElementById('btnLanjutStep2');
+  const btnCek=document.querySelector('#orderStep1 .btn-go[onclick="cekEstimasi()"]');
+  if(jenis==='kirim'){
+    if(estimasiBox) estimasiBox.style.display='none';
+    if(btnLanjut) btnLanjut.style.display='none';
+    if(btnCek) btnCek.style.display='block';
+  } else {
+    if(estimasiBox) estimasiBox.style.display='none';
+    if(btnLanjut) btnLanjut.style.display='none';
+    if(btnCek) btnCek.style.display='none';
+  }
+
   pengirimTab('buat');
 }
 
