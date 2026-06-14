@@ -2948,18 +2948,18 @@ function renderOrderMitra(o,done=false,sudahBid=false){
     ${o.jenis==='beli'?`
     <div style="background:#EEF4FF;border-radius:10px;padding:10px 12px;margin-bottom:10px">
       ${o.nama_pengantar?`<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:#64748B">Nama Toko</span><span style="font-size:12px;font-weight:500">${o.nama_pengantar}</span></div>`:''}
-      ${o.deskripsi?`<div style="margin-bottom:4px"><span style="font-size:11px;color:#64748B">Barang</span><div style="font-size:12px;color:#0F172A;margin-top:2px">${o.deskripsi}</div></div>`:''}
-      ${o.estimasi_harga_barang?`<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:#64748B">Est. Harga Barang</span><span style="font-size:12px;font-weight:500">${rupiah(o.estimasi_harga_barang)}</span></div>`:''}
+      ${o.deskripsi?`<div style="margin-bottom:6px"><span style="font-size:11px;color:#64748B">Barang</span><div style="font-size:12px;color:#0F172A;margin-top:2px">${o.deskripsi}</div></div>`:''}
+      ${o.estimasi_harga_barang?`<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:#64748B">Est. Harga Barang</span><span style="font-size:12px">${rupiah(o.estimasi_harga_barang)}</span></div>`:''}
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:11px;color:#64748B">Biaya Jasa</span><span style="font-size:12px">${rupiah(o.harga_tawar)}</span></div>
       <div style="display:flex;justify-content:space-between;padding-top:6px;border-top:0.5px solid #BFDBFE">
-        <span style="font-size:11px;color:#64748B">Biaya Jasa</span>
-        <span style="font-size:13px;font-weight:700;color:#0047AB">${rupiah(o.harga_tawar)}</span>
+        <span style="font-size:11px;font-weight:600;color:#0047AB">Total</span>
+        <span style="font-size:13px;font-weight:700;color:#0047AB">${rupiah((o.estimasi_harga_barang||0)+(o.harga_deal||o.harga_tawar||0))}</span>
       </div>
     </div>
-    `:''}
-    <div class="harga-row" style="margin-bottom:12px">
-      <div><div style="font-size:11px;color:var(--muted)">${o.jenis==='beli'?'Biaya Jasa':'Harga tawar pengguna'}</div><div class="harga-tawar">${rupiah(o.harga_tawar)}</div></div>
+    `:`<div class="harga-row" style="margin-bottom:12px">
+      <div><div style="font-size:11px;color:var(--muted)">Harga tawar pengguna</div><div class="harga-tawar">${rupiah(o.harga_tawar)}</div></div>
       ${pengirim.nama?`<div style="font-size:12px;color:var(--muted)">👤 ${pengirim.nama}</div>`:''}
-    </div>
+    </div>`}
     ${!done?(sudahBid?
     `<div style="background:var(--mitra-light);border:1.5px solid #b2dfdb;border-radius:10px;padding:12px;margin-top:12px;text-align:center">
       <div style="font-size:14px;font-weight:700;color:var(--mitra)">✅ Penawaran sudah dikirim</div>
