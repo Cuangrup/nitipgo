@@ -269,7 +269,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </style>
 </head>
 <body>
-<div class="topbar">
+<div class="topbar" id="mainTopbar" style="display:none">
   <div class="logo">Nitip<span>Go</span></div>
   <div class="user-menu" id="userMenu" style="display:none">
     <div class="role-badge" id="topRoleBadge"></div>
@@ -477,26 +477,105 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- HOME -->
+<!-- HOME / LOGIN BARU -->
 <div id="screenHome" class="screen active">
-  <div class="home-wrap">
-    <div class="home-hero">
-      <h1>Kirim Cepat,<br><span>Harga Sepakat.</span></h1>
-      <p>Pengiriman sameday Surabaya & sekitarnya.<br>Kamu tawar, mitra bid — kamu yang pilih.</p>
-    </div>
-    <div class="role-cards">
-      <div class="role-card" onclick="goScreen('screenLogin')">
-        <div class="icon">📦</div>
-        <h3>Masuk / Daftar</h3>
-        <p>Login sebagai pengirim atau mitra driver</p>
+  <div style="min-height:100vh;display:flex;flex-direction:column;background:#0047AB">
+
+    <!-- HEADER LOGO -->
+    <div style="padding:32px 24px 20px;text-align:center">
+      <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:40px;height:40px;background:white;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden">
+          <img src="https://raw.githubusercontent.com/Cuangrup/nitipgo/main/Nitipgo.png" 
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" 
+            style="width:32px;height:32px;object-fit:contain">
+          <span style="display:none;font-size:18px;font-weight:800;color:#0047AB">N</span>
+        </div>
+        <span style="font-size:22px;font-weight:800;color:white;letter-spacing:-0.5px">Nitip<span style="color:#93C5FD">Go</span></span>
       </div>
-      <div class="role-card" onclick="goScreen('screenTracking')">
-        <div class="icon">📍</div>
-        <h3>Lacak Kiriman</h3>
-        <p>Cek status order dengan kode kiriman</p>
+      <div style="font-size:15px;font-weight:600;color:white;margin-bottom:4px">Kebutuhanmu, Kami Hubungkan</div>
+      <div style="font-size:12px;color:#BFDBFE;line-height:1.5">Menghubungkan orang yang membutuhkan<br>bantuan dengan yang siap membantu</div>
+    </div>
+
+    <!-- ILUSTRASI -->
+    <div style="text-align:center;padding:0 24px 20px">
+      <svg width="120" height="90" viewBox="0 0 120 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="32" cy="14" r="12" fill="white" opacity="0.9"/>
+        <rect x="22" y="26" width="20" height="36" rx="10" fill="white" opacity="0.9"/>
+        <circle cx="88" cy="14" r="12" fill="#93C5FD"/>
+        <rect x="78" y="26" width="20" height="36" rx="10" fill="#93C5FD"/>
+        <path d="M42 52 Q60 32 78 52" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+        <circle cx="60" cy="44" r="3" fill="white"/>
+        <circle cx="52" cy="48" r="2" fill="white" opacity="0.6"/>
+        <circle cx="68" cy="48" r="2" fill="white" opacity="0.6"/>
+      </svg>
+    </div>
+
+    <!-- FORM CARD -->
+    <div style="flex:1;background:white;border-radius:28px 28px 0 0;padding:24px 20px">
+
+      <!-- TOGGLE ROLE -->
+      <div style="font-size:13px;color:#64748B;margin-bottom:10px;text-align:center">Masuk sebagai</div>
+      <div style="display:flex;background:#F1F5F9;border-radius:12px;padding:4px;margin-bottom:20px;gap:4px">
+        <button id="togglePengguna" onclick="setLoginRole('pengguna')" 
+          style="flex:1;padding:9px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:#0047AB;color:white;transition:all .2s">
+          Pengguna
+        </button>
+        <button id="toggleMitra" onclick="setLoginRole('mitra')" 
+          style="flex:1;padding:9px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:#64748B;transition:all .2s">
+          Mitra Driver
+        </button>
+      </div>
+
+      <div id="homeLoginAlert"></div>
+
+      <!-- INPUT HP -->
+      <div class="field">
+        <label>Nomor WhatsApp</label>
+        <input type="tel" id="homeLoginHp" placeholder="08xxxxxxxxxx" oninput="formatHP(this)" 
+          onkeydown="if(event.key==='Enter')document.getElementById('homeLoginPwd').focus()">
+      </div>
+
+      <!-- INPUT PASSWORD -->
+      <div class="field">
+        <label>Password</label>
+        <div class="pwd-wrap">
+          <input type="password" id="homeLoginPwd" placeholder="Password kamu"
+            onkeydown="if(event.key==='Enter')homeLogin()">
+          <button class="pwd-eye" onclick="togglePwd('homeLoginPwd',this)">👁️</button>
+        </div>
+      </div>
+
+      <div style="text-align:right;margin-bottom:16px;margin-top:-8px">
+        <a href="#" onclick="goScreen('screenLupaPassword')" style="font-size:12px;color:#0047AB;text-decoration:none">Lupa password?</a>
+      </div>
+
+      <!-- TOMBOL MASUK -->
+      <button class="btn btn-go" onclick="homeLogin()" style="margin-bottom:12px">Masuk →</button>
+
+      <!-- DIVIDER -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="flex:1;height:1px;background:#E2E8F0"></div>
+        <span style="font-size:12px;color:#94A3B8">atau</span>
+        <div style="flex:1;height:1px;background:#E2E8F0"></div>
+      </div>
+
+      <!-- DAFTAR -->
+      <button class="btn btn-outline" onclick="goScreen('screenDaftar')" style="margin-bottom:16px;color:#0047AB;border-color:#0047AB">
+        Buat Akun Baru
+      </button>
+
+      <!-- LACAK -->
+      <div style="text-align:center">
+        <a href="#" onclick="goScreen('screenTracking')" 
+          style="font-size:13px;color:#64748B;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+          📍 Lacak kiriman tanpa login
+        </a>
+      </div>
+
+      <div style="text-align:center;margin-top:16px;font-size:11px;color:#CBD5E1">
+        Bagian dari ekosistem Nitip • NitipBox · NitipGo
       </div>
     </div>
-    <div class="eco-tag">Bagian dari ekosistem Nitip • NitipBox · NitipGo</div>
   </div>
 </div>
 
@@ -1156,9 +1235,11 @@ function updateTopbar(user){
   document.getElementById('topRoleBadge').textContent=icon+' '+user.nama;
   document.getElementById('topRoleBadge').onclick=()=>bukaHalamanPengaturan();
   document.getElementById('userMenu').style.display='flex';
+  document.getElementById('mainTopbar').style.display='flex';
 }
 
 function logout(){
+  document.getElementById('mainTopbar').style.display='none';
   if(!confirm('Yakin ingin keluar?'))return;
   localStorage.removeItem('nitipgo_user');
   currentUser=null;currentRole=null;
@@ -3253,6 +3334,69 @@ async function kirimBantuan(){
     showAlert('bantuanAlert','Gagal kirim pesan. Coba lagi.');
   }
   btn.disabled=false; btn.textContent='Kirim Pesan →';
+}
+
+// ── HOME LOGIN ──
+let _homeLoginRole = 'pengguna';
+
+function setLoginRole(role){
+  _homeLoginRole = role;
+  const tp = document.getElementById('togglePengguna');
+  const tm = document.getElementById('toggleMitra');
+  if(role==='pengguna'){
+    tp.style.background='#0047AB'; tp.style.color='white';
+    tm.style.background='transparent'; tm.style.color='#64748B';
+  } else {
+    tm.style.background='#0047AB'; tm.style.color='white';
+    tp.style.background='transparent'; tp.style.color='#64748B';
+  }
+}
+
+async function homeLogin(){
+  const hp = document.getElementById('homeLoginHp').value.replace(/\D/g,'');
+  const pwd = document.getElementById('homeLoginPwd').value;
+  const alertEl = document.getElementById('homeLoginAlert');
+
+  if(!hp || hp.length < 9){showAlert('homeLoginAlert','Masukkan nomor WhatsApp yang valid.');return;}
+  if(!pwd){showAlert('homeLoginAlert','Masukkan password kamu.');return;}
+
+  const pwdHash = await hashPassword(pwd);
+  const{data:user,error} = await db.from('users')
+    .select('*')
+    .eq('no_hp', hp)
+    .eq('role', _homeLoginRole)
+    .eq('pwd_hash', pwdHash)
+    .single();
+
+  if(error || !user){showAlert('homeLoginAlert','Nomor HP atau password salah.');return;}
+  if(!user.verified){showAlert('homeLoginAlert','Akun belum terverifikasi. Cek email kamu.');return;}
+  if(user.status_verifikasi==='menunggu'){
+    goScreen('screenMenunggu');return;
+  }
+  if(user.status_verifikasi==='ditolak'){
+    showAlert('homeLoginAlert','Akun kamu ditolak. Hubungi admin.');return;
+  }
+  if(user.status_verifikasi==='nonaktif'){
+    showAlert('homeLoginAlert','Akun kamu dinonaktifkan. Hubungi admin.');return;
+  }
+
+  // OTP 2FA
+  const kode = Math.floor(100000+Math.random()*900000).toString();
+  otpPending = {kode, hp, nama:user.nama, role:_homeLoginRole, pwd, userId:user.id, 
+    email:user.email, jenisKendaraan:user.jenis_kendaraan, platNomor:user.plat_nomor, isLogin:true};
+  
+  try{
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_OTP,{
+      to_email: user.email,
+      to_name: user.nama,
+      otp_code: kode
+    });
+    document.getElementById('otpBackBtn').onclick = ()=>goScreen('screenHome');
+    document.getElementById('otpSubtitle').textContent = 'Kode verifikasi dikirim ke '+user.email;
+    goScreen('screenOTP');
+  }catch(e){
+    showAlert('homeLoginAlert','Gagal kirim OTP. Coba lagi.');
+  }
 }
 
 // ── LUPA PASSWORD ──
