@@ -1375,6 +1375,11 @@ function checkSession(){
 function goScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  // Topbar: tampilkan hanya untuk mitra
+  const topbar = document.getElementById('mainTopbar');
+  if(topbar){
+    topbar.style.display = (id==='screenMitra') ? 'flex' : 'none';
+  }
   // Render FAQ saat buka halaman bantuan
   if(id==='screenBantuan'){
     renderFAQ();
