@@ -2009,6 +2009,15 @@ function lanjutStep2(){
   document.getElementById('step2Tujuan').textContent = tujuan;
   document.getElementById('step2Jarak').textContent = _estimasiJarak.toFixed(1)+' km';
   document.getElementById('step2Estimasi').textContent = rupiah(_estimasiHarga);
+  // Sync estimasiTarif untuk validateHarga
+  estimasiTarif = _estimasiHarga;
+  // Set harga default ke estimasi
+  setHarga(_estimasiHarga);
+  // Tampilkan hint min/max
+  const minT=bulatkan500(_estimasiHarga*0.8);
+  const maxT=bulatkan500(_estimasiHarga*1.2);
+  const hargaHint=document.getElementById('hargaHint');
+  if(hargaHint) hargaHint.textContent='Min: '+rupiah(minT)+' · Max: '+rupiah(maxT);
   // Auto-fill nama & HP pengirim dari akun
   if(currentUser){
     if(!document.getElementById('orderNamaPengantar').value)
@@ -2712,7 +2721,7 @@ async function loadOrderAktifPengirim(){
   if(!el||!currentUser)return;
   el.innerHTML='<div class="loading">Memuat...</div>';
   const{data}=await db.from('orders').select('*,mitra:users!orders_mitra_id_fkey(no_hp,jenis_kendaraan,plat_nomor)').eq('pengirim_id',currentUser.id)
-    .in('status',['mencari','menunggu_konfirmasi','dijemput','diantar','diambil','dikerjakan']).order('created_at',{ascending:false});
+    .in('status',['mencari','menunggu_konfirmasi','menunggu_pembayaran','dibayar','diproses','dijemput','diantar','diambil','dikerjakan']).order('created_at',{ascending:false});
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">📭</div><p>Belum ada order aktif.</p></div>';return;}
   const html=await Promise.all(data.map(o=>renderOrderPengirim(o)));
   el.innerHTML=html.join('');
@@ -2841,7 +2850,7 @@ async function loadOrderTersedia(){
   const el=document.getElementById('listTersedia');
   el.innerHTML='<div class="loading">Mencari order...</div>';
   const{data}=await db.from('orders').select('*,users!orders_pengirim_id_fkey(nama)')
-    .in('status',['mencari','menunggu_konfirmasi']).is('mitra_id',null).order('created_at',{ascending:false});
+    .in('status',['mencari','menunggu_konfirmasi','menunggu_pembayaran']).is('mitra_id',null).order('created_at',{ascending:false});
   document.getElementById('badgeTersedia').textContent=data?data.length:0;
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">🔍</div><p>Belum ada order tersedia.</p><button class="btn btn-outline" style="width:auto;margin-top:16px" onclick="loadOrderTersedia()">🔄 Refresh</button></div>';return;}
   // Cek bid mitra ini untuk setiap order
@@ -2854,7 +2863,7 @@ async function loadOrderAktifMitra(){
   const el=document.getElementById('listMitraAktif');
   el.innerHTML='<div class="loading">Memuat...</div>';
   const{data}=await db.from('orders').select('*,pengirim:users!orders_pengirim_id_fkey(no_hp)').eq('mitra_id',currentUser.id)
-    .in('status',['dijemput','diantar','diambil','dikerjakan']).order('created_at',{ascending:false});
+    .in('status',['dijemput','diantar','diambil','dikerjakan','dibayar','diproses']).order('created_at',{ascending:false});
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">🛵</div><p>Belum ada order aktif.</p></div>';return;}
   el.innerHTML=data.map(o=>renderOrderAktifMitra(o)).join('');
 }
