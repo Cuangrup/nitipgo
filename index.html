@@ -1410,9 +1410,8 @@ function checkSession(){
     try{
       const user=JSON.parse(saved);
       // Selalu refresh dari DB untuk dapat status terbaru
-      db.from('users').select('*').eq('id',user.id).single().then(({data})=>{
+      db.from('users').select('*').eq('id',user.id).single().then(async({data})=>{
         if(data){
-          // Update localStorage dengan data terbaru
           localStorage.setItem('nitipgo_user',JSON.stringify(data));
           await masukSebagai(data);
         } else {
