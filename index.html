@@ -3943,9 +3943,16 @@ function lihatDetailOrder(orderId){
 
 async function konfirmasiPembayaran(orderId){
   if(!confirm('Konfirmasi pembayaran sudah diterima?')) return;
-  const{error} = await db.from('orders').update({status:'dibayar'}).eq('id',orderId);
+  // Ambil mitra_id dari bid yang dipilih
+  const{data:bid} = await db.from('bids').select('mitra_id,harga').eq('order_id',orderId).eq('status','dipilih').maybeSingle();
+  const updateData = {status:'dibayar'};
+  if(bid?.mitra_id) {
+    updateData.mitra_id = bid.mitra_id;
+    updateData.harga_deal = bid.harga;
+  }
+  const{error} = await db.from('orders').update(updateData).eq('id',orderId);
   if(error){alert('Gagal: '+error.message);return;}
-  alert('✅ Pembayaran dikonfirmasi! Order berstatus Dibayar.');
+  alert('✅ Pembayaran dikonfirmasi! Mitra dapat mulai belanja.');
   document.querySelectorAll('.admin-modal').forEach(m=>m.remove());
   loadAdminOrders();
 }
