@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NitipGo — Kirim Cepat, Harga Sepakat</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -1406,6 +1407,21 @@ function showAlert(elId,msg,type='error'){
 }
 
 // ── KALKULASI TARIF ──
+async function geocodeAddress(alamat){
+  try{
+    const res = await fetch('https://ikypjxxufrvdihuoccut.supabase.co/functions/v1/hyper-handler',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPA_KEY},
+      body:JSON.stringify({type:'search',q:alamat+', Surabaya'})
+    });
+    const data = await res.json();
+    if(data&&data[0]){
+      return {lat:parseFloat(data[0].lat),lng:parseFloat(data[0].lon),label:data[0].display_name};
+    }
+    return null;
+  }catch(e){return null;}
+}
+
 function hitungJarak(lat1,lng1,lat2,lng2){
   const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
   const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
