@@ -1863,8 +1863,6 @@ function pengirimTab(tab){
     },100);
   }
   else if(tab==='aktif'){document.querySelectorAll('.pengirim-tab')[1].classList.add('active');document.getElementById('tabOrderAktif').style.display='block';document.getElementById('tabAktifLabel').textContent='Order Aktif';loadOrderAktifPengirim();
-    // Refresh sekali saat tab dibuka
-    loadOrderAktifPengirim();
   }
   else{document.querySelectorAll('.pengirim-tab')[2].classList.add('active');document.getElementById('tabRiwayat').style.display='block';loadRiwayatPengirim();}
 }
@@ -1928,13 +1926,14 @@ async function buatOrder(){
   document.getElementById('orderStep1').style.display='block';
   document.getElementById('estimasiBox').style.display='none';
   document.getElementById('btnLanjutStep2').style.display='none';
-  // Pindah ke tab aktif
-  setTimeout(()=>pengirimTab('aktif'), 500);
+  // Pindah ke tab aktif dan load order
+  pengirimTab('aktif');
 }
 
 // ── LOAD ORDER PENGIRIM ──
 async function loadOrderAktifPengirim(){
   const el=document.getElementById('listOrderAktif');
+  if(!el||!currentUser)return;
   el.innerHTML='<div class="loading">Memuat...</div>';
   const{data}=await db.from('orders').select('*,mitra:users!orders_mitra_id_fkey(no_hp,jenis_kendaraan,plat_nomor)').eq('pengirim_id',currentUser.id)
     .in('status',['mencari','menunggu_konfirmasi','dijemput','diantar']).order('created_at',{ascending:false});
@@ -3656,14 +3655,14 @@ async function homeLogin(){
   if(!pwd){showAlert('homeLoginAlert','Masukkan password kamu.');return;}
 
   const pwdHash = await hashPassword(pwd);
-  const{data:user,error} = await db.from('users')
+  const{data:user} = await db.from('users')
     .select('*')
     .eq('no_hp', hp)
     .eq('role', _homeLoginRole)
     .eq('pwd_hash', pwdHash)
-    .single();
+    .maybeSingle();
 
-  if(error || !user){showAlert('homeLoginAlert','Nomor HP atau password salah.');return;}
+  if(!user){showAlert('homeLoginAlert','Nomor HP atau password salah.');return;}
   if(!user.verified){showAlert('homeLoginAlert','Akun belum terverifikasi. Cek email kamu.');return;}
   if(user.status_verifikasi==='menunggu'){
     goScreen('screenMenunggu');return;
