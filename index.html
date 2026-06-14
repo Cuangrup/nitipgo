@@ -3031,10 +3031,12 @@ async function ajukanBid(orderId, hargaTawar=0){
     const w=document.getElementById('bidWarning_'+orderId);
     if(harga>maxBid){
       if(w){w.style.display='block';w.textContent='⚠️ Maksimal bid '+rupiah(maxBid)+' (120% dari harga tawar pengirim)';}
+      alert('⚠️ Maksimal bid '+rupiah(maxBid)+' (120% dari harga tawar pengirim)');
       return;
     }
     if(harga<minBid){
       if(w){w.style.display='block';w.textContent='⚠️ Minimal bid '+rupiah(minBid)+' (80% dari harga tawar pengirim)';}
+      alert('⚠️ Minimal bid '+rupiah(minBid)+' (80% dari harga tawar pengirim)');
       return;
     }
     if(w) w.style.display='none';
