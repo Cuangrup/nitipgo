@@ -2857,14 +2857,14 @@ function renderOrderMitra(o,done=false,sudahBid=false){
     `<div class="nego-box mitra-side">
       <div class="nego-title mitra">💬 Ajukan Penawaran Harga</div>
       <div style="display:flex;align-items:center;gap:8px;background:white;border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:8px">
-        <button type="button" onclick="adjustBid('${o.id}',-500)" style="width:32px;height:32px;border-radius:6px;border:1.5px solid var(--border);background:var(--surface);font-size:16px;cursor:pointer;font-weight:700;">−</button>
+        <button type="button" onclick="adjustBid('${o.id}',-500,${o.harga_tawar})" style="width:32px;height:32px;border-radius:6px;border:1.5px solid var(--border);background:var(--surface);font-size:16px;cursor:pointer;font-weight:700;">−</button>
         <div style="flex:1;text-align:center">
           <input type="number" id="bidHarga_${o.id}" value="${o.harga_tawar}" min="0" step="500"
             style="width:100%;font-size:18px;font-weight:800;color:var(--mitra);border:none;outline:none;text-align:center;background:transparent;"
             oninput="validateBid('${o.id}',${o.harga_tawar})"
             onblur="bulatkanBid('${o.id}',${o.harga_tawar})">
         </div>
-        <button type="button" onclick="adjustBid('${o.id}',500)" style="width:32px;height:32px;border-radius:6px;border:1.5px solid var(--border);background:var(--surface);font-size:16px;cursor:pointer;font-weight:700;">+</button>
+        <button type="button" onclick="adjustBid('${o.id}',500,${o.harga_tawar})" style="width:32px;height:32px;border-radius:6px;border:1.5px solid var(--border);background:var(--surface);font-size:16px;cursor:pointer;font-weight:700;">+</button>
       </div>
       <div id="bidWarning_${o.id}" style="display:none;font-size:12px;color:#880e4f;background:#fce4ec;padding:8px;border-radius:6px;margin-bottom:8px"></div>
       <input type="text" id="bidPesan_${o.id}" placeholder="Pesan ke pengirim (opsional)" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px">
@@ -2974,10 +2974,13 @@ function salinAlamat(alamat, tipe){
   });
 }
 
-function adjustBid(orderId, delta){
+function adjustBid(orderId, delta, hargaTawar=0){
   const current=parseInt(document.getElementById('bidHarga_'+orderId).value)||0;
-  const newVal=Math.max(5000, current+delta);
+  const minVal=hargaTawar>0?bulatkan500(hargaTawar*0.8):5000;
+  const maxVal=hargaTawar>0?bulatkan500(hargaTawar*1.2):999999999;
+  const newVal=Math.min(maxVal, Math.max(minVal, current+delta));
   document.getElementById('bidHarga_'+orderId).value=bulatkan500(newVal);
+  validateBid(orderId, hargaTawar);
 }
 
 function validateBid(orderId, hargaTawar){
