@@ -1404,7 +1404,7 @@ function logout(){
 }
 
 // Auto login saat reload
-function checkSession(){
+async function checkSession(){
   const saved=localStorage.getItem('nitipgo_user');
   if(saved){
     try{
@@ -1733,7 +1733,7 @@ function tampilLokasiSaatIni(){
     console.log('Geolocation error:',err.message);
   },{enableHighAccuracy:true,timeout:8000});
 }
-function closeMap(){document.getElementById('mapModal').classList.remove('open');}
+async function closeMap(){document.getElementById('mapModal').classList.remove('open');}
 async function onMapClick(e){
   const{lat,lng}=e.latlng;selectedLatLng={lat,lng};
   if(mapMarker)mapMarker.remove();
@@ -2393,7 +2393,7 @@ function cekStatusAudio(){
   }
 }
 
-function startMitraPolling(){
+async function startMitraPolling(){
   if(_mitraPollTimer)clearInterval(_mitraPollTimer);
   stopNotifBerulang();
   _mitraPollTimer=setInterval(async()=>{
@@ -2515,7 +2515,7 @@ async function cekOrderSelesai(){
   }
 }
 
-function startPengirimPolling(){
+async function startPengirimPolling(){
   stopPengirimPolling();
   _pengirimPollTimer=setInterval(async()=>{
     if(!currentUser||currentRole!=='pengirim')return;
@@ -2624,7 +2624,7 @@ function checkAdminHash(){
   }
 }
 
-async function loginAdmin(){
+async async function loginAdmin(){
   const pwd=document.getElementById('adminPwd').value;
   if(!pwd){showAlert('adminLoginAlert','Password wajib diisi.');return;}
   const hash=await hashPassword(pwd);
@@ -3355,7 +3355,7 @@ async function kirimPesan(){
   loadChatMessages();
 }
 
-function startChatPolling(){
+async function startChatPolling(){
   stopChatPolling();
   _chatPollTimer = setInterval(async()=>{
     if(!_chatOrderId)return;
