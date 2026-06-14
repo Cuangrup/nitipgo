@@ -1722,20 +1722,16 @@ function selectSuggestion(lat,lon,addr){
   document.getElementById('mapSearchInput').value=selectedAddress;
 }
 function confirmMapLocation(){
-  if(!selectedAddress){alert('Pilih lokasi dulu');return;}
+  if(!selectedLatLng){alert('Pilih lokasi di peta dulu');return;}
   const fieldId=mapTarget==='pickup'?'orderPickup':'orderTujuan';
   const el=document.getElementById(fieldId);
-  el.value=selectedAddress;
-  if(selectedLatLng){
-    el.dataset.lat=selectedLatLng.lat;
-    el.dataset.lng=selectedLatLng.lng;
-  }
+  // Pakai alamat jika sudah ada, fallback ke koordinat
+  const addr = selectedAddress || (selectedLatLng.lat.toFixed(5)+', '+selectedLatLng.lng.toFixed(5));
+  el.value=addr;
+  el.dataset.lat=selectedLatLng.lat;
+  el.dataset.lng=selectedLatLng.lng;
   if(mapTarget==='pickup')pickupCoords=selectedLatLng;
   else tujuanCoords=selectedLatLng;
-  // Update estimasi jika kedua alamat sudah ada
-  const p=document.getElementById('orderPickup').value;
-  const t=document.getElementById('orderTujuan').value;
-  if(p&&t&&typeof updateEstimasi==='function') updateEstimasi();
   closeMap();
 }
 
