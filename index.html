@@ -358,8 +358,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="field">
         <label>Daftar sebagai</label>
         <select id="daftarRole" onchange="toggleDokMitra()">
-          <option value="pengirim">👤 Pengguna</option>
-          <option value="mitra">🛵 Mitra Driver</option>
+          <option value="pengirim">Pengguna</option>
+          <option value="mitra">Mitra Driver (NitipKirim & NitipBeli)</option>
+          <option value="mitra_service">Mitra Service (NitipSuruh)</option>
         </select>
       </div>
       <button class="btn btn-go" onclick="nextStepDaftar()">Lanjut →</button>
@@ -418,6 +419,68 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
 
       <div id="daftarStep2Alert"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" onclick="backStepDaftar()">← Kembali</button>
+        <button class="btn btn-go" onclick="kirimOTP('daftar')">Kirim OTP Verifikasi →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 SERVICE: Dokumen Mitra Service -->
+    <div id="daftarStep2Service" style="display:none">
+      <div style="background:#EEF4FF;border:1px solid #BFDBFE;border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:#0047AB">
+        <i class="ti ti-info-circle" aria-hidden="true"></i>
+        Mitra Service mengerjakan tugas tanpa kendaraan. Upload dokumen berikut untuk verifikasi.
+      </div>
+
+      <div class="field">
+        <label>Nama Lengkap</label>
+        <input type="text" id="daftarNamaService" placeholder="Nama sesuai KTP">
+      </div>
+
+      <div class="field">
+        <label>Foto Selfie</label>
+        <div class="dok-upload" id="uploadSelfieService" onclick="document.getElementById('inputSelfieService').click()">
+          <div id="previewSelfieService">
+            <i class="ti ti-camera" style="font-size:24px;color:#0047AB" aria-hidden="true"></i>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk upload foto wajah</div>
+          </div>
+        </div>
+        <input type="file" id="inputSelfieService" accept="image/*" capture="user" onchange="previewDokService('Selfie',this)">
+      </div>
+
+      <div class="field">
+        <label>Foto KTP</label>
+        <div class="dok-upload" id="uploadKtpService" onclick="document.getElementById('inputKtpService').click()">
+          <div id="previewKtpService">
+            <i class="ti ti-id" style="font-size:24px;color:#0047AB" aria-hidden="true"></i>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk upload foto KTP</div>
+          </div>
+        </div>
+        <input type="file" id="inputKtpService" accept="image/*" onchange="previewDokService('Ktp',this)">
+      </div>
+
+      <div class="field">
+        <label>KK atau Ijazah <span style="color:var(--muted);font-size:12px">(pilih salah satu)</span></label>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <button id="btnPilihKK" onclick="pilihDokService('kk')"
+            style="flex:1;padding:8px;border-radius:8px;border:2px solid #0047AB;background:#EEF4FF;color:#0047AB;font-size:13px;cursor:pointer;font-weight:500">
+            <i class="ti ti-file-text" aria-hidden="true"></i> Kartu Keluarga
+          </button>
+          <button id="btnPilihIjazah" onclick="pilihDokService('ijazah')"
+            style="flex:1;padding:8px;border-radius:8px;border:0.5px solid var(--border);background:white;color:var(--muted);font-size:13px;cursor:pointer">
+            <i class="ti ti-certificate" aria-hidden="true"></i> Ijazah
+          </button>
+        </div>
+        <div class="dok-upload" id="uploadDokService" onclick="document.getElementById('inputDokService').click()">
+          <div id="previewDokService">
+            <i class="ti ti-file-plus" style="font-size:24px;color:#0047AB" aria-hidden="true"></i>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px" id="labelDokService">Upload KK atau Ijazah</div>
+          </div>
+        </div>
+        <input type="file" id="inputDokService" accept="image/*" onchange="previewDokService('Dok',this)">
+      </div>
+
+      <div id="daftarStep2ServiceAlert"></div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-outline" onclick="backStepDaftar()">← Kembali</button>
         <button class="btn btn-go" onclick="kirimOTP('daftar')">Kirim OTP Verifikasi →</button>
@@ -648,6 +711,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="form-sub">Isi alamat untuk lihat estimasi harga</div>
     <div id="step1Alert"></div>
 
+    <!-- SEKSI ALAMAT (NitipKirim & NitipBeli) -->
+    <div id="alamatSection">
     <div class="field">
       <label>Alamat Penjemputan</label>
       <div class="addr-wrap">
@@ -662,6 +727,44 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <input type="text" id="orderTujuan" placeholder="Ketik alamat lengkap...">
         <button class="addr-map-btn" onclick="openMap('tujuan')" title="Pilih di peta"><i class="ti ti-map-pin" style="font-size:16px;color:#0047AB" aria-hidden="true"></i></button>
       </div>
+    </div>
+    </div>
+
+    <!-- SEKSI NITIPSURUH -->
+    <div id="suruhSection" style="display:none">
+    <div class="field">
+      <label>Nama kamu</label>
+      <input type="text" id="suruhNamaPengguna" placeholder="Nama lengkap">
+    </div>
+    <div class="field">
+      <label>No. HP kamu</label>
+      <input type="tel" id="suruhHpPengguna" placeholder="08xxxxxxxxxx" oninput="formatHP(this)">
+    </div>
+    <div class="field">
+      <label>Alamat kamu (lokasi tugas)</label>
+      <div class="addr-wrap">
+        <input type="text" id="suruhAlamat" placeholder="Alamat lengkap lokasi tugas...">
+        <button class="addr-map-btn" onclick="openMap('suruh')" title="Pilih di peta"><i class="ti ti-map-pin" style="font-size:16px;color:#0047AB" aria-hidden="true"></i></button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Deskripsi tugas</label>
+      <textarea id="suruhDesc" placeholder="Ceritakan tugasnya... (contoh: tolong ambilkan jemuran, bersihkan kamar, dll)" style="min-height:80px"></textarea>
+    </div>
+    <div class="field">
+      <label>Harga tawar (min Rp 10.000)</label>
+      <div style="display:flex;align-items:center;gap:8px;background:white;border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;">
+        <button type="button" onclick="adjustHargaSuruh(-1000)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;font-weight:700;flex-shrink:0;">−</button>
+        <div style="flex:1;text-align:center;">
+          <input type="number" id="suruhHarga" value="25000" min="10000" step="1000"
+            style="width:100%;font-size:22px;font-weight:800;color:var(--brand);border:none;outline:none;text-align:center;background:transparent;"
+            oninput="validateHargaSuruh(this)">
+        </div>
+        <button type="button" onclick="adjustHargaSuruh(1000)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;font-weight:700;flex-shrink:0;">+</button>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;text-align:center">Kelipatan Rp 1.000 · bisa nego dengan mitra</div>
+    </div>
+    <button class="btn btn-go" onclick="buatOrderSuruh()">Pasang Order <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
     </div>
 
     <!-- ESTIMASI -->
@@ -1044,7 +1147,40 @@ let dokFiles = {ktp:null, sim:null, stnk:null, kendaraan:null, selfie:null};
 function toggleDokMitra(){
   const role=document.getElementById('daftarRole').value;
   const step2Btn=document.querySelector('#daftarStep1 .btn-go');
-  step2Btn.textContent = role==='mitra' ? 'Lanjut Upload Dokumen →' : 'Kirim Kode OTP via Email →';
+  if(role==='mitra') step2Btn.textContent='Lanjut Upload Dokumen →';
+  else if(role==='mitra_service') step2Btn.textContent='Lanjut Upload Dokumen →';
+  else step2Btn.textContent='Kirim Kode OTP via Email →';
+}
+
+let _dokServicePilihan = 'kk';
+let _dokServiceData = {selfie:null, ktp:null, dok:null};
+
+function pilihDokService(tipe){
+  _dokServicePilihan = tipe;
+  const btnKK = document.getElementById('btnPilihKK');
+  const btnIjazah = document.getElementById('btnPilihIjazah');
+  const label = document.getElementById('labelDokService');
+  if(tipe==='kk'){
+    btnKK.style.cssText='flex:1;padding:8px;border-radius:8px;border:2px solid #0047AB;background:#EEF4FF;color:#0047AB;font-size:13px;cursor:pointer;font-weight:500';
+    btnIjazah.style.cssText='flex:1;padding:8px;border-radius:8px;border:0.5px solid var(--border);background:white;color:var(--muted);font-size:13px;cursor:pointer';
+    label.textContent='Upload foto Kartu Keluarga';
+  } else {
+    btnIjazah.style.cssText='flex:1;padding:8px;border-radius:8px;border:2px solid #0047AB;background:#EEF4FF;color:#0047AB;font-size:13px;cursor:pointer;font-weight:500';
+    btnKK.style.cssText='flex:1;padding:8px;border-radius:8px;border:0.5px solid var(--border);background:white;color:var(--muted);font-size:13px;cursor:pointer';
+    label.textContent='Upload foto Ijazah';
+  }
+}
+
+function previewDokService(type, input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    _dokServiceData[type.toLowerCase()] = e.target.result;
+    document.getElementById('preview'+type+'Service').innerHTML = 
+      `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">`;
+  };
+  reader.readAsDataURL(file);
 }
 
 function nextStepDaftar(){
@@ -1067,6 +1203,11 @@ function nextStepDaftar(){
     if(role==='mitra'){
       document.getElementById('daftarStep1').style.display='none';
       document.getElementById('daftarStep2').style.display='block';
+      document.getElementById('stepInfo').className='step-item done';
+      document.getElementById('stepDok').className='step-item active';
+    } else if(role==='mitra_service'){
+      document.getElementById('daftarStep1').style.display='none';
+      document.getElementById('daftarStep2Service').style.display='block';
       document.getElementById('stepInfo').className='step-item done';
       document.getElementById('stepDok').className='step-item active';
     } else {
@@ -1123,6 +1264,17 @@ function fileToBase64Compressed(file, maxSize=400, quality=0.5){
 }
 
 // Upload dokumen satu per satu ke database
+async function uploadDokumenService(userId, dokData){
+  try{
+    await db.from('users').update({
+      foto_profil: dokData.selfie||null,
+      dok_ktp: dokData.ktp||null,
+      dok_kk_ijazah: dokData.dok||null,
+      tipe_dok_pendukung: dokData.pilihan||'kk',
+    }).eq('id', userId);
+  }catch(e){console.error('uploadDokumenService error:',e);}
+}
+
 async function uploadDokumenBase64(userId){
   const types=[
     {key:'selfie',col:'foto_profil'},
@@ -1179,21 +1331,28 @@ async function kirimOTP(mode){
     const emailVal=document.getElementById('daftarEmail')?.value?.trim()||'';
     if(!emailVal){showAlert('daftarAlert','Email Gmail wajib diisi.');return;}
     if(!validasiGmail(emailVal)){showAlert('daftarAlert','Hanya email @gmail.com yang diizinkan.');return;}
-    // Validasi dokumen mitra wajib semua
+    // Validasi dokumen mitra driver
     if(role==='mitra'){
       const alertEl=document.getElementById('daftarStep2Alert')||document.getElementById('daftarAlert');
-      const jenisKendaraan=document.getElementById('daftarJenisKendaraan')?.value||'';
       const platNomor=document.getElementById('daftarPlatNomor')?.value.trim()||'';
-      if(!platNomor){alertEl.innerHTML='<div class="alert alert-error">🔢 Plat nomor kendaraan wajib diisi.</div>';return;}
-      if(!dokFiles.selfie){alertEl.innerHTML='<div class="alert alert-error">📸 Foto selfie/wajah wajib diupload.</div>';return;}
-      if(!dokFiles.ktp){alertEl.innerHTML='<div class="alert alert-error">📄 Foto KTP wajib diupload.</div>';return;}
-      if(!dokFiles.sim){alertEl.innerHTML='<div class="alert alert-error">🪪 Foto SIM wajib diupload.</div>';return;}
-      if(!dokFiles.stnk){alertEl.innerHTML='<div class="alert alert-error">🚗 Foto STNK wajib diupload.</div>';return;}
-      if(!dokFiles.kendaraan){alertEl.innerHTML='<div class="alert alert-error">📸 Foto kendaraan wajib diupload.</div>';return;}
+      if(!platNomor){alertEl.innerHTML='<div class="alert alert-error">Plat nomor kendaraan wajib diisi.</div>';return;}
+      if(!dokFiles.selfie){alertEl.innerHTML='<div class="alert alert-error">Foto selfie wajib diupload.</div>';return;}
+      if(!dokFiles.ktp){alertEl.innerHTML='<div class="alert alert-error">Foto KTP wajib diupload.</div>';return;}
+      if(!dokFiles.sim){alertEl.innerHTML='<div class="alert alert-error">Foto SIM wajib diupload.</div>';return;}
+      if(!dokFiles.stnk){alertEl.innerHTML='<div class="alert alert-error">Foto STNK wajib diupload.</div>';return;}
+      if(!dokFiles.kendaraan){alertEl.innerHTML='<div class="alert alert-error">Foto kendaraan wajib diupload.</div>';return;}
     }
-    // Cek HP + role sudah terdaftar (boleh punya 2 akun: pengirim & mitra)
-    const{data:existing}=await db.from('users').select('id').eq('no_hp',hp).eq('role',role).maybeSingle();
-    if(existing){showAlert('daftarAlert','Nomor HP sudah terdaftar sebagai '+role+'. Silakan login.');return;}
+    // Validasi dokumen mitra service
+    if(role==='mitra_service'){
+      const alertEl=document.getElementById('daftarStep2ServiceAlert')||document.getElementById('daftarAlert');
+      if(!_dokServiceData.selfie){alertEl.innerHTML='<div class="alert alert-error">Foto selfie wajib diupload.</div>';return;}
+      if(!_dokServiceData.ktp){alertEl.innerHTML='<div class="alert alert-error">Foto KTP wajib diupload.</div>';return;}
+      if(!_dokServiceData.dok){alertEl.innerHTML='<div class="alert alert-error">Foto KK atau Ijazah wajib diupload.</div>';return;}
+    }
+    // Cek HP + role sudah terdaftar
+    const roleDB = (role==='mitra_service') ? 'mitra' : role;
+    const{data:existing}=await db.from('users').select('id').eq('no_hp',hp).eq('role',roleDB).maybeSingle();
+    if(existing){showAlert('daftarAlert','Nomor HP sudah terdaftar. Silakan login.');return;}
   }
 
   // Generate OTP
@@ -1201,7 +1360,14 @@ async function kirimOTP(mode){
   const email=document.getElementById('daftarEmail')?.value||'';
   const jenisKendaraan=document.getElementById('daftarJenisKendaraan')?.value||'';
   const platNomor=(document.getElementById('daftarPlatNomor')?.value||'').toUpperCase();
-  otpPending={kode,hp,nama,role,pwd,email,jenisKendaraan,platNomor};
+  const roleDB2 = (role==='mitra_service') ? 'mitra' : role;
+  const tipeMitra = role==='mitra_service' ? 'service' : (role==='mitra' ? 'driver' : null);
+  otpPending={kode,hp,nama,role:roleDB2,pwd,email,
+    jenisKendaraan: role==='mitra' ? (document.getElementById('daftarJenisKendaraan')?.value||'') : null,
+    platNomor: role==='mitra' ? (document.getElementById('daftarPlatNomor')?.value||'').toUpperCase() : null,
+    tipeMitra,
+    dokServiceData: role==='mitra_service' ? {..._dokServiceData, pilihan:_dokServicePilihan} : null
+  };
 
   // Kirim OTP via Email
   const emailAddr=document.getElementById('daftarEmail')?.value?.trim()||otpPending.email||'';
@@ -1261,11 +1427,16 @@ async function verifikasiOTP(){
       status_verifikasi:isMitra?'menunggu':'aktif',
       jenis_kendaraan:otpPending.jenisKendaraan||null,
       plat_nomor:otpPending.platNomor||null,
+      tipe_mitra:otpPending.tipeMitra||null,
     }).select().single();
     if(error){showAlert('otpAlert','Gagal buat akun: '+error.message);return;}
     // Upload dokumen kalau mitra
     if(isMitra&&user){
-      await uploadDokumenBase64(user.id);
+      if(otpPending.tipeMitra==='service'&&otpPending.dokServiceData){
+        await uploadDokumenService(user.id, otpPending.dokServiceData);
+      } else {
+        await uploadDokumenBase64(user.id);
+      }
       // Kirim notif WA ke owner
       await kirimWA('6287750883510',`🔔 *NitipGo - Pendaftar Mitra Baru*\nNama: ${user.nama}\nHP: +${user.no_hp}\nDokumen sudah diupload. Silakan verifikasi di dashboard admin.`);
     }
@@ -1445,7 +1616,11 @@ function kodeOrder(){
   let r='';for(let i=0;i<6;i++)r+=c[Math.floor(Math.random()*c.length)];
   return'NGO-'+r;
 }
-function statusLabel(s){
+function statusLabel(s,jenis){
+  if(jenis==='suruh'){
+    const ms={mencari:'Mencari Mitra',menunggu_konfirmasi:'Pilih Mitra',diambil:'Diambil',dikerjakan:'Sedang Dikerjakan',selesai:'Selesai',batal:'Dibatalkan'};
+    return ms[s]||s;
+  }
   const m={mencari:'Mencari Mitra',menunggu_konfirmasi:'Pilih Mitra',nego:'Negosiasi',dijemput:'Dijemput',diantar:'Dalam Perjalanan',selesai:'Selesai',batal:'Dibatalkan'};
   return m[s]||s;
 }
@@ -1538,11 +1713,29 @@ function bukaOrderJenis(jenis){
   _orderJenis = jenis;
   const titles = {kirim:'Mau kirim ke mana?', beli:'Mau beli apa & di mana?', suruh:'Mau suruh apa?'};
   const subs = {kirim:'Isi alamat untuk lihat estimasi harga', beli:'Isi alamat toko & tujuan pengiriman', suruh:'Deskripsi tugas yang perlu dikerjakan'};
-  // Update judul form
   const formTitle = document.querySelector('#orderStep1 .form-title');
   const formSub = document.querySelector('#orderStep1 .form-sub');
   if(formTitle) formTitle.textContent = titles[jenis];
   if(formSub) formSub.textContent = subs[jenis];
+
+  // Tampilkan/sembunyikan elemen sesuai jenis
+  const alamatSection = document.getElementById('alamatSection');
+  const suruhSection = document.getElementById('suruhSection');
+  if(jenis==='suruh'){
+    if(alamatSection) alamatSection.style.display='none';
+    if(suruhSection) suruhSection.style.display='block';
+    // Auto-fill nama & HP pengguna
+    if(currentUser){
+      const namaEl=document.getElementById('suruhNamaPengguna');
+      const hpEl=document.getElementById('suruhHpPengguna');
+      if(namaEl&&!namaEl.value) namaEl.value=currentUser.nama||'';
+      if(hpEl&&!hpEl.value) hpEl.value=currentUser.no_hp||'';
+    }
+  } else {
+    if(alamatSection) alamatSection.style.display='block';
+    if(suruhSection) suruhSection.style.display='none';
+  }
+
   document.getElementById('orderStep1').style.display='block';
   document.getElementById('orderStep2').style.display='none';
   document.getElementById('estimasiBox').style.display='none';
@@ -1627,6 +1820,73 @@ function kembaliStep1(){
   document.getElementById('orderStep1').style.display='block';
 }
 
+// ── NITIPSURUH HELPERS ──
+function adjustHargaSuruh(delta){
+  const el=document.getElementById('suruhHarga');
+  let val=parseInt(el.value)||10000;
+  val=Math.max(10000, val+delta);
+  el.value=val;
+}
+
+function validateHargaSuruh(el){
+  let val=parseInt(el.value)||0;
+  if(val<10000) el.style.color='#DC2626';
+  else el.style.color='var(--brand)';
+}
+
+async function buatOrderSuruh(){
+  if(!currentUser||!currentUser.id){showAlert('step1Alert','Sesi habis. Silakan login ulang.');return;}
+  const nama=document.getElementById('suruhNamaPengguna').value.trim();
+  const hp=document.getElementById('suruhHpPengguna').value.replace(/\D/g,'');
+  const alamat=document.getElementById('suruhAlamat').value.trim();
+  const desc=document.getElementById('suruhDesc').value.trim();
+  const harga=parseInt(document.getElementById('suruhHarga').value)||0;
+
+  if(!nama){showAlert('step1Alert','Nama wajib diisi.');return;}
+  if(!hp||hp.length<9){showAlert('step1Alert','No HP wajib diisi.');return;}
+  if(!alamat){showAlert('step1Alert','Alamat lokasi tugas wajib diisi.');return;}
+  if(!desc){showAlert('step1Alert','Deskripsi tugas wajib diisi.');return;}
+  if(harga<10000){showAlert('step1Alert','Harga minimal Rp 10.000.');return;}
+
+  // Cek order aktif
+  const{data:orderAktif}=await db.from('orders')
+    .select('id,kode').eq('pengirim_id',currentUser.id)
+    .in('status',['mencari','menunggu_konfirmasi','diambil','dikerjakan'])
+    .maybeSingle();
+  if(orderAktif){showAlert('step1Alert','Kamu masih punya order aktif ('+orderAktif.kode+'). Selesaikan dulu.');return;}
+
+  const orderData={
+    kode:kodeOrder(),pengirim_id:currentUser.id,
+    jenis:'suruh',
+    alamat_pickup:alamat,
+    alamat_tujuan:alamat,
+    hp_pengirim:hp,
+    nama_pengantar:nama,
+    deskripsi:desc,
+    harga_tawar:harga,
+    status:'mencari',
+  };
+
+  // Simpan koordinat kalau ada
+  const suruhEl=document.getElementById('suruhAlamat');
+  if(suruhEl.dataset.lat){
+    orderData.pickup_lat=parseFloat(suruhEl.dataset.lat);
+    orderData.pickup_lng=parseFloat(suruhEl.dataset.lng);
+  }
+
+  const{data,error}=await db.from('orders').insert(orderData).select().single();
+  if(error){showAlert('step1Alert','Gagal buat order: '+error.message);return;}
+
+  // Reset form
+  document.getElementById('suruhNamaPengguna').value='';
+  document.getElementById('suruhHpPengguna').value='';
+  document.getElementById('suruhAlamat').value='';
+  document.getElementById('suruhDesc').value='';
+  document.getElementById('suruhHarga').value='25000';
+
+  setTimeout(()=>pengirimTab('aktif'), 800);
+}
+
 function onHargaInput(el){
   validateHarga();
 }
@@ -1694,6 +1954,26 @@ document.getElementById('orderTujuan').addEventListener('input',()=>{updateEstim
 let _userLocationMarker=null;
 
 function openMap(target){
+  // Handle suruh map target
+  if(target==='suruh'){
+    const el=document.getElementById('suruhAlamat');
+    mapTarget='suruh';
+    document.getElementById('mapModal').classList.add('open');
+    document.getElementById('mapModalTitle').textContent='Lokasi Tugas';
+    document.getElementById('mapSearchInput').value='';
+    document.getElementById('mapSuggestions').innerHTML='';
+    document.getElementById('mapSelectedAddr').textContent='Klik peta atau cari alamat';
+    selectedLatLng=null;selectedAddress='';
+    setTimeout(()=>{
+      if(!mapInstance){
+        mapInstance=L.map('mapContainer').setView([-7.2575,112.7521],13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(mapInstance);
+        mapInstance.on('click',onMapClick);
+      } else {mapInstance.invalidateSize();}
+      tampilLokasiSaatIni();
+    },300);
+    return;
+  }
   mapTarget=target;
   document.getElementById('mapModal').classList.add('open');
   document.getElementById('mapModalTitle').textContent=target==='pickup'?'Lokasi Penjemputan':'Lokasi Tujuan';
@@ -1775,7 +2055,11 @@ function selectSuggestion(lat,lon,addr){
 }
 function confirmMapLocation(){
   if(!selectedLatLng){alert('Pilih lokasi di peta dulu');return;}
-  const fieldId=mapTarget==='pickup'?'orderPickup':'orderTujuan';
+  let fieldId;
+  if(mapTarget==='pickup') fieldId='orderPickup';
+  else if(mapTarget==='tujuan') fieldId='orderTujuan';
+  else if(mapTarget==='suruh') fieldId='suruhAlamat';
+  else fieldId='orderTujuan';
   const el=document.getElementById(fieldId);
   // Pakai alamat jika sudah ada, fallback ke koordinat
   const addr = selectedAddress || (selectedLatLng.lat.toFixed(5)+', '+selectedLatLng.lng.toFixed(5));
