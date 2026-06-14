@@ -747,27 +747,59 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <!-- MITRA DASHBOARD -->
 <div id="screenMitra" class="screen">
+
+  <!-- HEADER BIRU MITRA -->
+  <div style="background:#0047AB;padding:16px 20px 0">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div>
+        <div style="font-size:12px;color:#BFDBFE">Mode Driver</div>
+        <div style="font-size:16px;font-weight:600;color:white" id="mitraHeaderNama">Mitra</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="background:rgba(255,255,255,0.15);border-radius:20px;padding:4px 12px;font-size:11px;color:white" id="mitraHeaderRating">⭐ 5.0</div>
+        <button onclick="bukaHalamanPengaturan()" style="background:rgba(255,255,255,0.15);border:none;border-radius:20px;padding:6px 12px;color:white;font-size:12px;cursor:pointer">
+          <i class="ti ti-user-circle" style="font-size:14px" aria-hidden="true"></i> Akun
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIF AUDIO BAR -->
+  <div id="notifAudioBar" style="background:#EEF4FF;border-bottom:1px solid #BFDBFE;padding:8px 16px;display:none;align-items:center;justify-content:space-between">
+    <span style="font-size:12px;color:#0047AB">Aktifkan notif suara order baru</span>
+    <button onclick="aktifkanAudio()" style="background:#0047AB;color:white;border:none;border-radius:8px;padding:4px 12px;font-size:12px;cursor:pointer">Aktifkan</button>
+  </div>
+
+  <!-- TABS -->
   <div class="mitra-tabs">
     <div class="mitra-tab active" onclick="mitraTab('tersedia')">Tersedia <span class="badge" id="badgeTersedia">0</span></div>
     <div class="mitra-tab" onclick="mitraTab('aktif')">Aktifku</div>
     <div class="mitra-tab" onclick="mitraTab('selesai')">Selesai</div>
   </div>
-  <div id="notifAudioBar" style="background:#fff3e0;border-bottom:1px solid #ffe0b2;padding:8px 16px;display:none;align-items:center;justify-content:space-between;font-size:13px">
-    <span>🔔 Aktifkan suara notifikasi order</span>
-    <button onclick="aktifkanAudio()" style="background:var(--mitra);color:white;border:none;padding:6px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Aktifkan</button>
+
+  <!-- TAB TERSEDIA -->
+  <div id="tabTersedia" class="mitra-content">
+    <div id="orderTersediaList" class="form-wrap" style="padding-top:16px">
+      <div class="loading">Memuat order tersedia...</div>
+    </div>
   </div>
-  <div id="mitraTabTersedia" class="mitra-content">
-    <div id="listTersedia"><div class="loading">Mencari order...</div></div>
+
+  <!-- TAB AKTIFKU -->
+  <div id="tabAktifku" class="mitra-content" style="display:none">
+    <div id="orderAktifMitraList" class="form-wrap" style="padding-top:16px">
+      <div class="loading">Memuat order aktif...</div>
+    </div>
   </div>
-  <div id="mitraTabAktif" style="display:none" class="mitra-content">
-    <div id="listMitraAktif"><div class="loading">Memuat...</div></div>
+
+  <!-- TAB SELESAI -->
+  <div id="tabSelesaiMitra" class="mitra-content" style="display:none">
+    <div id="orderSelesaiMitraList" class="form-wrap" style="padding-top:16px">
+      <div class="loading">Memuat riwayat...</div>
+    </div>
   </div>
-  <div id="mitraTabSelesai" style="display:none" class="mitra-content">
-    <div id="listMitraSelesai"><div class="loading">Memuat...</div></div>
-  </div>
+
 </div>
 
-<!-- ADMIN LOGIN -->
 <div id="screenAdminLogin" class="screen">
   <div class="admin-login">
     <div style="text-align:center;margin-bottom:24px">
@@ -1324,6 +1356,11 @@ function updateTopbar(user){
   // Update nama di header dashboard pengguna
   const headerNama = document.getElementById('pengirimHeaderNama');
   if(headerNama) headerNama.textContent = user.nama;
+  // Update nama & rating di header mitra
+  const mitraHeaderNama = document.getElementById('mitraHeaderNama');
+  if(mitraHeaderNama) mitraHeaderNama.textContent = user.nama;
+  const mitraHeaderRating = document.getElementById('mitraHeaderRating');
+  if(mitraHeaderRating) mitraHeaderRating.textContent = '⭐ '+(user.rating||'5.0');
 }
 
 function logout(){
@@ -1486,12 +1523,13 @@ let _estimasiJarak = 0;
 
 function bukaOrderJenis(jenis){
   _orderJenis = jenis;
-  const icons = {kirim:'ti-package', beli:'ti-shopping-bag', suruh:'ti-clipboard-list'};
-  const texts = {kirim:'NitipKirim', beli:'NitipBeli', suruh:'NitipSuruh'};
-  const iconEl = document.getElementById('step1JenisIcon');
-  iconEl.className = 'ti ' + icons[jenis];
-  iconEl.style.cssText = 'font-size:16px;color:#0047AB';
-  document.getElementById('step1JenisText').textContent = texts[jenis];
+  const titles = {kirim:'Mau kirim ke mana?', beli:'Mau beli apa & di mana?', suruh:'Mau suruh apa?'};
+  const subs = {kirim:'Isi alamat untuk lihat estimasi harga', beli:'Isi alamat toko & tujuan pengiriman', suruh:'Deskripsi tugas yang perlu dikerjakan'};
+  // Update judul form
+  const formTitle = document.querySelector('#orderStep1 .form-title');
+  const formSub = document.querySelector('#orderStep1 .form-sub');
+  if(formTitle) formTitle.textContent = titles[jenis];
+  if(formSub) formSub.textContent = subs[jenis];
   document.getElementById('orderStep1').style.display='block';
   document.getElementById('orderStep2').style.display='none';
   document.getElementById('estimasiBox').style.display='none';
@@ -3699,297 +3737,24 @@ checkSession();
 checkAdminHash();
 </script>
 
-<!-- PENGATURAN AKUN -->
-<div id="screenPengaturan" class="screen">
-  <div class="form-wrap">
-    <button class="back-btn" onclick="goBackFromPengaturan()">← Kembali</button>
-    <div class="form-title">Pengaturan Akun</div>
-
-    <!-- Profil -->
-    <div style="display:flex;align-items:center;gap:16px;padding:20px;background:var(--surface);border-radius:12px;margin-bottom:20px">
-      <div id="pengaturanAvatar"></div>
-      <div>
-        <div style="font-weight:800;font-size:17px" id="pengaturanNama">-</div>
-        <div style="font-size:13px;color:var(--muted)" id="pengaturanRole">-</div>
-        <div style="margin-top:4px" id="pengaturanRating"></div>
-      </div>
-    </div>
-
-    <!-- Ganti Foto Profil -->
-    <div style="text-align:center;margin-bottom:16px">
-      <input type="file" id="inputFotoProfil" accept="image/*" capture="user" style="display:none" onchange="uploadFotoProfil(this)">
-      <button class="btn btn-outline btn-sm" onclick="document.getElementById('inputFotoProfil').click()" style="font-size:13px">
-        <i class="ti ti-camera" style="font-size:14px" aria-hidden="true"></i> Ganti Foto Profil
-      </button>
-      <div id="fotoProfllUploadStatus" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
-    </div>
-
-    <!-- Info Akun -->
-    <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:0 16px;margin-bottom:16px">
-      <div class="info-row">
-        <div><div class="info-label">Nama</div><div id="infoNama">-</div></div>
-      </div>
-      <div class="info-row">
-        <div><div class="info-label">Nomor WhatsApp</div><div id="infoHp">-</div></div>
-      </div>
-      <div class="info-row">
-        <div><div class="info-label">Email</div><div id="infoEmail">-</div></div>
-      </div>
-      <div class="info-row" id="infoPlatRow" style="display:none">
-        <div><div class="info-label">Plat Nomor</div><div id="infoPlat">-</div></div>
-      </div>
-    </div>
-
-    <!-- Rating diterima -->
-    <div id="pengaturanRatingSection" style="margin-bottom:16px">
-      <div style="font-weight:700;font-size:14px;margin-bottom:10px">⭐ Ulasan yang Diterima</div>
-      <div id="pengaturanUlasanList"><div style="font-size:13px;color:var(--muted)">Memuat...</div></div>
-    </div>
-
-    <!-- Menu -->
-    <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:0 16px;margin-bottom:16px">
-      <div class="menu-item" onclick="goScreen('screenGantiPassword')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        Ganti Password
-        <span class="menu-arrow">›</span>
-      </div>
-      <div class="menu-item" onclick="goScreen('screenBantuan')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Bantuan & FAQ
-        <span class="menu-arrow">›</span>
-      </div>
-      <div class="menu-item" style="color:#e53935" onclick="logout()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Keluar
-      </div>
-    </div>
-
-    <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:8px">
-      Untuk mengubah nama atau nomor HP,<br>hubungi admin melalui menu Bantuan.
-    </div>
-  </div>
-</div>
-
-<!-- GANTI PASSWORD -->
-<div id="screenGantiPassword" class="screen">
-  <div class="form-wrap">
-    <button class="back-btn" onclick="goScreen('screenPengaturan')">← Kembali</button>
-    <div class="form-title">Ganti Password</div>
-    <div id="gantiPwdAlert"></div>
-    <div class="field">
-      <label>Password Lama</label>
-      <div class="pwd-wrap">
-        <input type="password" id="gantiPwdLama" placeholder="Password saat ini">
-        <button class="pwd-eye" onclick="togglePwd('gantiPwdLama',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
-      </div>
-    </div>
-    <div class="field">
-      <label>Password Baru</label>
-      <div class="pwd-wrap">
-        <input type="password" id="gantiPwdBaru" placeholder="Minimal 6 karakter">
-        <button class="pwd-eye" onclick="togglePwd('gantiPwdBaru',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
-      </div>
-    </div>
-    <div class="field">
-      <label>Konfirmasi Password Baru</label>
-      <div class="pwd-wrap">
-        <input type="password" id="gantiPwdKonfirmasi" placeholder="Ulangi password baru">
-        <button class="pwd-eye" onclick="togglePwd('gantiPwdKonfirmasi',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
-      </div>
-    </div>
-    <button class="btn btn-go" onclick="gantiPassword()">Simpan Password →</button>
-  </div>
-</div>
-
-<!-- BANTUAN & FAQ -->
-<div id="screenBantuan" class="screen">
-  <div class="form-wrap">
-    <button class="back-btn" onclick="goScreen('screenPengaturan')">← Kembali</button>
-    <div class="form-title">Bantuan & FAQ</div>
-    <div class="form-sub">Pertanyaan yang sering ditanyakan</div>
-
-    <!-- FAQ -->
-    <div style="margin-bottom:24px" id="faqSection"></div>
-
-    <!-- Hubungi Admin -->
-    <div style="border-top:2px solid var(--border);padding-top:20px">
-      <div style="font-weight:700;font-size:15px;margin-bottom:4px">📧 Hubungi Admin</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Tidak menemukan jawaban? Kirim pesan ke tim NitipGo.</div>
-      <div id="bantuanAlert"></div>
-      <div class="field">
-        <label>Subjek</label>
-        <select id="bantuanSubjek" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px">
-          <option value="">-- Pilih subjek --</option>
-          <option value="Ubah Data Akun">Ubah Data Akun (Nama/HP)</option>
-          <option value="Masalah Order">Masalah Order</option>
-          <option value="Masalah Pembayaran">Masalah Pembayaran</option>
-          <option value="Laporkan Pengguna">Laporkan Pengguna/Mitra</option>
-          <option value="Pertanyaan Lainnya">Pertanyaan Lainnya</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Pesan</label>
-        <textarea id="bantuanPesan" placeholder="Tulis pesanmu di sini..." style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;height:120px;resize:none;font-family:inherit"></textarea>
-      </div>
-      <button class="btn btn-go" onclick="kirimBantuan()">Kirim Pesan →</button>
-    </div>
-  </div>
-</div>
-
-<!-- PENGATURAN AKUN -->
-<div id="screenPengaturan" class="screen">
-  <div class="form-wrap">
-    <button class="back-btn" onclick="goBackFromPengaturan()">← Kembali</button>
-    <div class="form-title">Pengaturan Akun</div>
-
-    <!-- Profil -->
-    <div style="display:flex;align-items:center;gap:16px;padding:20px;background:var(--surface);border-radius:12px;margin-bottom:20px">
-      <div id="pengaturanAvatar"></div>
-      <div>
-        <div style="font-weight:800;font-size:17px" id="pengaturanNama">-</div>
-        <div style="font-size:13px;color:var(--muted)" id="pengaturanRole">-</div>
-        <div style="margin-top:4px" id="pengaturanRating"></div>
-      </div>
-    </div>
-
-    <!-- Ganti Foto Profil -->
-    <div style="text-align:center;margin-bottom:16px">
-      <input type="file" id="inputFotoProfil" accept="image/*" capture="user" style="display:none" onchange="uploadFotoProfil(this)">
-      <button class="btn btn-outline btn-sm" onclick="document.getElementById('inputFotoProfil').click()" style="font-size:13px">
-        <i class="ti ti-camera" style="font-size:14px" aria-hidden="true"></i> Ganti Foto Profil
-      </button>
-      <div id="fotoProfllUploadStatus" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
-    </div>
-
-    <!-- Info Akun -->
-    <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:0 16px;margin-bottom:16px">
-      <div class="info-row">
-        <div><div class="info-label">Nama</div><div id="infoNama">-</div></div>
-      </div>
-      <div class="info-row">
-        <div><div class="info-label">Nomor WhatsApp</div><div id="infoHp">-</div></div>
-      </div>
-      <div class="info-row">
-        <div><div class="info-label">Email</div><div id="infoEmail">-</div></div>
-      </div>
-      <div class="info-row" id="infoPlatRow" style="display:none">
-        <div><div class="info-label">Plat Nomor</div><div id="infoPlat">-</div></div>
-      </div>
-    </div>
-
-    <!-- Rating diterima -->
-    <div id="pengaturanRatingSection" style="margin-bottom:16px">
-      <div style="font-weight:700;font-size:14px;margin-bottom:10px">⭐ Ulasan yang Diterima</div>
-      <div id="pengaturanUlasanList"><div style="font-size:13px;color:var(--muted)">Memuat...</div></div>
-    </div>
-
-    <!-- Menu -->
-    <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:0 16px;margin-bottom:16px">
-      <div class="menu-item" onclick="goScreen('screenGantiPassword')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        Ganti Password
-        <span class="menu-arrow">›</span>
-      </div>
-      <div class="menu-item" onclick="goScreen('screenBantuan')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Bantuan & FAQ
-        <span class="menu-arrow">›</span>
-      </div>
-      <div class="menu-item" style="color:#e53935" onclick="logout()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Keluar
-      </div>
-    </div>
-
-    <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:8px">
-      Untuk mengubah nama atau nomor HP,<br>hubungi admin melalui menu Bantuan.
-    </div>
-  </div>
-</div>
-
-<!-- GANTI PASSWORD -->
-<div id="screenGantiPassword" class="screen">
-  <div class="form-wrap">
-    <button class="back-btn" onclick="goScreen('screenPengaturan')">← Kembali</button>
-    <div class="form-title">Ganti Password</div>
-    <div id="gantiPwdAlert"></div>
-    <div class="field">
-      <label>Password Lama</label>
-      <div class="pwd-wrap">
-        <input type="password" id="gantiPwdLama" placeholder="Password saat ini">
-        <button class="pwd-eye" onclick="togglePwd('gantiPwdLama',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
-      </div>
-    </div>
-    <div class="field">
-      <label>Password Baru</label>
-      <div class="pwd-wrap">
-        <input type="password" id="gantiPwdBaru" placeholder="Minimal 6 karakter">
-        <button class="pwd-eye" onclick="togglePwd('gantiPwdBaru',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
-      </div>
-    </div>
-    <div class="field">
-      <label>Konfirmasi Password Baru</label>
-      <div class="pwd-wrap">
-        <input type="password" id="gantiPwdKonfirmasi" placeholder="Ulangi password baru">
-        <button class="pwd-eye" onclick="togglePwd('gantiPwdKonfirmasi',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
-      </div>
-    </div>
-    <button class="btn btn-go" onclick="gantiPassword()">Simpan Password →</button>
-  </div>
-</div>
-
-<!-- BANTUAN & FAQ -->
-<div id="screenBantuan" class="screen">
-  <div class="form-wrap">
-    <button class="back-btn" onclick="goScreen('screenPengaturan')">← Kembali</button>
-    <div class="form-title">Bantuan & FAQ</div>
-    <div class="form-sub">Pertanyaan yang sering ditanyakan</div>
-
-    <!-- FAQ -->
-    <div style="margin-bottom:24px" id="faqSection"></div>
-
-    <!-- Hubungi Admin -->
-    <div style="border-top:2px solid var(--border);padding-top:20px">
-      <div style="font-weight:700;font-size:15px;margin-bottom:4px">📧 Hubungi Admin</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Tidak menemukan jawaban? Kirim pesan ke tim NitipGo.</div>
-      <div id="bantuanAlert"></div>
-      <div class="field">
-        <label>Subjek</label>
-        <select id="bantuanSubjek" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px">
-          <option value="">-- Pilih subjek --</option>
-          <option value="Ubah Data Akun">Ubah Data Akun (Nama/HP)</option>
-          <option value="Masalah Order">Masalah Order</option>
-          <option value="Masalah Pembayaran">Masalah Pembayaran</option>
-          <option value="Laporkan Pengguna">Laporkan Pengguna/Mitra</option>
-          <option value="Pertanyaan Lainnya">Pertanyaan Lainnya</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Pesan</label>
-        <textarea id="bantuanPesan" placeholder="Tulis pesanmu di sini..." style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;height:120px;resize:none;font-family:inherit"></textarea>
-      </div>
-      <button class="btn btn-go" onclick="kirimBantuan()">Kirim Pesan →</button>
-    </div>
-  </div>
-</div>
 <!-- CHAT -->
 <div id="screenChat" class="screen">
-  <div class="chat-screen">
-    <div class="chat-header">
+  <div style="display:flex;flex-direction:column;min-height:calc(100vh - 60px)">
+    <div style="background:#0047AB;color:white;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0">
       <button onclick="tutupChat()" style="background:none;border:none;color:white;cursor:pointer;font-size:20px;padding:0;line-height:1">←</button>
       <div>
         <div style="font-weight:700;font-size:15px" id="chatOrderKode">-</div>
         <div style="font-size:12px;opacity:0.8" id="chatOrderInfo">-</div>
       </div>
     </div>
-    <div class="chat-messages" id="chatMessages">
+    <div style="flex:1;min-height:300px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--surface)" id="chatMessages">
       <div class="loading">Memuat pesan...</div>
     </div>
-    <div class="chat-input-bar">
-      <input type="text" id="chatInput" placeholder="Tulis pesan..." 
-        style="flex:1;padding:8px 14px;border-radius:20px;border:0.5px solid var(--border);font-size:14px;outline:none"
+    <div style="padding:10px 12px;background:white;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;position:sticky;bottom:0">
+      <input type="text" id="chatInput" placeholder="Tulis pesan..."
+        style="flex:1;padding:8px 14px;border-radius:20px;border:1.5px solid var(--border);font-size:14px;outline:none"
         onkeydown="if(event.key==='Enter')kirimPesan()">
-      <button class="chat-send-btn" onclick="kirimPesan()">
+      <button onclick="kirimPesan()" style="width:36px;height:36px;border-radius:50%;background:#0047AB;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
         <i class="ti ti-send" style="font-size:16px;color:white" aria-hidden="true"></i>
       </button>
     </div>
@@ -3997,12 +3762,141 @@ checkAdminHash();
 </div>
 
 
-<!-- RATING MODAL -->
-<div id="notifSelesai" class="notif-popup">
-  <div class="notif-box">
-    <div id="notifContent"></div>
+<!-- PENGATURAN AKUN -->
+<div id="screenPengaturan" class="screen">
+  <div class="form-wrap">
+    <button class="back-btn" onclick="goBackFromPengaturan()">← Kembali</button>
+    <div class="form-title">Pengaturan Akun</div>
+
+    <!-- Profil -->
+    <div style="display:flex;align-items:center;gap:16px;padding:20px;background:var(--surface);border-radius:12px;margin-bottom:20px">
+      <div id="pengaturanAvatar"></div>
+      <div>
+        <div style="font-weight:800;font-size:17px" id="pengaturanNama">-</div>
+        <div style="font-size:13px;color:var(--muted)" id="pengaturanRole">-</div>
+        <div style="margin-top:4px" id="pengaturanRating"></div>
+      </div>
+    </div>
+
+    <!-- Ganti Foto Profil -->
+    <div style="text-align:center;margin-bottom:16px">
+      <input type="file" id="inputFotoProfil" accept="image/*" capture="user" style="display:none" onchange="uploadFotoProfil(this)">
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('inputFotoProfil').click()" style="font-size:13px">
+        <i class="ti ti-camera" style="font-size:14px" aria-hidden="true"></i> Ganti Foto Profil
+      </button>
+      <div id="fotoProfllUploadStatus" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
+    </div>
+
+    <!-- Info Akun -->
+    <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:0 16px;margin-bottom:16px">
+      <div class="info-row">
+        <div><div class="info-label">Nama</div><div id="infoNama">-</div></div>
+      </div>
+      <div class="info-row">
+        <div><div class="info-label">Nomor WhatsApp</div><div id="infoHp">-</div></div>
+      </div>
+      <div class="info-row">
+        <div><div class="info-label">Email</div><div id="infoEmail">-</div></div>
+      </div>
+      <div class="info-row" id="infoPlatRow" style="display:none">
+        <div><div class="info-label">Plat Nomor</div><div id="infoPlat">-</div></div>
+      </div>
+    </div>
+
+    <!-- Rating diterima -->
+    <div id="pengaturanRatingSection" style="margin-bottom:16px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">⭐ Ulasan yang Diterima</div>
+      <div id="pengaturanUlasanList"><div style="font-size:13px;color:var(--muted)">Memuat...</div></div>
+    </div>
+
+    <!-- Menu -->
+    <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:0 16px;margin-bottom:16px">
+      <div class="menu-item" onclick="goScreen('screenGantiPassword')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Ganti Password
+        <span class="menu-arrow">›</span>
+      </div>
+      <div class="menu-item" onclick="goScreen('screenBantuan')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Bantuan & FAQ
+        <span class="menu-arrow">›</span>
+      </div>
+      <div class="menu-item" style="color:#e53935" onclick="logout()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Keluar
+      </div>
+    </div>
+
+    <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:8px">
+      Untuk mengubah nama atau nomor HP,<br>hubungi admin melalui menu Bantuan.
+    </div>
   </div>
 </div>
 
+<!-- GANTI PASSWORD -->
+<div id="screenGantiPassword" class="screen">
+  <div class="form-wrap">
+    <button class="back-btn" onclick="goScreen('screenPengaturan')">← Kembali</button>
+    <div class="form-title">Ganti Password</div>
+    <div id="gantiPwdAlert"></div>
+    <div class="field">
+      <label>Password Lama</label>
+      <div class="pwd-wrap">
+        <input type="password" id="gantiPwdLama" placeholder="Password saat ini">
+        <button class="pwd-eye" onclick="togglePwd('gantiPwdLama',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Password Baru</label>
+      <div class="pwd-wrap">
+        <input type="password" id="gantiPwdBaru" placeholder="Minimal 6 karakter">
+        <button class="pwd-eye" onclick="togglePwd('gantiPwdBaru',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Konfirmasi Password Baru</label>
+      <div class="pwd-wrap">
+        <input type="password" id="gantiPwdKonfirmasi" placeholder="Ulangi password baru">
+        <button class="pwd-eye" onclick="togglePwd('gantiPwdKonfirmasi',this)"><i class="ti ti-eye" style="font-size:16px" aria-hidden="true"></i></button>
+      </div>
+    </div>
+    <button class="btn btn-go" onclick="gantiPassword()">Simpan Password →</button>
+  </div>
+</div>
+
+<!-- BANTUAN & FAQ -->
+<div id="screenBantuan" class="screen">
+  <div class="form-wrap">
+    <button class="back-btn" onclick="goScreen('screenPengaturan')">← Kembali</button>
+    <div class="form-title">Bantuan & FAQ</div>
+    <div class="form-sub">Pertanyaan yang sering ditanyakan</div>
+
+    <!-- FAQ -->
+    <div style="margin-bottom:24px" id="faqSection"></div>
+
+    <!-- Hubungi Admin -->
+    <div style="border-top:2px solid var(--border);padding-top:20px">
+      <div style="font-weight:700;font-size:15px;margin-bottom:4px">📧 Hubungi Admin</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Tidak menemukan jawaban? Kirim pesan ke tim NitipGo.</div>
+      <div id="bantuanAlert"></div>
+      <div class="field">
+        <label>Subjek</label>
+        <select id="bantuanSubjek" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px">
+          <option value="">-- Pilih subjek --</option>
+          <option value="Ubah Data Akun">Ubah Data Akun (Nama/HP)</option>
+          <option value="Masalah Order">Masalah Order</option>
+          <option value="Masalah Pembayaran">Masalah Pembayaran</option>
+          <option value="Laporkan Pengguna">Laporkan Pengguna/Mitra</option>
+          <option value="Pertanyaan Lainnya">Pertanyaan Lainnya</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Pesan</label>
+        <textarea id="bantuanPesan" placeholder="Tulis pesanmu di sini..." style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;height:120px;resize:none;font-family:inherit"></textarea>
+      </div>
+      <button class="btn btn-go" onclick="kirimBantuan()">Kirim Pesan →</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
