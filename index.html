@@ -1247,7 +1247,7 @@ async function verifikasiOTP(){
     // Mode LOGIN — langsung masuk
     const{data:user}=await db.from('users').select('*').eq('id',otpPending.userId).single();
     otpPending={kode:null,hp:null,nama:null,role:null,pwd:null,userId:null};
-    if(user)await await masukSebagai(user);
+    if(user)await masukSebagai(user);
   } else {
     // Mode DAFTAR — buat akun baru
     const pwdHash=await hashPassword(otpPending.pwd);
@@ -1320,9 +1320,7 @@ async function loginAkun(){
 }
 
 async function masukSebagai(user){
-  // Selalu ambil data terbaru dari DB
-  const{data:freshUser}=await db.from('users').select('*').eq('id',user.id).single();
-  const u=freshUser||user;
+  const u=user;
   currentUser=u;
   currentRole=u.role;
   // Cek status verifikasi mitra
@@ -1341,23 +1339,17 @@ async function masukSebagai(user){
   localStorage.setItem('nitipgo_user',JSON.stringify(u));
   updateTopbar(u);
   if(u.role==='pengirim'){
-    document.getElementById('mainTopbar').style.display='none';
     goScreen('screenPengirim');
-    setTimeout(()=>{
-      pengirimTab('buat');
-      subscribeRealtimePengirim();
-      setTimeout(cekOrderSelesai,2000);
-      startFlagOrderCheck();
-    },100);
-  }
-  else{
+    pengirimTab('buat');
+    subscribeRealtimePengirim();
+    setTimeout(cekOrderSelesai,2000);
+    startFlagOrderCheck();
+  } else {
     goScreen('screenMitra');
-    setTimeout(()=>{
-      mitraTab('tersedia');
-      subscribeRealtime();
-      cekStatusAudio();
-      startFlagOrderCheck();
-    },100);
+    mitraTab('tersedia');
+    subscribeRealtime();
+    setTimeout(cekStatusAudio,500);
+    startFlagOrderCheck();
   }
 }
 
@@ -1406,7 +1398,7 @@ function logout(){
 }
 
 // Auto login saat reload
-async function checkSession(){
+function checkSession(){
   const saved=localStorage.getItem('nitipgo_user');
   if(saved){
     try{
@@ -3673,23 +3665,9 @@ async function homeLogin(){
     showAlert('homeLoginAlert','Akun kamu dinonaktifkan. Hubungi admin.');return;
   }
 
-  // OTP 2FA
-  const kode = Math.floor(100000+Math.random()*900000).toString();
-  otpPending = {kode, hp, nama:user.nama, role:_homeLoginRole, pwd, userId:user.id, 
-    email:user.email, jenisKendaraan:user.jenis_kendaraan, platNomor:user.plat_nomor, isLogin:true};
-  
-  try{
-    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_OTP,{
-      to_email: user.email,
-      to_name: user.nama,
-      otp_code: kode
-    });
-    document.getElementById('otpBackBtn').onclick = ()=>goScreen('screenHome');
-    document.getElementById('otpSubtitle').textContent = 'Kode verifikasi dikirim ke '+user.email;
-    goScreen('screenOTP');
-  }catch(e){
-    showAlert('homeLoginAlert','Gagal kirim OTP. Coba lagi.');
-  }
+  // Login langsung tanpa OTP
+  localStorage.setItem('nitipgo_user', JSON.stringify(user));
+  await masukSebagai(user);
 }
 
 // ── LUPA PASSWORD ──
