@@ -1515,7 +1515,8 @@ async function masukSebagai(user){
   currentRole=u.role;
   // Cek status verifikasi mitra
   if(u.role==='mitra' && u.status_verifikasi==='menunggu'){
-    localStorage.setItem('nitipgo_user',JSON.stringify(u));
+    const _uM={...u};delete _uM.foto_profil;delete _uM.dok_ktp;delete _uM.dok_sim;delete _uM.dok_stnk;delete _uM.dok_kendaraan;
+    localStorage.setItem('nitipgo_user',JSON.stringify(_uM));
     updateTopbar(u);
     goScreen('screenMenunggu');
     return;
@@ -1525,8 +1526,11 @@ async function masukSebagai(user){
     showAlert('loginAlert','Pendaftaran mitrammu ditolak. Hubungi admin untuk info lebih lanjut.');
     return;
   }
-  // Simpan session
-  localStorage.setItem('nitipgo_user',JSON.stringify(u));
+  // Simpan session tanpa data besar
+  const _uKecil={...u};
+  delete _uKecil.foto_profil;delete _uKecil.dok_ktp;delete _uKecil.dok_sim;
+  delete _uKecil.dok_stnk;delete _uKecil.dok_kendaraan;delete _uKecil.dok_kk_ijazah;
+  localStorage.setItem('nitipgo_user',JSON.stringify(_uKecil));
   updateTopbar(u);
   // Update nama di header
   const pengirimHeader=document.getElementById('pengirimHeaderNama');
@@ -3905,7 +3909,8 @@ async function uploadFotoProfil(input){
     const{error} = await db.from('users').update({foto_profil:base64}).eq('id',currentUser.id);
     if(error){status.textContent='Gagal upload.';return;}
     currentUser.foto_profil = base64;
-    localStorage.setItem('nitipgo_user', JSON.stringify(currentUser));
+    const _uFoto={...currentUser};delete _uFoto.foto_profil;delete _uFoto.dok_ktp;delete _uFoto.dok_sim;delete _uFoto.dok_stnk;delete _uFoto.dok_kendaraan;
+    localStorage.setItem('nitipgo_user', JSON.stringify(_uFoto));
     // Update avatar di halaman pengaturan
     document.getElementById('pengaturanAvatar').innerHTML=`<img src="${base64}" class="profil-avatar">`;
     // Update topbar
