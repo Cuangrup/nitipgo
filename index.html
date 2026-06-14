@@ -1280,14 +1280,12 @@ function fileToBase64Compressed(file, maxSize=400, quality=0.5){
 // Upload dokumen satu per satu ke database
 async function uploadDokumenService(userId, dokData){
   try{
-    console.log('uploadDokumenService called, userId:', userId);
-    const res = await db.from('users').update({
+    await db.from('users').update({
       foto_profil: dokData.selfie||null,
       dok_ktp: dokData.ktp||null,
       dok_kk_ijazah: dokData.dok||null,
       tipe_dok_pendukung: dokData.pilihan||'kk',
     }).eq('id', userId);
-    console.log('uploadDokumenService result:', JSON.stringify({error:res.error?.message, status:res.status}));
   }catch(e){console.error('uploadDokumenService error:',e);}
 }
 
@@ -1342,7 +1340,6 @@ async function kirimOTP(mode){
   const hp=document.getElementById('daftarHp').value.replace(/\D/g,'');
   const pwd=document.getElementById('daftarPwd')?.value||'';
 
-  console.log('kirimOTP called, role:', role, 'nama:', nama, 'hp:', hp);
   if(mode==='daftar'){
     if(!nama){showAlert('daftarAlert','Nama wajib diisi.');return;}
     if(hp.length<10){showAlert('daftarAlert','Nomor HP tidak valid.');return;}
@@ -1388,12 +1385,6 @@ async function kirimOTP(mode){
     dokServiceData: role==='mitra_service' ? {..._dokServiceData, pilihan:_dokServicePilihan} : null
   };
   if(role==='mitra_service'){
-    console.log('dokServiceData:', JSON.stringify({
-      selfie: !!otpPending.dokServiceData?.selfie,
-      ktp: !!otpPending.dokServiceData?.ktp,
-      dok: !!otpPending.dokServiceData?.dok,
-      pilihan: otpPending.dokServiceData?.pilihan
-    }));
   }
 
   // Kirim OTP via Email
@@ -1459,7 +1450,6 @@ async function verifikasiOTP(){
     if(error){showAlert('otpAlert','Gagal buat akun: '+error.message);return;}
     // Upload dokumen kalau mitra
     if(isMitra&&user){
-      console.log('tipeMitra:', otpPending.tipeMitra, 'dokServiceData:', !!otpPending.dokServiceData);
       if(otpPending.tipeMitra==='service'&&otpPending.dokServiceData){
         await uploadDokumenService(user.id, otpPending.dokServiceData);
       } else {
