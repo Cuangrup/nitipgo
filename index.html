@@ -1874,7 +1874,9 @@ function setHarga(val){
 
 function adjustHarga(delta){
   const current=parseInt(document.getElementById('orderHarga').value)||0;
-  const newVal=Math.max(5000, current+delta);
+  const minVal=estimasiTarif>0?bulatkan500(estimasiTarif*0.8):5000;
+  const maxVal=estimasiTarif>0?bulatkan500(estimasiTarif*1.2):9999999;
+  const newVal=Math.min(maxVal, Math.max(minVal, current+delta));
   setHarga(newVal);
 }
 
@@ -2351,19 +2353,23 @@ function validateHarga(){
   const btn=document.getElementById('btnPasangOrder');
   if(estimasiTarif>0){
     const minTawar=bulatkan500(estimasiTarif*0.8);
+    const maxTawar=bulatkan500(estimasiTarif*1.2);
     if(harga<minTawar){
       warning.style.display='block';
-      warning.textContent=`⚠️ Naikkan tarifmu! Minimum tawar ${rupiah(minTawar)} (80% dari estimasi ${rupiah(estimasiTarif)})`;
-      btn.disabled=true;
-      btn.style.opacity='0.5';
+      warning.textContent=`⚠️ Minimum tawar ${rupiah(minTawar)} (80% dari estimasi ${rupiah(estimasiTarif)})`;
+      btn.disabled=true; btn.style.opacity='0.5';
+      return false;
+    }
+    if(harga>maxTawar){
+      warning.style.display='block';
+      warning.textContent=`⚠️ Maksimum tawar ${rupiah(maxTawar)} (120% dari estimasi ${rupiah(estimasiTarif)})`;
+      btn.disabled=true; btn.style.opacity='0.5';
       return false;
     }
   } else if(harga<5500){
-    // Tanpa estimasi, minimal Rp 5.500
     warning.style.display='block';
     warning.textContent='⚠️ Harga tawar terlalu rendah. Minimal Rp 5.500';
-    btn.disabled=true;
-    btn.style.opacity='0.5';
+    btn.disabled=true; btn.style.opacity='0.5';
     return false;
   }
   if(harga<5000){
