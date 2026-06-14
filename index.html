@@ -728,6 +728,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <button class="addr-map-btn" onclick="openMap('tujuan')" title="Pilih di peta"><i class="ti ti-map-pin" style="font-size:16px;color:#0047AB" aria-hidden="true"></i></button>
       </div>
     </div>
+
+    <!-- ESTIMASI (hanya untuk NitipKirim & NitipBeli) -->
+    <div id="estimasiBox" style="display:none;background:#EEF4FF;border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:12px;color:#64748B;margin-bottom:4px">Estimasi harga</div>
+      <div style="font-size:22px;font-weight:800;color:#0047AB" id="estimasiHarga">Rp 0</div>
+      <div style="font-size:11px;color:#64748B;margin-top:2px" id="estimasiJarak">Menghitung jarak...</div>
+    </div>
+    <button class="btn btn-go" onclick="cekEstimasi()">Cek Estimasi →</button>
+    <button id="btnLanjutStep2" class="btn btn-go" onclick="lanjutStep2()" style="display:none;margin-top:8px">Lanjut Isi Detail →</button>
     </div>
 
     <!-- SEKSI NITIPSURUH - STEP 1 -->
@@ -742,16 +751,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
       <div class="field">
         <label>Deskripsi pekerjaan</label>
-        <textarea id="suruhDesc" placeholder="Ceritakan tugasnya secara detail... (contoh: tolong ambilkan jemuran di lantai 3, lipat dan simpan di lemari)" style="min-height:100px"></textarea>
+        <textarea id="suruhDesc" placeholder="Ceritakan tugasnya secara detail..." style="min-height:100px"></textarea>
       </div>
       <button class="btn btn-go" onclick="suruhLanjutStep2()">Lanjut <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
     </div>
 
-    <!-- SEKSI NITIPSURUH - STEP 2 -->
+    <!-- NITIPSURUH - STEP 2 -->
     <div id="suruhStep2" style="display:none">
       <button class="back-btn" onclick="suruhKembaliStep1()">← Kembali</button>
-
-      <!-- Ringkasan lokasi -->
       <div style="background:#EEF4FF;border-radius:12px;padding:12px;margin-bottom:16px">
         <div style="font-size:11px;color:#64748B;margin-bottom:4px">Lokasi pekerjaan</div>
         <div style="font-size:13px;color:#0047AB;display:flex;gap:6px;align-items:flex-start">
@@ -759,7 +766,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <span id="suruhAlamatRingkas">-</span>
         </div>
       </div>
-
       <div class="field">
         <label>Nama kamu</label>
         <input type="text" id="suruhNamaPengguna" placeholder="Nama lengkap">
@@ -783,14 +789,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
       <button class="btn btn-go" onclick="buatOrderSuruh()">Pasang Order <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
     </div>
-    <!-- ESTIMASI -->
-    <div id="estimasiBox" style="display:none;background:#EEF4FF;border-radius:12px;padding:14px;margin-bottom:16px">
-      <div style="font-size:12px;color:#64748B;margin-bottom:4px">Estimasi harga</div>
-      <div style="font-size:22px;font-weight:800;color:#0047AB" id="estimasiHarga">Rp 0</div>
-      <div style="font-size:11px;color:#64748B;margin-top:2px" id="estimasiJarak">Menghitung jarak...</div>
-    </div>
-    <button class="btn btn-go" onclick="cekEstimasi()">Cek Estimasi →</button>
-    <button id="btnLanjutStep2" class="btn btn-go" onclick="lanjutStep2()" style="display:none;margin-top:8px">Lanjut Isi Detail →</button>
     </div>
   </div>
 
