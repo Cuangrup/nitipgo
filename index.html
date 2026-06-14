@@ -1642,7 +1642,7 @@ document.getElementById('orderTujuan').addEventListener('input',()=>{updateEstim
 function openMap(target){
   mapTarget=target;
   document.getElementById('mapModal').classList.add('open');
-  document.getElementById('mapModalTitle').textContent=target==='pickup'?'📍 Lokasi Penjemputan':'📍 Lokasi Tujuan';
+  document.getElementById('mapModalTitle').textContent=target==='pickup'?'Lokasi Penjemputan':'Lokasi Tujuan';
   document.getElementById('mapSearchInput').value='';
   document.getElementById('mapSuggestions').innerHTML='';
   document.getElementById('mapSelectedAddr').textContent='Klik peta atau cari alamat';
@@ -1696,10 +1696,18 @@ function selectSuggestion(lat,lon,addr){
 function confirmMapLocation(){
   if(!selectedAddress){alert('Pilih lokasi dulu');return;}
   const fieldId=mapTarget==='pickup'?'orderPickup':'orderTujuan';
-  document.getElementById(fieldId).value=selectedAddress;
+  const el=document.getElementById(fieldId);
+  el.value=selectedAddress;
+  if(selectedLatLng){
+    el.dataset.lat=selectedLatLng.lat;
+    el.dataset.lng=selectedLatLng.lng;
+  }
   if(mapTarget==='pickup')pickupCoords=selectedLatLng;
   else tujuanCoords=selectedLatLng;
-  updateEstimasi();
+  // Update estimasi jika kedua alamat sudah ada
+  const p=document.getElementById('orderPickup').value;
+  const t=document.getElementById('orderTujuan').value;
+  if(p&&t&&typeof updateEstimasi==='function') updateEstimasi();
   closeMap();
 }
 
@@ -1708,7 +1716,7 @@ function openFotoModal(orderId,type,title,desc,callback){
   fotoOrderId=orderId;fotoType=type;fotoCallback=callback;fotoDataUrl=null;
   document.getElementById('fotoModalTitle').textContent=title;
   document.getElementById('fotoModalDesc').textContent=desc;
-  document.getElementById('fotoPreviewWrap').innerHTML='<div style="font-size:32px;">📸</div><div style="font-size:13px;color:var(--muted);margin-top:8px;">Klik untuk ambil/pilih foto</div>';
+  document.getElementById('fotoPreviewWrap').innerHTML='<i class="ti ti-camera" style="font-size:32px;color:#0047AB"></i><div style="font-size:13px;color:var(--muted);margin-top:8px;">Klik untuk ambil/pilih foto</div>';
   document.getElementById('fotoConfirmBtn').disabled=true;
   document.getElementById('fotoInput').value='';
   document.getElementById('fotoModal').style.display='flex';
