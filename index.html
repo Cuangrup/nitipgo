@@ -2785,19 +2785,38 @@ async function renderOrderPengirim(o,simple=false){
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Lokasi Pekerjaan</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps('${o.alamat_pickup}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Lokasi Pekerjaan</div>${o.alamat_pickup}</div>
+      </div>
+    </div>
+    `:o.jenis==='beli'?`
+    <div class="route">
+      <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
+      <div class="route-text">
+        <div class="route-addr"><div class="route-label">Tempat Pembelian</div>${o.alamat_pickup}</div>
+        <div class="route-addr"><div class="route-label">Antar ke</div>${o.alamat_tujuan}</div>
       </div>
     </div>
     `:`
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps('${o.alamat_pickup}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
-        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps('${o.alamat_tujuan}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup}</div>
+        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan}</div>
       </div>
     </div>
     `}
-    ${o.deskripsi?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📝 ${o.deskripsi}</div>`:''}
+    ${o.jenis==='beli'?`
+    <div style="background:#EEF4FF;border-radius:10px;padding:10px 12px;margin-bottom:10px">
+      ${o.nama_pengantar?`<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:#64748B">Nama Toko</span><span style="font-size:12px;font-weight:500;color:#0F172A">${o.nama_pengantar}</span></div>`:''}
+      ${o.deskripsi?`<div style="margin-bottom:4px"><span style="font-size:11px;color:#64748B">Barang</span><div style="font-size:12px;color:#0F172A;margin-top:2px">${o.deskripsi}</div></div>`:''}
+      ${o.estimasi_harga_barang?`<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:#64748B">Est. Harga Barang</span><span style="font-size:12px;font-weight:500;color:#0F172A">${rupiah(o.estimasi_harga_barang)}</span></div>`:''}
+      <div style="display:flex;justify-content:space-between;padding-top:6px;border-top:0.5px solid #BFDBFE">
+        <span style="font-size:11px;color:#64748B">Total Dibayar</span>
+        <span style="font-size:13px;font-weight:700;color:#0047AB">${rupiah(o.nominal_bayar||0)}</span>
+      </div>
+    </div>
+    `:''}
+    ${o.deskripsi&&o.jenis!=='beli'?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📝 ${o.deskripsi}</div>`:''}
     <div class="harga-row">
       <div><div style="font-size:11px;color:var(--muted)">Harga tawar</div><div class="harga-tawar">${rupiah(o.harga_tawar)}</div></div>
         ${o.harga_deal?`<div style="text-align:right"><div style="font-size:11px;color:var(--muted)">Harga deal</div><div style="font-size:18px;font-weight:800;color:var(--mitra)">${rupiah(o.harga_deal)}</div></div>`:''}
@@ -2894,19 +2913,38 @@ function renderOrderMitra(o,done=false,sudahBid=false){
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Lokasi Pekerjaan</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps('${o.alamat_pickup}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Lokasi Pekerjaan</div>${o.alamat_pickup}</div>
+      </div>
+    </div>
+    `:o.jenis==='beli'?`
+    <div class="route">
+      <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
+      <div class="route-text">
+        <div class="route-addr"><div class="route-label">Tempat Pembelian</div>${o.alamat_pickup}</div>
+        <div class="route-addr"><div class="route-label">Antar ke</div>${o.alamat_tujuan}</div>
       </div>
     </div>
     `:`
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps('${o.alamat_pickup}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
-        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps('${o.alamat_tujuan}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup}</div>
+        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan}</div>
       </div>
     </div>
     `}
-    ${o.deskripsi?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📝 ${o.deskripsi}</div>`:''}
+    ${o.jenis==='beli'?`
+    <div style="background:#EEF4FF;border-radius:10px;padding:10px 12px;margin-bottom:10px">
+      ${o.nama_pengantar?`<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:#64748B">Nama Toko</span><span style="font-size:12px;font-weight:500;color:#0F172A">${o.nama_pengantar}</span></div>`:''}
+      ${o.deskripsi?`<div style="margin-bottom:4px"><span style="font-size:11px;color:#64748B">Barang</span><div style="font-size:12px;color:#0F172A;margin-top:2px">${o.deskripsi}</div></div>`:''}
+      ${o.estimasi_harga_barang?`<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:#64748B">Est. Harga Barang</span><span style="font-size:12px;font-weight:500;color:#0F172A">${rupiah(o.estimasi_harga_barang)}</span></div>`:''}
+      <div style="display:flex;justify-content:space-between;padding-top:6px;border-top:0.5px solid #BFDBFE">
+        <span style="font-size:11px;color:#64748B">Total Dibayar</span>
+        <span style="font-size:13px;font-weight:700;color:#0047AB">${rupiah(o.nominal_bayar||0)}</span>
+      </div>
+    </div>
+    `:''}
+    ${o.deskripsi&&o.jenis!=='beli'?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📝 ${o.deskripsi}</div>`:''}
     <div class="harga-row" style="margin-bottom:12px">
       <div><div style="font-size:11px;color:var(--muted)">Harga tawar pengguna</div><div class="harga-tawar">${rupiah(o.harga_tawar)}</div></div>
       ${pengirim.nama?`<div style="font-size:12px;color:var(--muted)">👤 ${pengirim.nama}</div>`:''}
@@ -2943,18 +2981,37 @@ function renderOrderAktifMitra(o){
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Lokasi Pekerjaan</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps('${o.alamat_pickup}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Lokasi Pekerjaan</div>${o.alamat_pickup}</div>
+      </div>
+    </div>
+    `:o.jenis==='beli'?`
+    <div class="route">
+      <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
+      <div class="route-text">
+        <div class="route-addr"><div class="route-label">Tempat Pembelian</div>${o.alamat_pickup}</div>
+        <div class="route-addr"><div class="route-label">Antar ke</div>${o.alamat_tujuan}</div>
       </div>
     </div>
     `:`
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps('${o.alamat_pickup}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
-        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps('${o.alamat_tujuan}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup}</div>
+        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan}</div>
       </div>
     </div>
     `}
+    ${o.jenis==='beli'?`
+    <div style="background:#EEF4FF;border-radius:10px;padding:10px 12px;margin-bottom:10px">
+      ${o.nama_pengantar?`<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:#64748B">Nama Toko</span><span style="font-size:12px;font-weight:500;color:#0F172A">${o.nama_pengantar}</span></div>`:''}
+      ${o.deskripsi?`<div style="margin-bottom:4px"><span style="font-size:11px;color:#64748B">Barang</span><div style="font-size:12px;color:#0F172A;margin-top:2px">${o.deskripsi}</div></div>`:''}
+      ${o.estimasi_harga_barang?`<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:#64748B">Est. Harga Barang</span><span style="font-size:12px;font-weight:500;color:#0F172A">${rupiah(o.estimasi_harga_barang)}</span></div>`:''}
+      <div style="display:flex;justify-content:space-between;padding-top:6px;border-top:0.5px solid #BFDBFE">
+        <span style="font-size:11px;color:#64748B">Total Dibayar</span>
+        <span style="font-size:13px;font-weight:700;color:#0047AB">${rupiah(o.nominal_bayar||0)}</span>
+      </div>
+    </div>
+    `:''}
     <div class="harga-row" style="margin-bottom:12px"><div class="harga-tawar">${rupiah(o.harga_deal||o.harga_tawar)}</div></div>
     <button onclick="bukaChat('${o.id}','${o.kode}','pengirim')" style="width:100%;margin-bottom:10px;padding:10px;background:#1a5f3f;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-message-circle" style="font-size:16px" aria-hidden="true"></i> Chat dengan Pengguna</button>
     <div style="background:var(--surface);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px">
