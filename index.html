@@ -2487,8 +2487,14 @@ function confirmMapLocation(){
   el.value=addr;
   el.dataset.lat=selectedLatLng.lat;
   el.dataset.lng=selectedLatLng.lng;
-  if(mapTarget==='pickup')pickupCoords=selectedLatLng;
-  else tujuanCoords=selectedLatLng;
+  if(mapTarget==='pickup') pickupCoords=selectedLatLng;
+  else if(mapTarget==='tujuan') tujuanCoords=selectedLatLng;
+  // Hitung estimasi NitipBeli otomatis
+  if(mapTarget==='beliPickup'||mapTarget==='beliTujuan'){
+    const bp=document.getElementById('beliPickup').value;
+    const bt=document.getElementById('beliTujuan').value;
+    if(bp&&bt) hitungEstimasiBeli();
+  }
   closeMap();
 }
 
