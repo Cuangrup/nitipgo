@@ -739,6 +739,141 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button id="btnLanjutStep2" class="btn btn-go" onclick="lanjutStep2()" style="display:none;margin-top:8px">Lanjut Isi Detail →</button>
     </div>
 
+    <!-- SEKSI NITIPBELI - STEP 1 -->
+    <div id="beliSection" style="display:none">
+    <div id="beliStep1">
+      <div class="field">
+        <label>Titik Pembelian (Lokasi Toko)</label>
+        <div class="addr-wrap">
+          <input type="text" id="beliPickup" placeholder="Nama & alamat toko...">
+          <button class="addr-map-btn" onclick="openMap('beliPickup')" title="Pilih di peta"><i class="ti ti-map-pin" style="font-size:16px;color:#0047AB" aria-hidden="true"></i></button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Titik Pengantaran</label>
+        <div class="addr-wrap">
+          <input type="text" id="beliTujuan" placeholder="Alamat pengiriman barang...">
+          <button class="addr-map-btn" onclick="openMap('beliTujuan')" title="Pilih di peta"><i class="ti ti-map-pin" style="font-size:16px;color:#0047AB" aria-hidden="true"></i></button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Estimasi Biaya Jasa</label>
+        <div style="display:flex;align-items:center;gap:8px;background:white;border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;">
+          <button type="button" onclick="adjustHargaBeli(-500)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;font-weight:700;flex-shrink:0;">−</button>
+          <div style="flex:1;text-align:center;">
+            <input type="number" id="beliHargaJasa" value="15000" min="5000" step="500"
+              style="width:100%;font-size:22px;font-weight:800;color:var(--brand);border:none;outline:none;text-align:center;background:transparent;">
+          </div>
+          <button type="button" onclick="adjustHargaBeli(500)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;font-weight:700;flex-shrink:0;">+</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;text-align:center">Biaya jasa mitra · kelipatan Rp 500</div>
+      </div>
+      <div id="beliStep1Alert"></div>
+      <button class="btn btn-go" onclick="beliLanjutStep2()">Lanjut <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+    </div>
+
+    <!-- NITIPBELI - STEP 2: DETAIL -->
+    <div id="beliStep2" style="display:none">
+      <button class="back-btn" onclick="beliKembaliStep1()">← Kembali</button>
+      <div style="background:#EEF4FF;border-radius:12px;padding:12px;margin-bottom:16px">
+        <div style="font-size:11px;color:#64748B;margin-bottom:6px">Rute pengiriman</div>
+        <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:4px">
+          <i class="ti ti-circle-dot" style="font-size:13px;color:#0047AB;flex-shrink:0;margin-top:1px" aria-hidden="true"></i>
+          <span style="font-size:12px;color:#0F172A" id="beliRingkasPickup">-</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <i class="ti ti-map-pin" style="font-size:13px;color:#0047AB;flex-shrink:0;margin-top:1px" aria-hidden="true"></i>
+          <span style="font-size:12px;color:#0F172A" id="beliRingkasTujuan">-</span>
+        </div>
+        <div style="margin-top:8px;padding-top:8px;border-top:0.5px solid #BFDBFE;display:flex;justify-content:space-between">
+          <span style="font-size:11px;color:#64748B">Estimasi biaya jasa</span>
+          <span style="font-size:13px;font-weight:600;color:#0047AB" id="beliRingkasJasa">-</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Nama Toko / Tempat Pembelian</label>
+        <input type="text" id="beliNamaToko" placeholder="Contoh: Alfamart Rungkut, Pasar Wonokromo...">
+      </div>
+      <div class="field">
+        <label>Barang yang Dibeli</label>
+        <textarea id="beliDeskBarang" placeholder="Contoh: Indomie goreng 10pcs, Aqua 1.5L 2botol, dll..." style="min-height:80px"></textarea>
+      </div>
+      <div class="field">
+        <label>Estimasi Harga Barang (Rp)</label>
+        <input type="number" id="beliEstimasiHarga" placeholder="Perkiraan total harga barang" 
+          style="font-size:16px;font-weight:600;" oninput="hitungTotalBeli()">
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Perkiraan — bisa berbeda dengan harga aktual</div>
+      </div>
+      <div class="field">
+        <label>Nama Penerima</label>
+        <input type="text" id="beliNamaPenerima" placeholder="Nama penerima barang">
+      </div>
+      <div class="field">
+        <label>No. HP Penerima</label>
+        <input type="tel" id="beliHpPenerima" placeholder="08xxxxxxxxxx" oninput="formatHP(this)">
+      </div>
+
+      <!-- TOTAL PEMBAYARAN -->
+      <div style="background:#EEF4FF;border-radius:12px;padding:14px;margin-bottom:16px">
+        <div style="font-size:12px;color:#64748B;margin-bottom:8px;font-weight:500">Rincian Pembayaran</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:12px;color:#64748B">Estimasi harga barang</span>
+          <span style="font-size:12px;color:#0F172A" id="beliRincianBarang">Rp 0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:12px;color:#64748B">Biaya jasa mitra</span>
+          <span style="font-size:12px;color:#0F172A" id="beliRincianJasa">Rp 0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:0.5px solid #BFDBFE">
+          <span style="font-size:13px;font-weight:600;color:#0047AB">Total Pembayaran</span>
+          <span style="font-size:16px;font-weight:800;color:#0047AB" id="beliTotal">Rp 0</span>
+        </div>
+      </div>
+
+      <div id="beliStep2Alert"></div>
+      <button class="btn btn-go" onclick="beliLanjutStep3()">Lanjut ke Pembayaran <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+    </div>
+
+    <!-- NITIPBELI - STEP 3: PEMBAYARAN -->
+    <div id="beliStep3" style="display:none">
+      <button class="back-btn" onclick="beliKembaliStep2()">← Kembali</button>
+
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:15px;font-weight:600;color:#0F172A;margin-bottom:4px">Transfer Pembayaran</div>
+        <div style="font-size:13px;color:#64748B">Selesaikan pembayaran untuk melanjutkan order</div>
+      </div>
+
+      <!-- INFO REKENING -->
+      <div style="background:#EEF4FF;border-radius:12px;padding:16px;margin-bottom:16px;text-align:center">
+        <div style="font-size:11px;color:#64748B;margin-bottom:4px">Transfer ke rekening</div>
+        <div style="font-size:14px;font-weight:600;color:#0047AB;margin-bottom:2px">BCA</div>
+        <div style="font-size:24px;font-weight:800;color:#0F172A;letter-spacing:2px;margin-bottom:4px">1300295441</div>
+        <div style="font-size:13px;color:#64748B">A/N Mohammad Rusdianto</div>
+        <div style="margin-top:12px;padding-top:12px;border-top:0.5px solid #BFDBFE">
+          <div style="font-size:11px;color:#64748B;margin-bottom:4px">Nominal transfer</div>
+          <div style="font-size:22px;font-weight:800;color:#0047AB" id="beliNominalUnik">Rp 0</div>
+          <div style="font-size:11px;color:#e53935;margin-top:4px">⚠️ Transfer sesuai nominal di atas (sudah termasuk kode unik)</div>
+        </div>
+      </div>
+
+      <!-- UPLOAD BUKTI -->
+      <div class="field">
+        <label>Upload Bukti Transfer</label>
+        <div class="dok-upload" id="uploadBuktiBeli" onclick="document.getElementById('inputBuktiBeli').click()">
+          <div id="previewBuktiBeli">
+            <i class="ti ti-receipt" style="font-size:28px;color:#0047AB" aria-hidden="true"></i>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px">Foto / screenshot bukti transfer</div>
+          </div>
+        </div>
+        <input type="file" id="inputBuktiBeli" accept="image/*" onchange="previewBuktiBeli(this)">
+      </div>
+
+      <div id="beliStep3Alert"></div>
+      <button class="btn btn-go" onclick="buatOrderBeli()">Pasang Order <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+    </div>
+    </div>
+
     <!-- SEKSI NITIPSURUH - STEP 1 -->
     <div id="suruhSection" style="display:none">
     <div id="suruhStep1">
@@ -1646,7 +1781,11 @@ function statusLabel(s,jenis){
     const ms={mencari:'Mencari Mitra',menunggu_konfirmasi:'Pilih Mitra',diambil:'Diambil',dikerjakan:'Sedang Dikerjakan',selesai:'Selesai',batal:'Dibatalkan'};
     return ms[s]||s;
   }
-  const m={mencari:'Mencari Mitra',menunggu_konfirmasi:'Pilih Mitra',nego:'Negosiasi',dijemput:'Dijemput',diantar:'Dalam Perjalanan',selesai:'Selesai',batal:'Dibatalkan'};
+  if(jenis==='beli'){
+    const mb={mencari:'Mencari Mitra',menunggu_konfirmasi:'Pilih Mitra',menunggu_pembayaran:'Menunggu Pembayaran',dibayar:'Pembayaran Diterima',diproses:'Sedang Dibelikan',diantar:'Dalam Perjalanan',selesai:'Selesai',batal:'Dibatalkan'};
+    return mb[s]||s;
+  }
+  const m={mencari:'Mencari Mitra',menunggu_konfirmasi:'Pilih Mitra',dijemput:'Dijemput',diantar:'Dalam Perjalanan',selesai:'Selesai',batal:'Dibatalkan'};
   return m[s]||s;
 }
 function jenisLabel(j){return{kirim:'NitipKirim',suruh:'NitipSuruh',beli:'NitipBeli'}[j]||j;}
@@ -1736,29 +1875,35 @@ let _estimasiJarak = 0;
 
 function bukaOrderJenis(jenis){
   _orderJenis = jenis;
-  const titles = {kirim:'Mau kirim ke mana?', beli:'Mau beli apa & di mana?', suruh:'Mau suruh apa?'};
-  const subs = {kirim:'Isi alamat untuk lihat estimasi harga', beli:'Isi alamat toko & tujuan pengiriman', suruh:'Deskripsi tugas yang perlu dikerjakan'};
+  const titles = {kirim:'Mau kirim ke mana?', beli:'Mau beli apa?', suruh:'Mau suruh apa?'};
   const formTitle = document.querySelector('#orderStep1 .form-title');
-  const formSub = document.querySelector('#orderStep1 .form-sub');
-  if(formTitle) formTitle.textContent = titles[jenis];
-  if(formSub) formSub.textContent = subs[jenis];
+  if(formTitle) formTitle.textContent = titles[jenis]||'';
 
-  // Tampilkan/sembunyikan elemen sesuai jenis
   const alamatSection = document.getElementById('alamatSection');
   const suruhSection = document.getElementById('suruhSection');
+  const beliSection = document.getElementById('beliSection');
+
+  // Sembunyikan semua section
+  if(alamatSection) alamatSection.style.display='none';
+  if(suruhSection) suruhSection.style.display='none';
+  if(beliSection) beliSection.style.display='none';
+
   if(jenis==='suruh'){
-    if(alamatSection) alamatSection.style.display='none';
     if(suruhSection) suruhSection.style.display='block';
-    // Auto-fill nama & HP pengguna
     if(currentUser){
       const namaEl=document.getElementById('suruhNamaPengguna');
       const hpEl=document.getElementById('suruhHpPengguna');
       if(namaEl&&!namaEl.value) namaEl.value=currentUser.nama||'';
       if(hpEl&&!hpEl.value) hpEl.value=currentUser.no_hp||'';
     }
+  } else if(jenis==='beli'){
+    if(beliSection) beliSection.style.display='block';
+    // Reset ke step 1
+    document.getElementById('beliStep1').style.display='block';
+    document.getElementById('beliStep2').style.display='none';
+    document.getElementById('beliStep3').style.display='none';
   } else {
     if(alamatSection) alamatSection.style.display='block';
-    if(suruhSection) suruhSection.style.display='none';
   }
 
   document.getElementById('orderStep1').style.display='block';
@@ -1843,6 +1988,146 @@ function lanjutStep2(){
 function kembaliStep1(){
   document.getElementById('orderStep2').style.display='none';
   document.getElementById('orderStep1').style.display='block';
+}
+
+// ── NITIPBELI HELPERS ──
+let _beliHargaJasa = 15000;
+let _beliEstimasiHarga = 0;
+let _buktiBeli = null;
+
+function adjustHargaBeli(delta){
+  const el=document.getElementById('beliHargaJasa');
+  let val=parseInt(el.value)||15000;
+  val=Math.max(5000, val+delta);
+  el.value=val;
+  _beliHargaJasa=val;
+  hitungTotalBeli();
+}
+
+function hitungTotalBeli(){
+  const hargaBarang=parseInt(document.getElementById('beliEstimasiHarga')?.value)||0;
+  const hargaJasa=parseInt(document.getElementById('beliHargaJasa')?.value)||15000;
+  _beliEstimasiHarga=hargaBarang;
+  _beliHargaJasa=hargaJasa;
+  const total=hargaBarang+hargaJasa;
+  if(document.getElementById('beliRincianBarang')) document.getElementById('beliRincianBarang').textContent=rupiah(hargaBarang);
+  if(document.getElementById('beliRincianJasa')) document.getElementById('beliRincianJasa').textContent=rupiah(hargaJasa);
+  if(document.getElementById('beliTotal')) document.getElementById('beliTotal').textContent=rupiah(total);
+}
+
+function beliLanjutStep2(){
+  const pickup=document.getElementById('beliPickup').value.trim();
+  const tujuan=document.getElementById('beliTujuan').value.trim();
+  if(!pickup){showAlert('beliStep1Alert','Titik pembelian wajib diisi.');return;}
+  if(!tujuan){showAlert('beliStep1Alert','Titik pengantaran wajib diisi.');return;}
+  document.getElementById('beliRingkasPickup').textContent=pickup;
+  document.getElementById('beliRingkasTujuan').textContent=tujuan;
+  document.getElementById('beliRingkasJasa').textContent=rupiah(parseInt(document.getElementById('beliHargaJasa').value)||15000);
+  hitungTotalBeli();
+  document.getElementById('beliStep1').style.display='none';
+  document.getElementById('beliStep2').style.display='block';
+  window.scrollTo(0,0);
+}
+
+function beliKembaliStep1(){
+  document.getElementById('beliStep2').style.display='none';
+  document.getElementById('beliStep1').style.display='block';
+}
+
+function beliLanjutStep3(){
+  const namaToko=document.getElementById('beliNamaToko').value.trim();
+  const deskBarang=document.getElementById('beliDeskBarang').value.trim();
+  const estimasiHarga=parseInt(document.getElementById('beliEstimasiHarga').value)||0;
+  const namaPenerima=document.getElementById('beliNamaPenerima').value.trim();
+  const hpPenerima=document.getElementById('beliHpPenerima').value.replace(/\D/g,'');
+  if(!namaToko){showAlert('beliStep2Alert','Nama toko wajib diisi.');return;}
+  if(!deskBarang){showAlert('beliStep2Alert','Deskripsi barang wajib diisi.');return;}
+  if(estimasiHarga<1000){showAlert('beliStep2Alert','Estimasi harga barang wajib diisi.');return;}
+  if(!namaPenerima){showAlert('beliStep2Alert','Nama penerima wajib diisi.');return;}
+  if(!hpPenerima||hpPenerima.length<9){showAlert('beliStep2Alert','No HP penerima wajib diisi.');return;}
+  // Generate nominal unik (total + 3 digit random)
+  const total=estimasiHarga+(parseInt(document.getElementById('beliHargaJasa').value)||15000);
+  const kodeUnik=Math.floor(Math.random()*900)+100;
+  const nominalUnik=total+kodeUnik;
+  document.getElementById('beliNominalUnik').textContent=rupiah(nominalUnik);
+  window._beliNominalUnik=nominalUnik;
+  document.getElementById('beliStep2').style.display='none';
+  document.getElementById('beliStep3').style.display='block';
+  window.scrollTo(0,0);
+}
+
+function beliKembaliStep2(){
+  document.getElementById('beliStep3').style.display='none';
+  document.getElementById('beliStep2').style.display='block';
+}
+
+function previewBuktiBeli(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    _buktiBeli=e.target.result;
+    document.getElementById('previewBuktiBeli').innerHTML=
+      `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function buatOrderBeli(){
+  if(!currentUser)return;
+  if(!_buktiBeli){showAlert('beliStep3Alert','Upload bukti transfer dulu.');return;}
+  const pickup=document.getElementById('beliPickup').value.trim();
+  const tujuan=document.getElementById('beliTujuan').value.trim();
+  const namaToko=document.getElementById('beliNamaToko').value.trim();
+  const deskBarang=document.getElementById('beliDeskBarang').value.trim();
+  const estimasiHarga=parseInt(document.getElementById('beliEstimasiHarga').value)||0;
+  const hargaJasa=parseInt(document.getElementById('beliHargaJasa').value)||15000;
+  const namaPenerima=document.getElementById('beliNamaPenerima').value.trim();
+  const hpPenerima=document.getElementById('beliHpPenerima').value.replace(/\D/g,'');
+
+  // Cek order aktif
+  const{data:orderAktif}=await db.from('orders').select('id,kode')
+    .eq('pengirim_id',currentUser.id)
+    .in('status',['mencari','menunggu_konfirmasi','menunggu_pembayaran','dibayar','diproses','dijemput','diantar','diambil','dikerjakan'])
+    .maybeSingle();
+  if(orderAktif){showAlert('beliStep3Alert','Kamu masih punya order aktif ('+orderAktif.kode+'). Selesaikan dulu.');return;}
+
+  const orderData={
+    kode:kodeOrder(),
+    pengirim_id:currentUser.id,
+    jenis:'beli',
+    alamat_pickup:pickup,
+    alamat_tujuan:tujuan,
+    nama_pengantar:namaToko,
+    deskripsi:deskBarang,
+    harga_tawar:hargaJasa,
+    estimasi_harga_barang:estimasiHarga,
+    nominal_bayar:window._beliNominalUnik||0,
+    bukti_bayar:_buktiBeli,
+    nama_penerima:namaPenerima,
+    hp_penerima:hpPenerima,
+    hp_pengirim:currentUser.no_hp,
+    status:'menunggu_pembayaran',
+  };
+
+  const{data,error}=await db.from('orders').insert(orderData).select().single();
+  if(error){showAlert('beliStep3Alert','Gagal buat order: '+error.message);return;}
+
+  // Reset form
+  document.getElementById('beliPickup').value='';
+  document.getElementById('beliTujuan').value='';
+  document.getElementById('beliNamaToko').value='';
+  document.getElementById('beliDeskBarang').value='';
+  document.getElementById('beliEstimasiHarga').value='';
+  document.getElementById('beliNamaPenerima').value='';
+  document.getElementById('beliHpPenerima').value='';
+  document.getElementById('beliHargaJasa').value='15000';
+  _buktiBeli=null;
+  document.getElementById('previewBuktiBeli').innerHTML=`<i class="ti ti-receipt" style="font-size:28px;color:#0047AB" aria-hidden="true"></i><div style="font-size:12px;color:var(--muted);margin-top:6px">Foto / screenshot bukti transfer</div>`;
+  document.getElementById('beliStep3').style.display='none';
+  document.getElementById('beliStep1').style.display='block';
+
+  setTimeout(()=>pengirimTab('aktif'), 800);
 }
 
 // ── NITIPSURUH HELPERS ──
@@ -2002,6 +2287,26 @@ document.getElementById('orderTujuan').addEventListener('input',()=>{updateEstim
 let _userLocationMarker=null;
 
 function openMap(target){
+  // Handle beli map targets
+  if(target==='beliPickup'||target==='beliTujuan'){
+    const el=document.getElementById(target);
+    mapTarget=target;
+    document.getElementById('mapModal').classList.add('open');
+    document.getElementById('mapModalTitle').textContent=target==='beliPickup'?'Lokasi Toko':'Lokasi Pengantaran';
+    document.getElementById('mapSearchInput').value='';
+    document.getElementById('mapSuggestions').innerHTML='';
+    document.getElementById('mapSelectedAddr').textContent='Klik peta atau cari alamat';
+    selectedLatLng=null;selectedAddress='';
+    setTimeout(()=>{
+      if(!mapInstance){
+        mapInstance=L.map('mapContainer').setView([-7.2575,112.7521],13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(mapInstance);
+        mapInstance.on('click',onMapClick);
+      } else {mapInstance.invalidateSize();}
+      tampilLokasiSaatIni();
+    },300);
+    return;
+  }
   // Handle suruh map target
   if(target==='suruh'){
     const el=document.getElementById('suruhAlamat');
@@ -2107,6 +2412,8 @@ function confirmMapLocation(){
   if(mapTarget==='pickup') fieldId='orderPickup';
   else if(mapTarget==='tujuan') fieldId='orderTujuan';
   else if(mapTarget==='suruh') fieldId='suruhAlamat';
+  else if(mapTarget==='beliPickup') fieldId='beliPickup';
+  else if(mapTarget==='beliTujuan') fieldId='beliTujuan';
   else fieldId='orderTujuan';
   const el=document.getElementById(fieldId);
   // Pakai alamat jika sudah ada, fallback ke koordinat
