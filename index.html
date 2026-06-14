@@ -1287,8 +1287,6 @@ async function uploadDokumenService(userId, dokData){
     await db.from('users').update({
       foto_profil: dokData.selfie||null,
       dok_ktp: dokData.ktp||null,
-      dok_kk_ijazah: dokData.dok||null,
-      tipe_dok_pendukung: dokData.pilihan||'kk',
     }).eq('id', userId);
   }catch(e){console.error('uploadDokumenService error:',e);}
 }
@@ -1445,7 +1443,6 @@ async function verifikasiOTP(){
       status_verifikasi:isMitra?'menunggu':'aktif',
       jenis_kendaraan:otpPending.jenisKendaraan||null,
       plat_nomor:otpPending.platNomor||null,
-      tipe_mitra:otpPending.tipeMitra||null,
     }).select().single();
     if(error){showAlert('otpAlert','Gagal buat akun: '+error.message);return;}
     // Upload dokumen kalau mitra
