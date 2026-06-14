@@ -1341,6 +1341,7 @@ async function kirimOTP(mode){
   const hp=document.getElementById('daftarHp').value.replace(/\D/g,'');
   const pwd=document.getElementById('daftarPwd')?.value||'';
 
+  console.log('kirimOTP called, role:', role, 'nama:', nama, 'hp:', hp);
   if(mode==='daftar'){
     if(!nama){showAlert('daftarAlert','Nama wajib diisi.');return;}
     if(hp.length<10){showAlert('daftarAlert','Nomor HP tidak valid.');return;}
@@ -1457,6 +1458,7 @@ async function verifikasiOTP(){
     if(error){showAlert('otpAlert','Gagal buat akun: '+error.message);return;}
     // Upload dokumen kalau mitra
     if(isMitra&&user){
+      console.log('tipeMitra:', otpPending.tipeMitra, 'dokServiceData:', !!otpPending.dokServiceData);
       if(otpPending.tipeMitra==='service'&&otpPending.dokServiceData){
         await uploadDokumenService(user.id, otpPending.dokServiceData);
       } else {
