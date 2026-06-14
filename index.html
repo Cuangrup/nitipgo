@@ -769,7 +769,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <button type="button" onclick="adjustHargaBeli(-500)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;font-weight:700;flex-shrink:0;">−</button>
           <div style="flex:1;text-align:center;">
             <input type="number" id="beliHargaJasa" value="15000" min="5000" step="500"
-              style="width:100%;font-size:22px;font-weight:800;color:var(--brand);border:none;outline:none;text-align:center;background:transparent;">
+              style="width:100%;font-size:22px;font-weight:800;color:var(--brand);border:none;outline:none;text-align:center;background:transparent;"
+              oninput="validasiHargaBeli();hitungTotalBeli()">
           </div>
           <button type="button" onclick="adjustHargaBeli(500)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;font-weight:700;flex-shrink:0;">+</button>
         </div>
@@ -2067,6 +2068,16 @@ async function hitungEstimasiBeli(){
     document.getElementById('btnBeliLanjut').disabled=false;
     document.getElementById('btnBeliLanjut').style.opacity='1';
     _beliHargaJasa=estimasi;
+    // Tampilkan hint batas min/max
+    const minJ=bulatkan500(estimasi*0.8);
+    const maxJ=bulatkan500(estimasi*1.2);
+    const hintEl=document.querySelector('#beliJasaInput .field-hint');
+    if(!hintEl){
+      const hint=document.createElement('div');
+      hint.style.cssText='font-size:11px;color:var(--muted);margin-top:4px;text-align:center';
+      hint.textContent='Min '+rupiah(minJ)+' · Max '+rupiah(maxJ);
+      document.getElementById('beliJasaInput').appendChild(hint);
+    }
   }catch(e){
     document.getElementById('beliEstimasiHargaJasa').textContent='Gagal hitung estimasi';
   }
@@ -2075,10 +2086,37 @@ async function hitungEstimasiBeli(){
 function adjustHargaBeli(delta){
   const el=document.getElementById('beliHargaJasa');
   let val=parseInt(el.value)||15000;
-  val=Math.max(5000, val+delta);
+  // Min 80% dari estimasi, max 120%
+  const estimasi=parseInt(document.getElementById('beliEstimasiHargaJasa')?.textContent?.replace(/\D/g,''))||0;
+  const minVal=estimasi>0?bulatkan500(estimasi*0.8):5000;
+  const maxVal=estimasi>0?bulatkan500(estimasi*1.2):999999;
+  val=Math.min(maxVal, Math.max(minVal, val+delta));
   el.value=val;
   _beliHargaJasa=val;
+  validasiHargaBeli();
   hitungTotalBeli();
+}
+
+function validasiHargaBeli(){
+  const el=document.getElementById('beliHargaJasa');
+  const val=parseInt(el.value)||0;
+  const estimasiEl=document.getElementById('beliEstimasiHargaJasa');
+  const estimasi=parseInt(estimasiEl?.textContent?.replace(/[^0-9]/g,''))||0;
+  const btnLanjut=document.getElementById('btnBeliLanjut');
+  if(estimasi>0){
+    const minVal=bulatkan500(estimasi*0.8);
+    const maxVal=bulatkan500(estimasi*1.2);
+    if(val<minVal){
+      el.style.color='#DC2626';
+      if(btnLanjut){btnLanjut.disabled=true;btnLanjut.style.opacity='0.5';}
+    } else if(val>maxVal){
+      el.style.color='#DC2626';
+      if(btnLanjut){btnLanjut.disabled=true;btnLanjut.style.opacity='0.5';}
+    } else {
+      el.style.color='var(--brand)';
+      if(btnLanjut){btnLanjut.disabled=false;btnLanjut.style.opacity='1';}
+    }
+  }
 }
 
 function hitungTotalBeli(){
@@ -2617,6 +2655,13 @@ async function buatOrder(){
   const harga=parseInt(document.getElementById('orderHarga').value)||0;
   if(!pickup||!tujuan){showAlert('buatOrderAlert','Alamat penjemputan & tujuan wajib diisi.');return;}
   if(harga<5000){showAlert('buatOrderAlert','Harga tawar minimal Rp 5.000.');return;}
+  // Validasi batas 80% dari estimasi
+  if(estimasiTarif>0){
+    const minTawar=bulatkan500(estimasiTarif*0.8);
+    const maxTawar=bulatkan500(estimasiTarif*1.2);
+    if(harga<minTawar){showAlert('buatOrderAlert','⚠️ Harga tawar minimal '+rupiah(minTawar)+' (80% dari estimasi).');return;}
+    if(harga>maxTawar){showAlert('buatOrderAlert','⚠️ Harga tawar maksimal '+rupiah(maxTawar)+' (120% dari estimasi).');return;}
+  }
   btn.disabled=true;btn.textContent='Memasang order...';
   const hpPengirim=document.getElementById('orderHpPengirim').value.trim()||currentUser.no_hp||'';
   const namaPengantar=document.getElementById('orderNamaPengantar').value.trim()||currentUser.nama;
