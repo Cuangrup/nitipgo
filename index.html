@@ -2630,7 +2630,6 @@ async function ajukanBid(orderId, hargaTawar=0){
   if(existing&&existing.length){alert('Kamu sudah mengajukan penawaran untuk order ini. Tunggu pengirim memilih.');return;}
   await db.from('bids').insert({order_id:orderId,mitra_id:currentUser.id,harga,pesan});
   await db.from('orders').update({status:'menunggu_konfirmasi'}).eq('id',orderId).eq('status','mencari');
-  showAlert('','','');
   alert('✅ Penawaran berhasil diajukan! Tunggu pengirim memilih kamu.');
   loadOrderTersedia();
 }
