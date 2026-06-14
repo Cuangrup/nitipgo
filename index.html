@@ -1320,6 +1320,11 @@ async function loginAkun(){
 }
 
 async function masukSebagai(user){
+  // Ambil data fresh dari DB
+  try{
+    const{data:fresh}=await db.from('users').select('*').eq('id',user.id).single();
+    if(fresh) user=fresh;
+  }catch(e){}
   const u=user;
   currentUser=u;
   currentRole=u.role;
@@ -1338,6 +1343,14 @@ async function masukSebagai(user){
   // Simpan session
   localStorage.setItem('nitipgo_user',JSON.stringify(u));
   updateTopbar(u);
+  // Update nama di header
+  const pengirimHeader=document.getElementById('pengirimHeaderNama');
+  if(pengirimHeader) pengirimHeader.textContent=u.nama;
+  const mitraHeader=document.getElementById('mitraHeaderNama');
+  if(mitraHeader) mitraHeader.textContent=u.nama;
+  const mitraRating=document.getElementById('mitraHeaderRating');
+  if(mitraRating) mitraRating.textContent='⭐ '+(u.rating||'5.0');
+
   if(u.role==='pengirim'){
     goScreen('screenPengirim');
     pengirimTab('buat');
@@ -1354,16 +1367,8 @@ async function masukSebagai(user){
 }
 
 function updateTopbar(user){
-  const icon=user.role==='pengirim'?'👤':'🛵';
-  const topRoleBadge = document.getElementById('topRoleBadge');
-  if(topRoleBadge) topRoleBadge.textContent=icon+' '+user.nama;
-  const topRoleBadgeEl = document.getElementById('topRoleBadge');
-  if(topRoleBadgeEl) topRoleBadgeEl.onclick=()=>bukaHalamanPengaturan();
-  const userMenu = document.getElementById('userMenu');
-  if(userMenu) userMenu.style.display='flex';
-  // mainTopbar disembunyikan - setiap dashboard punya header sendiri
-  const mainTopbar = document.getElementById('mainTopbar');
-  if(mainTopbar) mainTopbar.style.display='none';
+  const topbar=document.getElementById('mainTopbar');
+  if(topbar) topbar.style.display='none';
   // Update nama di header dashboard pengguna
   const headerNama = document.getElementById('pengirimHeaderNama');
   if(headerNama) headerNama.textContent = user.nama;
@@ -1421,13 +1426,13 @@ function checkSession(){
 // ── NAVIGATION ──
 function goScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  const el = document.getElementById(id);
+  const el=document.getElementById(id);
   if(el) el.classList.add('active');
-  // Render FAQ saat buka halaman bantuan
+  else console.warn('goScreen: element not found:', id);
   if(id==='screenBantuan'){
-    renderFAQ();
-    const subtitle = document.getElementById('faqSubtitle');
-    if(subtitle) subtitle.textContent = currentRole==='mitra' ? 'Pertanyaan untuk Mitra Driver' : 'Pertanyaan untuk Pengguna';
+    if(typeof renderFAQ==='function') renderFAQ();
+    const subtitle=document.getElementById('faqSubtitle');
+    if(subtitle) subtitle.textContent=currentRole==='mitra'?'Pertanyaan untuk Mitra Driver':'Pertanyaan untuk Pengguna';
   }
 }
 
