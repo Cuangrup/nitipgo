@@ -2323,13 +2323,22 @@ async function renderOrderPengirim(o,simple=false){
       <div><div class="order-kode">${o.kode}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${new Date(o.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>
       <div><span class="order-jenis ${o.jenis}">${jenisLabel(o.jenis)}</span><span class="status-pill status-${o.status}" style="display:block;margin-top:4px;text-align:center">${statusLabel(o.status, o.jenis)}</span></div>
     </div>
+    ${o.jenis==='suruh'?`
+    <div class="route">
+      <div class="route-line"><div class="dot dot-pickup"></div></div>
+      <div class="route-text">
+        <div class="route-addr"><div class="route-label">Lokasi Pekerjaan</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps('${o.alamat_pickup}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+      </div>
+    </div>
+    `:`
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps(this.getAttribute('data-addr'))" data-addr="${o.alamat_pickup}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
-        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps(this.getAttribute('data-addr'))" data-addr="${o.alamat_tujuan}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps('${o.alamat_pickup}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps('${o.alamat_tujuan}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
       </div>
     </div>
+    `}
     ${o.deskripsi?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📝 ${o.deskripsi}</div>`:''}
     <div class="harga-row">
       <div><div style="font-size:11px;color:var(--muted)">Harga tawar</div><div class="harga-tawar">${rupiah(o.harga_tawar)}</div></div>
@@ -2423,13 +2432,22 @@ function renderOrderMitra(o,done=false,sudahBid=false){
       <div><div class="order-kode">${o.kode}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${new Date(o.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>
       <div><span class="order-jenis ${o.jenis}">${jenisLabel(o.jenis)}</span>${done?`<span class="status-pill status-selesai" style="display:block;margin-top:4px;text-align:center">Selesai</span>`:''}</div>
     </div>
+    ${o.jenis==='suruh'?`
+    <div class="route">
+      <div class="route-line"><div class="dot dot-pickup"></div></div>
+      <div class="route-text">
+        <div class="route-addr"><div class="route-label">Lokasi Pekerjaan</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps('${o.alamat_pickup}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+      </div>
+    </div>
+    `:`
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps(this.getAttribute('data-addr'))" data-addr="${o.alamat_pickup}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
-        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps(this.getAttribute('data-addr'))" data-addr="${o.alamat_tujuan}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps('${o.alamat_pickup}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps('${o.alamat_tujuan}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
       </div>
     </div>
+    `}
     ${o.deskripsi?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📝 ${o.deskripsi}</div>`:''}
     <div class="harga-row" style="margin-bottom:12px">
       <div><div style="font-size:11px;color:var(--muted)">Harga tawar pengguna</div><div class="harga-tawar">${rupiah(o.harga_tawar)}</div></div>
@@ -2463,13 +2481,22 @@ function renderOrderAktifMitra(o){
   return`
   <div class="card">
     <div class="card-header"><div class="order-kode">${o.kode}</div><span class="status-pill status-${o.status}">${statusLabel(o.status, o.jenis)}</span></div>
+    ${o.jenis==='suruh'?`
+    <div class="route">
+      <div class="route-line"><div class="dot dot-pickup"></div></div>
+      <div class="route-text">
+        <div class="route-addr"><div class="route-label">Lokasi Pekerjaan</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps('${o.alamat_pickup}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+      </div>
+    </div>
+    `:`
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps(this.getAttribute('data-addr'))" data-addr="${o.alamat_pickup}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
-        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps(this.getAttribute('data-addr'))" data-addr="${o.alamat_tujuan}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup} <button onclick="bukaGoogleMaps('${o.alamat_pickup}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
+        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan} <button onclick="bukaGoogleMaps('${o.alamat_tujuan}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#1a73e8"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8" style="vertical-align:middle;margin-right:3px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Maps</button></div>
       </div>
     </div>
+    `}
     <div class="harga-row" style="margin-bottom:12px"><div class="harga-tawar">${rupiah(o.harga_deal||o.harga_tawar)}</div></div>
     <button onclick="bukaChat('${o.id}','${o.kode}','pengirim')" style="width:100%;margin-bottom:10px;padding:10px;background:#1a5f3f;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-message-circle" style="font-size:16px" aria-hidden="true"></i> Chat dengan Pengguna</button>
     <div style="background:var(--surface);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px">
