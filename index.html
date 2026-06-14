@@ -1926,8 +1926,8 @@ async function buatOrder(){
   document.getElementById('orderStep1').style.display='block';
   document.getElementById('estimasiBox').style.display='none';
   document.getElementById('btnLanjutStep2').style.display='none';
-  // Pindah ke tab aktif dan load order
-  pengirimTab('aktif');
+  // Tunggu DB commit lalu pindah tab
+  setTimeout(()=>pengirimTab('aktif'), 800);
 }
 
 // ── LOAD ORDER PENGIRIM ──
