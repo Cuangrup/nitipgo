@@ -2837,7 +2837,7 @@ async function renderOrderPengirim(o,simple=false){
 async function pilihMitra(orderId,bidId,mitraId,harga){
   // Cek jenis order dulu
   const{data:order}=await db.from('orders').select('jenis').eq('id',orderId).single();
-  const statusBaru = order?.jenis==='suruh' ? 'diambil' : 'dijemput';
+  const statusBaru = order?.jenis==='suruh' ? 'diambil' : (order?.jenis==='beli' ? 'menunggu_pembayaran' : 'dijemput');
   // Tolak semua bid lain
   await db.from('bids').update({status:'ditolak'}).eq('order_id',orderId).neq('id',bidId);
   // Tandai bid terpilih
