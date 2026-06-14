@@ -1985,6 +1985,7 @@ async function cekEstimasi(){
     _estimasiJarak = jarak;
     const estimasi = hitungTarif(jarak);
     _estimasiHarga = estimasi;
+    estimasiTarif = estimasi; // sync ke validateHarga
 
     document.getElementById('step1Alert').innerHTML='';
     document.getElementById('estimasiBox').style.display='block';
