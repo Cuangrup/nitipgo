@@ -2234,7 +2234,7 @@ async function buatOrderBeli(){
     nama_penerima:namaPenerima,
     hp_penerima:hpPenerima,
     hp_pengirim:currentUser.no_hp,
-    status:'menunggu_pembayaran',
+    status:'mencari',
   };
 
   const{data,error}=await db.from('orders').insert(orderData).select().single();
