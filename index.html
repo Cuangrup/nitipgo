@@ -595,7 +595,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </button>
         <button id="toggleMitra" onclick="setLoginRole('mitra')" 
           style="flex:1;padding:9px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:#64748B;transition:all .2s">
-          Mitra Driver
+          Mitra
         </button>
       </div>
 
@@ -730,41 +730,59 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     </div>
 
-    <!-- SEKSI NITIPSURUH -->
+    <!-- SEKSI NITIPSURUH - STEP 1 -->
     <div id="suruhSection" style="display:none">
-    <div class="field">
-      <label>Nama kamu</label>
-      <input type="text" id="suruhNamaPengguna" placeholder="Nama lengkap">
-    </div>
-    <div class="field">
-      <label>No. HP kamu</label>
-      <input type="tel" id="suruhHpPengguna" placeholder="08xxxxxxxxxx" oninput="formatHP(this)">
-    </div>
-    <div class="field">
-      <label>Alamat kamu (lokasi tugas)</label>
-      <div class="addr-wrap">
-        <input type="text" id="suruhAlamat" placeholder="Alamat lengkap lokasi tugas...">
-        <button class="addr-map-btn" onclick="openMap('suruh')" title="Pilih di peta"><i class="ti ti-map-pin" style="font-size:16px;color:#0047AB" aria-hidden="true"></i></button>
-      </div>
-    </div>
-    <div class="field">
-      <label>Deskripsi tugas</label>
-      <textarea id="suruhDesc" placeholder="Ceritakan tugasnya... (contoh: tolong ambilkan jemuran, bersihkan kamar, dll)" style="min-height:80px"></textarea>
-    </div>
-    <div class="field">
-      <label>Harga tawar (min Rp 10.000)</label>
-      <div style="display:flex;align-items:center;gap:8px;background:white;border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;">
-        <button type="button" onclick="adjustHargaSuruh(-1000)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;font-weight:700;flex-shrink:0;">−</button>
-        <div style="flex:1;text-align:center;">
-          <input type="number" id="suruhHarga" value="25000" min="10000" step="1000"
-            style="width:100%;font-size:22px;font-weight:800;color:var(--brand);border:none;outline:none;text-align:center;background:transparent;"
-            oninput="validateHargaSuruh(this)">
+    <div id="suruhStep1">
+      <div class="field">
+        <label>Lokasi pekerjaan</label>
+        <div class="addr-wrap">
+          <input type="text" id="suruhAlamat" placeholder="Alamat lengkap lokasi tugas...">
+          <button class="addr-map-btn" onclick="openMap('suruh')" title="Pilih di peta"><i class="ti ti-map-pin" style="font-size:16px;color:#0047AB" aria-hidden="true"></i></button>
         </div>
-        <button type="button" onclick="adjustHargaSuruh(1000)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;font-weight:700;flex-shrink:0;">+</button>
       </div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px;text-align:center">Kelipatan Rp 1.000 · bisa nego dengan mitra</div>
+      <div class="field">
+        <label>Deskripsi pekerjaan</label>
+        <textarea id="suruhDesc" placeholder="Ceritakan tugasnya secara detail... (contoh: tolong ambilkan jemuran di lantai 3, lipat dan simpan di lemari)" style="min-height:100px"></textarea>
+      </div>
+      <button class="btn btn-go" onclick="suruhLanjutStep2()">Lanjut <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
     </div>
-    <button class="btn btn-go" onclick="buatOrderSuruh()">Pasang Order <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+
+    <!-- SEKSI NITIPSURUH - STEP 2 -->
+    <div id="suruhStep2" style="display:none">
+      <button class="back-btn" onclick="suruhKembaliStep1()">← Kembali</button>
+
+      <!-- Ringkasan lokasi -->
+      <div style="background:#EEF4FF;border-radius:12px;padding:12px;margin-bottom:16px">
+        <div style="font-size:11px;color:#64748B;margin-bottom:4px">Lokasi pekerjaan</div>
+        <div style="font-size:13px;color:#0047AB;display:flex;gap:6px;align-items:flex-start">
+          <i class="ti ti-map-pin" style="font-size:14px;flex-shrink:0;margin-top:1px" aria-hidden="true"></i>
+          <span id="suruhAlamatRingkas">-</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Nama kamu</label>
+        <input type="text" id="suruhNamaPengguna" placeholder="Nama lengkap">
+      </div>
+      <div class="field">
+        <label>No. HP kamu</label>
+        <input type="tel" id="suruhHpPengguna" placeholder="08xxxxxxxxxx" oninput="formatHP(this)">
+      </div>
+      <div class="field">
+        <label>Harga tawar (min Rp 10.000)</label>
+        <div style="display:flex;align-items:center;gap:8px;background:white;border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;">
+          <button type="button" onclick="adjustHargaSuruh(-1000)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;font-weight:700;flex-shrink:0;">−</button>
+          <div style="flex:1;text-align:center;">
+            <input type="number" id="suruhHarga" value="25000" min="10000" step="1000"
+              style="width:100%;font-size:22px;font-weight:800;color:var(--brand);border:none;outline:none;text-align:center;background:transparent;"
+              oninput="validateHargaSuruh(this)">
+          </div>
+          <button type="button" onclick="adjustHargaSuruh(1000)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;font-weight:700;flex-shrink:0;">+</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;text-align:center">Kelipatan Rp 1.000 · bisa nego dengan mitra</div>
+      </div>
+      <button class="btn btn-go" onclick="buatOrderSuruh()">Pasang Order <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+    </div>
     </div>
 
     <!-- ESTIMASI -->
@@ -1821,6 +1839,29 @@ function kembaliStep1(){
 }
 
 // ── NITIPSURUH HELPERS ──
+function suruhLanjutStep2(){
+  const alamat = document.getElementById('suruhAlamat').value.trim();
+  const desc = document.getElementById('suruhDesc').value.trim();
+  if(!alamat){showAlert('step1Alert','Lokasi pekerjaan wajib diisi.');return;}
+  if(!desc){showAlert('step1Alert','Deskripsi pekerjaan wajib diisi.');return;}
+  // Tampilkan ringkasan
+  document.getElementById('suruhAlamatRingkas').textContent = alamat;
+  // Auto-fill nama & HP
+  if(currentUser){
+    const namaEl=document.getElementById('suruhNamaPengguna');
+    const hpEl=document.getElementById('suruhHpPengguna');
+    if(namaEl&&!namaEl.value) namaEl.value=currentUser.nama||'';
+    if(hpEl&&!hpEl.value) hpEl.value=currentUser.no_hp||'';
+  }
+  document.getElementById('suruhStep1').style.display='none';
+  document.getElementById('suruhStep2').style.display='block';
+  window.scrollTo(0,0);
+}
+
+function suruhKembaliStep1(){
+  document.getElementById('suruhStep2').style.display='none';
+  document.getElementById('suruhStep1').style.display='block';
+}
 function adjustHargaSuruh(delta){
   const el=document.getElementById('suruhHarga');
   let val=parseInt(el.value)||10000;
