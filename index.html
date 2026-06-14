@@ -2986,9 +2986,13 @@ function validateBid(orderId, hargaTawar){
   if(!w)return;
   if(hargaTawar>0){
     const maxBid=bulatkan500(hargaTawar*1.2);
+    const minBid=bulatkan500(hargaTawar*0.8);
     if(harga>maxBid){
       w.style.display='block';
       w.textContent=`⚠️ Max tawar ${rupiah(maxBid)} (120% dari tawar pengguna)`;
+    } else if(harga<minBid){
+      w.style.display='block';
+      w.textContent=`⚠️ Min tawar ${rupiah(minBid)} (80% dari tawar pengguna)`;
     } else {
       w.style.display='none';
     }
@@ -2997,8 +3001,9 @@ function validateBid(orderId, hargaTawar){
 
 function bulatkanBid(orderId, hargaTawar){
   const el=document.getElementById('bidHarga_'+orderId);
-  const val=parseInt(el.value)||0;
-  el.value=bulatkan500(Math.max(5000,val));
+  let val=parseInt(el.value)||0;
+  const minBid=hargaTawar>0?bulatkan500(hargaTawar*0.8):5000;
+  el.value=bulatkan500(Math.max(minBid,val));
   validateBid(orderId, hargaTawar);
 }
 
