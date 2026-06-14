@@ -600,19 +600,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
     <!-- 3 LAYANAN -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:0;padding-bottom:16px">
-      <div onclick="pengirimTab('buat');document.getElementById('orderJenis').value='kirim'" 
+      <div onclick="bukaOrderJenis('kirim')" 
         style="background:rgba(255,255,255,0.15);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer">
         <div style="font-size:20px;margin-bottom:4px">📦</div>
         <div style="font-size:10px;font-weight:600;color:white">NitipKirim</div>
         <div style="font-size:9px;color:#BFDBFE">Delivery</div>
       </div>
-      <div onclick="pengirimTab('buat');document.getElementById('orderJenis').value='beli'"
+      <div onclick="bukaOrderJenis('beli')"
         style="background:rgba(255,255,255,0.15);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer">
         <div style="font-size:20px;margin-bottom:4px">🛍️</div>
         <div style="font-size:10px;font-weight:600;color:white">NitipBeli</div>
         <div style="font-size:9px;color:#BFDBFE">Buying</div>
       </div>
-      <div onclick="pengirimTab('buat');document.getElementById('orderJenis').value='suruh'"
+      <div onclick="bukaOrderJenis('suruh')"
         style="background:rgba(255,255,255,0.15);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer">
         <div style="font-size:20px;margin-bottom:4px">🧾</div>
         <div style="font-size:10px;font-weight:600;color:white">NitipSuruh</div>
@@ -628,18 +628,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="pengirim-tab" onclick="pengirimTab('riwayat')">Riwayat</div>
   </div>
 
-  <div id="tabBuatOrder" class="form-wrap">
-    <div class="form-title">Buat Order Baru</div>
-    <div class="form-sub">Isi detail & pasang harga tawarmu</div>
-    <div id="buatOrderAlert"></div>
-    <div class="field">
-      <label>Jenis Layanan</label>
-      <select id="orderJenis">
-        <option value="kirim">📦 NitipKirim — Antar Paket/Dokumen</option>
-        <option value="suruh">🧾 NitipSuruh — Jasa Errand/Operasional</option>
-        <option value="beli">🛍️ NitipBeli — Titip Belanja</option>
-      </select>
+  <div id="tabBuatOrder">
+
+  <!-- STEP 1: ALAMAT & ESTIMASI -->
+  <div id="orderStep1" class="form-wrap">
+    <div id="step1JenisLabel" style="display:inline-flex;align-items:center;gap:8px;background:#EEF4FF;border-radius:20px;padding:6px 14px;margin-bottom:16px">
+      <span id="step1JenisIcon">📦</span>
+      <span style="font-size:13px;font-weight:600;color:#0047AB" id="step1JenisText">NitipKirim</span>
+      <a href="#" onclick="batalStep1()" style="font-size:11px;color:#64748B;margin-left:4px">Ganti</a>
     </div>
+
+    <div class="form-title">Mau kirim ke mana?</div>
+    <div class="form-sub">Isi alamat untuk lihat estimasi harga</div>
+    <div id="step1Alert"></div>
+
     <div class="field">
       <label>Alamat Penjemputan</label>
       <div class="addr-wrap">
@@ -647,6 +649,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <button class="addr-map-btn" onclick="openMap('pickup')" title="Pilih di peta">📍</button>
       </div>
     </div>
+
     <div class="field">
       <label>Alamat Tujuan</label>
       <div class="addr-wrap">
@@ -654,26 +657,63 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <button class="addr-map-btn" onclick="openMap('tujuan')" title="Pilih di peta">📍</button>
       </div>
     </div>
+
+    <!-- ESTIMASI -->
+    <div id="estimasiBox" style="display:none;background:#EEF4FF;border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:12px;color:#64748B;margin-bottom:4px">Estimasi harga</div>
+      <div style="font-size:22px;font-weight:800;color:#0047AB" id="estimasiHarga">Rp 0</div>
+      <div style="font-size:11px;color:#64748B;margin-top:2px" id="estimasiJarak">Menghitung jarak...</div>
+    </div>
+
+    <button class="btn btn-go" onclick="cekEstimasi()">Cek Estimasi →</button>
+    <button id="btnLanjutStep2" class="btn btn-go" onclick="lanjutStep2()" style="display:none;margin-top:8px">Lanjut Isi Detail →</button>
+  </div>
+
+  <!-- STEP 2: DETAIL ORDER -->
+  <div id="orderStep2" class="form-wrap" style="display:none">
+    <button class="back-btn" onclick="kembaliStep1()">← Kembali</button>
+
+    <!-- RINGKASAN ALAMAT -->
+    <div style="background:#EEF4FF;border-radius:12px;padding:12px;margin-bottom:20px">
+      <div style="font-size:11px;color:#64748B;margin-bottom:6px">Rute pengiriman</div>
+      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#0047AB;flex-shrink:0;margin-top:4px"></div>
+        <div style="font-size:12px;color:#0F172A" id="step2Pickup">-</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-start">
+        <div style="width:8px;height:8px;border-radius:50%;background:#0F172A;flex-shrink:0;margin-top:4px"></div>
+        <div style="font-size:12px;color:#0F172A" id="step2Tujuan">-</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid #BFDBFE">
+        <div style="font-size:11px;color:#64748B" id="step2Jarak">-</div>
+        <div style="font-size:14px;font-weight:700;color:#0047AB" id="step2Estimasi">-</div>
+      </div>
+    </div>
+
+    <div class="form-title">Detail Pengiriman</div>
+    <div id="buatOrderAlert"></div>
+
     <div class="field">
-      <label>Nomor HP Pengirim</label>
-      <input type="tel" id="orderHpPengirim" placeholder="08xxxxxxxxxx (nomor WA pengirim)" oninput="formatHP(this)">
+      <label>Nama Pengirim</label>
+      <input type="text" id="orderNamaPengantar" placeholder="Nama yang mengantar barang">
     </div>
     <div class="field">
-      <label>Nama Pengantar</label>
-      <input type="text" id="orderNamaPengantar" placeholder="Nama yang mengantar barang (boleh kosong = nama akun)">
+      <label>No. HP Pengirim</label>
+      <input type="tel" id="orderHpPengirim" placeholder="08xxxxxxxxxx" oninput="formatHP(this)">
     </div>
     <div class="field">
       <label>Nama Penerima</label>
-      <input type="text" id="orderNamaPenerima" placeholder="Nama penerima di lokasi tujuan">
+      <input type="text" id="orderNamaPenerima" placeholder="Nama penerima di tujuan">
     </div>
     <div class="field">
-      <label>Nomor HP Penerima</label>
+      <label>No. HP Penerima</label>
       <input type="tel" id="orderHpPenerima" placeholder="08xxxxxxxxxx" oninput="formatHP(this)">
     </div>
     <div class="field">
       <label>Deskripsi Barang/Keperluan</label>
       <textarea id="orderDesc" placeholder="Contoh: 1 paket dokumen, perlu tanda tangan penerima"></textarea>
     </div>
+
     <div class="field">
       <label>Harga Tawarmu (Rp)</label>
       <div style="display:flex;align-items:center;gap:8px;background:white;border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;">
@@ -685,15 +725,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
         <button type="button" onclick="adjustHarga(500)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;font-weight:700;flex-shrink:0;">+</button>
       </div>
-      <div class="harga-hint" style="margin-top:8px">
-        💡 Estimasi: <b id="estimasiHarga">isi alamat dulu</b><br>
-        <span id="batasHargaInfo" style="color:var(--muted)">Tawar bebas, mitra yang bid</span>
-      </div>
-      <div id="hargaWarning" style="display:none;margin-top:8px;padding:10px 12px;background:#fce4ec;color:#880e4f;border-radius:8px;font-size:13px;font-weight:600;"></div>
+      <div class="harga-hint" id="hargaHint"></div>
+      <div id="hargaWarning" style="display:none;font-size:12px;color:#DC2626;margin-top:6px;background:#FEF2F2;padding:8px;border-radius:8px"></div>
     </div>
+
     <button class="btn btn-go" id="btnPasangOrder" onclick="buatOrder()" style="opacity:1">Pasang Order 🚀</button>
   </div>
-  <div id="tabOrderAktif" style="display:none" class="mitra-content">
+
+<div id="tabOrderAktif" style="display:none" class="mitra-content">
     <div id="listOrderAktif"><div class="loading">Memuat...</div></div>
   </div>
   <div id="tabRiwayat" style="display:none" class="mitra-content">
@@ -1417,6 +1456,99 @@ function adjustHarga(delta){
   setHarga(newVal);
 }
 
+// ── ORDER STEP 1 & 2 ──
+let _orderJenis = 'kirim';
+let _estimasiHarga = 0;
+let _estimasiJarak = 0;
+
+function bukaOrderJenis(jenis){
+  _orderJenis = jenis;
+  const icons = {kirim:'📦', beli:'🛍️', suruh:'🧾'};
+  const texts = {kirim:'NitipKirim', beli:'NitipBeli', suruh:'NitipSuruh'};
+  document.getElementById('step1JenisIcon').textContent = icons[jenis];
+  document.getElementById('step1JenisText').textContent = texts[jenis];
+  document.getElementById('orderStep1').style.display='block';
+  document.getElementById('orderStep2').style.display='none';
+  document.getElementById('estimasiBox').style.display='none';
+  document.getElementById('btnLanjutStep2').style.display='none';
+  pengirimTab('buat');
+}
+
+function batalStep1(){
+  _orderJenis = 'kirim';
+  document.getElementById('step1JenisIcon').textContent='📦';
+  document.getElementById('step1JenisText').textContent='NitipKirim';
+}
+
+async function cekEstimasi(){
+  const pickup = document.getElementById('orderPickup').value.trim();
+  const tujuan = document.getElementById('orderTujuan').value.trim();
+  if(!pickup){showAlert('step1Alert','Isi alamat penjemputan dulu.');return;}
+  if(!tujuan){showAlert('step1Alert','Isi alamat tujuan dulu.');return;}
+
+  document.getElementById('step1Alert').innerHTML='<div class="alert" style="background:#EEF4FF;color:#0047AB">Menghitung estimasi...</div>';
+
+  try{
+    const[p,t] = await Promise.all([
+      geocodeAddress(pickup),
+      geocodeAddress(tujuan)
+    ]);
+    if(!p||!t){showAlert('step1Alert','Alamat tidak ditemukan. Coba lebih spesifik.');return;}
+
+    // Simpan koordinat
+    window._pickupLat=p.lat; window._pickupLng=p.lng;
+    window._tujuanLat=t.lat; window._tujuanLng=t.lng;
+    if(!document.getElementById('orderPickup').dataset.lat){
+      document.getElementById('orderPickup').dataset.lat=p.lat;
+      document.getElementById('orderPickup').dataset.lng=p.lng;
+    }
+    if(!document.getElementById('orderTujuan').dataset.lat){
+      document.getElementById('orderTujuan').dataset.lat=t.lat;
+      document.getElementById('orderTujuan').dataset.lng=t.lng;
+    }
+
+    const jarak = hitungJarak(p.lat,p.lng,t.lat,t.lng);
+    _estimasiJarak = jarak;
+    const estimasi = hitungTarif(jarak);
+    _estimasiHarga = estimasi;
+
+    document.getElementById('step1Alert').innerHTML='';
+    document.getElementById('estimasiBox').style.display='block';
+    document.getElementById('estimasiHarga').textContent = rupiah(estimasi);
+    document.getElementById('estimasiJarak').textContent = jarak.toFixed(1)+' km dari pickup ke tujuan';
+    document.getElementById('btnLanjutStep2').style.display='block';
+
+    // Set harga default
+    setHarga(estimasi);
+  }catch(e){
+    showAlert('step1Alert','Gagal menghitung estimasi. Coba lagi.');
+  }
+}
+
+function lanjutStep2(){
+  const pickup = document.getElementById('orderPickup').value.trim();
+  const tujuan = document.getElementById('orderTujuan').value.trim();
+  document.getElementById('orderStep1').style.display='none';
+  document.getElementById('orderStep2').style.display='block';
+  document.getElementById('step2Pickup').textContent = pickup;
+  document.getElementById('step2Tujuan').textContent = tujuan;
+  document.getElementById('step2Jarak').textContent = _estimasiJarak.toFixed(1)+' km';
+  document.getElementById('step2Estimasi').textContent = rupiah(_estimasiHarga);
+  // Auto-fill nama & HP pengirim dari akun
+  if(currentUser){
+    if(!document.getElementById('orderNamaPengantar').value)
+      document.getElementById('orderNamaPengantar').value = currentUser.nama||'';
+    if(!document.getElementById('orderHpPengirim').value)
+      document.getElementById('orderHpPengirim').value = currentUser.no_hp||'';
+  }
+  window.scrollTo(0,0);
+}
+
+function kembaliStep1(){
+  document.getElementById('orderStep2').style.display='none';
+  document.getElementById('orderStep1').style.display='block';
+}
+
 function onHargaInput(el){
   validateHarga();
 }
@@ -1613,6 +1745,8 @@ function pengirimTab(tab){
   document.querySelectorAll('.pengirim-tab').forEach(t=>t.classList.remove('active'));
   ['tabBuatOrder','tabOrderAktif','tabRiwayat'].forEach(id=>document.getElementById(id).style.display='none');
   if(tab==='buat'){document.querySelectorAll('.pengirim-tab')[0].classList.add('active');document.getElementById('tabBuatOrder').style.display='block';
+    document.getElementById('orderStep1').style.display='block';
+    document.getElementById('orderStep2').style.display='none';
     // Set harga default dan validasi saat tab dibuka
     setTimeout(()=>{
       const h=parseInt(document.getElementById('orderHarga').value)||0;
@@ -1646,7 +1780,7 @@ async function buatOrder(){
     showAlert('buatOrderAlert','⚠️ Kamu masih punya order aktif ('+orderAktif.kode+'). Selesaikan atau batalkan dulu sebelum buat order baru.');
     return;
   }
-  const jenis=document.getElementById('orderJenis').value;
+  const jenis=_orderJenis||'kirim';
   const pickup=document.getElementById('orderPickup').value.trim();
   const tujuan=document.getElementById('orderTujuan').value.trim();
   const desc=document.getElementById('orderDesc').value.trim();
