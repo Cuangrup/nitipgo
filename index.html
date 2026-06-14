@@ -1910,12 +1910,14 @@ function bukaOrderJenis(jenis){
     document.getElementById('beliStep1').style.display='block';
     document.getElementById('beliStep2').style.display='none';
     document.getElementById('beliStep3').style.display='none';
-    // Tampilkan estimasi box langsung (kosong dulu, isi setelah titik dipilih)
-    document.getElementById('beliEstimasiBox').style.display='block';
-    document.getElementById('beliEstimasiHargaJasa').textContent='Pilih titik pembelian & pengantaran';
+    // Reset estimasi
+    document.getElementById('beliEstimasiBox').style.display='none';
+    document.getElementById('beliEstimasiHargaJasa').textContent='Rp 0';
     document.getElementById('beliEstimasiJarak').textContent='';
     document.getElementById('beliJasaInput').style.display='none';
-    document.getElementById('btnBeliLanjut').style.display='none';
+    document.getElementById('btnBeliLanjut').style.display='block';
+    document.getElementById('btnBeliLanjut').disabled=true;
+    document.getElementById('btnBeliLanjut').style.opacity='0.5';
   } else {
     if(alamatSection) alamatSection.style.display='block';
   }
@@ -2056,11 +2058,13 @@ async function hitungEstimasiBeli(){
     const jarak=hitungJarak(parseFloat(pLat),parseFloat(pLng),parseFloat(tLat),parseFloat(tLng));
     const estimasi=hitungTarif(jarak);
 
+    document.getElementById('beliEstimasiBox').style.display='block';
     document.getElementById('beliEstimasiHargaJasa').textContent=rupiah(estimasi);
     document.getElementById('beliEstimasiJarak').textContent=jarak.toFixed(1)+' km dari toko ke tujuan';
     document.getElementById('beliHargaJasa').value=estimasi;
     document.getElementById('beliJasaInput').style.display='block';
-    document.getElementById('btnBeliLanjut').style.display='block';
+    document.getElementById('btnBeliLanjut').disabled=false;
+    document.getElementById('btnBeliLanjut').style.opacity='1';
     _beliHargaJasa=estimasi;
   }catch(e){
     document.getElementById('beliEstimasiHargaJasa').textContent='Gagal hitung estimasi';
