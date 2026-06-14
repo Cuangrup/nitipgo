@@ -1280,13 +1280,14 @@ function fileToBase64Compressed(file, maxSize=400, quality=0.5){
 // Upload dokumen satu per satu ke database
 async function uploadDokumenService(userId, dokData){
   try{
-    await db.from('users').update({
+    console.log('uploadDokumenService called, userId:', userId);
+    const res = await db.from('users').update({
       foto_profil: dokData.selfie||null,
       dok_ktp: dokData.ktp||null,
       dok_kk_ijazah: dokData.dok||null,
       tipe_dok_pendukung: dokData.pilihan||'kk',
-      tipe_mitra: 'service',
     }).eq('id', userId);
+    console.log('uploadDokumenService result:', JSON.stringify({error:res.error?.message, status:res.status}));
   }catch(e){console.error('uploadDokumenService error:',e);}
 }
 
