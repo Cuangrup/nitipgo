@@ -3900,7 +3900,14 @@ function lihatDetailOrder(orderId){
         <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Harga Deal</span><b style="color:var(--go)">${rupiah(o.harga_deal||o.harga_tawar)}</b></div>
         `:''}
       </div>
-      ${o.bukti_bayar?`<div style="margin-top:12px"><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px">BUKTI TRANSFER</div><img src="${o.bukti_bayar}" onclick="openDokModal('${o.bukti_bayar}')" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;cursor:pointer"></div>`:''} 
+      ${o.bukti_bayar?`<div style="margin-top:12px">
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px">BUKTI TRANSFER</div>
+        <img src="${o.bukti_bayar}" onclick="openDokModal('${o.bukti_bayar}')" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;cursor:pointer;margin-bottom:8px">
+        ${o.status==='menunggu_pembayaran'?`
+        <button onclick="konfirmasiPembayaran('${o.id}')" style="width:100%;padding:10px;background:#0047AB;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">
+          ✅ Konfirmasi Pembayaran Diterima
+        </button>`:'<div style="background:#EEF4FF;padding:8px;border-radius:8px;font-size:12px;color:#0047AB;text-align:center">✅ Pembayaran sudah dikonfirmasi</div>'}
+      </div>`:''} 
       ${o.foto_pickup||o.foto_selesai?`<div style="display:flex;gap:8px;margin-top:16px">
         ${o.foto_pickup?`<div style="flex:1"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">FOTO PICKUP</div><img src="${o.foto_pickup}" onclick="openDokModal('${o.foto_pickup}')" style="width:100%;height:100px;object-fit:cover;border-radius:8px;cursor:pointer"></div>`:''}
         ${o.foto_selesai?`<div style="flex:1"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">FOTO SELESAI</div><img src="${o.foto_selesai}" onclick="openDokModal('${o.foto_selesai}')" style="width:100%;height:100px;object-fit:cover;border-radius:8px;cursor:pointer"></div>`:''}
@@ -3915,6 +3922,15 @@ function lihatDetailOrder(orderId){
     // Load chat history
     setTimeout(()=>loadAdminChat(o.id),300);
   });
+}
+
+async function konfirmasiPembayaran(orderId){
+  if(!confirm('Konfirmasi pembayaran sudah diterima?')) return;
+  const{error} = await db.from('orders').update({status:'dibayar'}).eq('id',orderId);
+  if(error){alert('Gagal: '+error.message);return;}
+  alert('✅ Pembayaran dikonfirmasi! Order berstatus Dibayar.');
+  document.querySelectorAll('.admin-modal').forEach(m=>m.remove());
+  loadAdminOrders();
 }
 
 async function loadAdminChat(orderId){
