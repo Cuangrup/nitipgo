@@ -1480,7 +1480,7 @@ async function kirimOTP(mode){
   const nama=(role==='mitra_service'?
     document.getElementById('daftarNamaService')?.value?.trim():
     document.getElementById('daftarNama')?.value?.trim())||'';
-  const hp=document.getElementById('daftarHp').value.replace(/\D/g,'');
+  const hp=document.getElementById('daftarHp').value.replace(/\D/g,'').replace(/^0/,'62');
   const pwd=document.getElementById('daftarPwd')?.value||'';
 
   if(mode==='daftar'){
@@ -1747,6 +1747,7 @@ async function checkSession(){
   if(saved){
     try{
       const user=JSON.parse(saved);
+      if(user&&user.no_hp) user.no_hp=user.no_hp.replace(/[^\d]/g,'');
       // Selalu refresh dari DB untuk dapat status terbaru
       db.from('users').select('*').eq('id',user.id).single().then(async({data})=>{
         if(data){
@@ -4412,10 +4413,11 @@ async function kirimBantuan(){
 }
 
 // ── HOME LOGIN ──
-let _homeLoginRole = 'pengguna';
+let _homeLoginRole = 'pengirim';
 
 function setLoginRole(role){
-  _homeLoginRole = role;
+  // 'pengguna' di UI = 'pengirim' di DB
+  _homeLoginRole = role === 'pengguna' ? 'pengirim' : role;
   const tp = document.getElementById('togglePengguna');
   const tm = document.getElementById('toggleMitra');
   if(role==='pengguna'){
