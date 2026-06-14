@@ -209,6 +209,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* NOTIFIKASI & RATING */
 .notif-popup{display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;}
 .notif-popup.show{display:flex;}
+.notif-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;}
+.notif-overlay.show{display:flex;}
 .notif-box{background:white;border-radius:16px;padding:28px 24px;max-width:360px;width:90%;text-align:center;animation:popIn .3s ease;}
 @keyframes popIn{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}
 .notif-icon{font-size:56px;margin-bottom:12px;}
@@ -3899,6 +3901,13 @@ checkAdminHash();
       </div>
       <button class="btn btn-go" onclick="kirimBantuan()">Kirim Pesan →</button>
     </div>
+  </div>
+</div>
+
+<!-- NOTIF SELESAI / RATING MODAL -->
+<div id="notifSelesai" class="notif-overlay">
+  <div class="notif-box">
+    <div id="notifContent"></div>
   </div>
 </div>
 </body>
