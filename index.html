@@ -139,7 +139,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .mitra-tab{flex:1;padding:14px;text-align:center;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
 .mitra-tab.active{color:var(--mitra);border-bottom-color:var(--mitra);}
 .mitra-content{max-width:480px;margin:0 auto;padding:16px 20px;}
-.pengirim-tabs{display:flex;background:white;border-bottom:1.5px solid var(--border);position:sticky;top:60px;z-index:50;}
+.pengirim-tabs{display:flex;background:white;border-bottom:1.5px solid var(--border);position:sticky;top:0;z-index:50;}
 .pengirim-tab{flex:1;padding:14px;text-align:center;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
 .pengirim-tab.active{color:var(--go);border-bottom-color:var(--go);}
 .alert{padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;}
@@ -583,11 +583,51 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <!-- PENGIRIM DASHBOARD -->
 <div id="screenPengirim" class="screen">
+
+  <!-- HEADER BIRU -->
+  <div style="background:#0047AB;padding:16px 20px 0">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div>
+        <div style="font-size:12px;color:#BFDBFE">Halo,</div>
+        <div style="font-size:16px;font-weight:600;color:white" id="pengirimHeaderNama">Pengguna</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onclick="bukaHalamanPengaturan()" style="background:rgba(255,255,255,0.15);border:none;border-radius:20px;padding:6px 12px;color:white;font-size:12px;cursor:pointer">
+          ⚙️ Akun
+        </button>
+      </div>
+    </div>
+
+    <!-- 3 LAYANAN -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:0;padding-bottom:16px">
+      <div onclick="pengirimTab('buat');document.getElementById('orderJenis').value='kirim'" 
+        style="background:rgba(255,255,255,0.15);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer">
+        <div style="font-size:20px;margin-bottom:4px">📦</div>
+        <div style="font-size:10px;font-weight:600;color:white">NitipKirim</div>
+        <div style="font-size:9px;color:#BFDBFE">Delivery</div>
+      </div>
+      <div onclick="pengirimTab('buat');document.getElementById('orderJenis').value='beli'"
+        style="background:rgba(255,255,255,0.15);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer">
+        <div style="font-size:20px;margin-bottom:4px">🛍️</div>
+        <div style="font-size:10px;font-weight:600;color:white">NitipBeli</div>
+        <div style="font-size:9px;color:#BFDBFE">Buying</div>
+      </div>
+      <div onclick="pengirimTab('buat');document.getElementById('orderJenis').value='suruh'"
+        style="background:rgba(255,255,255,0.15);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer">
+        <div style="font-size:20px;margin-bottom:4px">🧾</div>
+        <div style="font-size:10px;font-weight:600;color:white">NitipSuruh</div>
+        <div style="font-size:9px;color:#BFDBFE">Tasks</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
   <div class="pengirim-tabs">
     <div class="pengirim-tab active" onclick="pengirimTab('buat')">+ Buat Order</div>
     <div class="pengirim-tab" onclick="pengirimTab('aktif')" id="tabAktifLabel">Order Aktif</div>
     <div class="pengirim-tab" onclick="pengirimTab('riwayat')">Riwayat</div>
   </div>
+
   <div id="tabBuatOrder" class="form-wrap">
     <div class="form-title">Buat Order Baru</div>
     <div class="form-sub">Isi detail & pasang harga tawarmu</div>
@@ -1226,7 +1266,10 @@ async function masukSebagai(user){
   // Simpan session
   localStorage.setItem('nitipgo_user',JSON.stringify(u));
   updateTopbar(u);
-  if(u.role==='pengirim'){goScreen('screenPengirim');pengirimTab('buat');subscribeRealtimePengirim();setTimeout(cekOrderSelesai,2000);startFlagOrderCheck();}
+  if(u.role==='pengirim'){
+    document.getElementById('mainTopbar').style.display='none';
+    goScreen('screenPengirim');pengirimTab('buat');subscribeRealtimePengirim();setTimeout(cekOrderSelesai,2000);startFlagOrderCheck();
+  }
   else{goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();setTimeout(cekStatusAudio,500);startFlagOrderCheck();}
 }
 
@@ -1236,6 +1279,9 @@ function updateTopbar(user){
   document.getElementById('topRoleBadge').onclick=()=>bukaHalamanPengaturan();
   document.getElementById('userMenu').style.display='flex';
   document.getElementById('mainTopbar').style.display='flex';
+  // Update nama di header dashboard pengguna
+  const headerNama = document.getElementById('pengirimHeaderNama');
+  if(headerNama) headerNama.textContent = user.nama;
 }
 
 function logout(){
