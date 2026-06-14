@@ -3022,8 +3022,7 @@ function renderOrderAktifMitra(o){
         <span style="font-size:13px;font-weight:700;color:#0047AB">${rupiah((o.estimasi_harga_barang||0)+(o.harga_deal||o.harga_tawar||0))}</span>
       </div>
     </div>
-    `:''}
-    <div class="harga-row" style="margin-bottom:12px"><div class="harga-tawar">${rupiah(o.harga_deal||o.harga_tawar)}</div></div>
+    `:`<div class="harga-row" style="margin-bottom:12px"><div class="harga-tawar">${rupiah(o.harga_deal||o.harga_tawar)}</div></div>`}
     <button onclick="bukaChat('${o.id}','${o.kode}','pengirim')" style="width:100%;margin-bottom:10px;padding:10px;background:#1a5f3f;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-message-circle" style="font-size:16px" aria-hidden="true"></i> Chat dengan Pengguna</button>
     <div style="background:var(--surface);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px">
       <div style="display:grid;gap:4px">
