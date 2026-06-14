@@ -1596,7 +1596,10 @@ async function checkSession(){
       // Selalu refresh dari DB untuk dapat status terbaru
       db.from('users').select('*').eq('id',user.id).single().then(async({data})=>{
         if(data){
-          localStorage.setItem('nitipgo_user',JSON.stringify(data));
+          const datakecil={...data};
+          delete datakecil.foto_profil;delete datakecil.dok_ktp;delete datakecil.dok_sim;
+          delete datakecil.dok_stnk;delete datakecil.dok_kendaraan;delete datakecil.dok_kk_ijazah;
+          localStorage.setItem('nitipgo_user',JSON.stringify(datakecil));
           await masukSebagai(data);
         } else {
           localStorage.removeItem('nitipgo_user');
@@ -3995,7 +3998,15 @@ async function homeLogin(){
   }
 
   // Login langsung tanpa OTP
-  localStorage.setItem('nitipgo_user', JSON.stringify(user));
+  // Simpan ke localStorage tanpa data besar (foto/dokumen)
+  const userKecil = {...user};
+  delete userKecil.foto_profil;
+  delete userKecil.dok_ktp;
+  delete userKecil.dok_sim;
+  delete userKecil.dok_stnk;
+  delete userKecil.dok_kendaraan;
+  delete userKecil.dok_kk_ijazah;
+  localStorage.setItem('nitipgo_user', JSON.stringify(userKecil));
   await masukSebagai(user);
 }
 
