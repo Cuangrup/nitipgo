@@ -1703,6 +1703,7 @@ async function masukSebagai(user){
     subscribeRealtime();
     setTimeout(cekStatusAudio,500);
     startFlagOrderCheck();
+    setTimeout(cekKelengkapanMitra, 2000);
   }
 }
 
@@ -3679,6 +3680,11 @@ async function loadAdminMitra(){
         ${u.dok_kendaraan?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Kendaraan</div><img src="${u.dok_kendaraan}" class="dok-thumb" onclick="openDokModal('${u.dok_kendaraan}')"></div>`:''}
         ${u.dok_kk_ijazah?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">${u.tipe_dok_pendukung==='ijazah'?'Ijazah':'KK'}</div><img src="${u.dok_kk_ijazah}" class="dok-thumb" onclick="openDokModal('${u.dok_kk_ijazah}')"></div>`:''}
       </div>
+      ${u.no_rekening?`<div style="background:#EEF4FF;border-radius:8px;padding:10px;margin-top:8px;font-size:12px">
+        <div style="font-weight:600;color:#0047AB;margin-bottom:4px">🏦 Rekening Pencairan</div>
+        <div>${u.nama_bank} · ${u.no_rekening}</div>
+        <div style="color:var(--muted)">a/n ${u.nama_rekening}</div>
+      </div>`:'<div style="font-size:11px;color:#e53935;margin-top:6px">⚠️ Belum ada rekening</div>'}
       <div style="display:flex;gap:8px">
         <button class="btn btn-mitra btn-sm" onclick="approveMitra('${u.id}','${u.no_hp}')">✅ Approve</button>
         <button class="btn btn-danger btn-sm" onclick="tolakMitra('${u.id}','${u.no_hp}')">❌ Tolak</button>
@@ -4341,6 +4347,136 @@ function goBackFromPengaturan(){
   window.scrollTo(0,0);
 }
 
+function bukaFormKontakDarurat(){
+  document.getElementById('formKontakDarurat').style.display='block';
+  if(currentUser?.nama_kontak_darurat) document.getElementById('inputNamaKontak').value=currentUser.nama_kontak_darurat;
+  if(currentUser?.hp_kontak_darurat) document.getElementById('inputHpKontak').value=currentUser.hp_kontak_darurat;
+  if(currentUser?.hubungan_kontak_darurat) document.getElementById('inputHubunganKontak').value=currentUser.hubungan_kontak_darurat;
+}
+
+function tutupFormKontakDarurat(){
+  document.getElementById('formKontakDarurat').style.display='none';
+}
+
+async function simpanKontakDarurat(){
+  const nama=document.getElementById('inputNamaKontak').value.trim();
+  const hubungan=document.getElementById('inputHubunganKontak').value;
+  const hp=document.getElementById('inputHpKontak').value.replace(/\D/g,'');
+  if(!nama||!hp){alert('Nama dan nomor HP wajib diisi!');return;}
+  const{error}=await db.from('users').update({
+    nama_kontak_darurat:nama,
+    hubungan_kontak_darurat:hubungan,
+    hp_kontak_darurat:hp
+  }).eq('id',currentUser.id);
+  if(error){alert('Gagal simpan: '+error.message);return;}
+  currentUser.nama_kontak_darurat=nama;
+  currentUser.hubungan_kontak_darurat=hubungan;
+  currentUser.hp_kontak_darurat=hp;
+  tampilKontakDaruratInfo();
+  tutupFormKontakDarurat();
+  alert('✅ Kontak darurat berhasil disimpan!');
+}
+
+function tampilKontakDaruratInfo(){
+  const el=document.getElementById('kontakDaruratInfo');
+  const btn=document.getElementById('btnKontakDaruratLabel');
+  if(currentUser?.hp_kontak_darurat){
+    el.innerHTML=`
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:11px;color:var(--muted)">Nama</span>
+        <b style="font-size:13px">${currentUser.nama_kontak_darurat}</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:11px;color:var(--muted)">Hubungan</span>
+        <span style="font-size:13px">${currentUser.hubungan_kontak_darurat}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="font-size:11px;color:var(--muted)">No. HP</span>
+        <b style="font-size:13px">${currentUser.hp_kontak_darurat}</b>
+      </div>`;
+    if(btn) btn.textContent='Ubah Kontak Darurat';
+  } else {
+    el.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:8px">Belum ada kontak darurat</div>';
+    if(btn) btn.textContent='Tambah Kontak Darurat';
+  }
+}
+
+function cekKelengkapanMitra(){
+  if(currentRole!=='mitra') return;
+  const kurang=[];
+  if(!currentUser?.no_rekening) kurang.push('rekening pencairan');
+  if(!currentUser?.hp_kontak_darurat) kurang.push('kontak darurat');
+  if(kurang.length===0) return;
+  
+  // Banner mengganggu di atas dashboard mitra
+  const banner=document.createElement('div');
+  banner.id='bannerLengkapi';
+  banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#FF6B00;color:white;padding:12px 16px;text-align:center;font-size:13px;font-weight:500';
+  banner.innerHTML=`⚠️ Lengkapi profilmu: <b>${kurang.join(' & ')}</b> — wajib diisi untuk bisa menerima pencairan! 
+    <button onclick="bukaHalamanPengaturan();this.parentElement.remove()" 
+      style="margin-left:10px;background:white;color:#FF6B00;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer">
+      Lengkapi Sekarang
+    </button>
+    <button onclick="this.parentElement.remove()" 
+      style="margin-left:6px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer">✕</button>`;
+  document.body.appendChild(banner);
+}
+
+function bukaFormRekening(){
+  document.getElementById('formRekening').style.display='block';
+  // Pre-fill kalau sudah ada
+  if(currentUser?.nama_bank) document.getElementById('inputNamaBank').value=currentUser.nama_bank;
+  if(currentUser?.no_rekening) document.getElementById('inputNoRekening').value=currentUser.no_rekening;
+  if(currentUser?.nama_rekening) document.getElementById('inputNamaRekening').value=currentUser.nama_rekening;
+}
+
+function tutupFormRekening(){
+  document.getElementById('formRekening').style.display='none';
+}
+
+async function simpanRekening(){
+  const namaBank=document.getElementById('inputNamaBank').value.trim();
+  const noRek=document.getElementById('inputNoRekening').value.trim();
+  const namaRek=document.getElementById('inputNamaRekening').value.trim();
+  if(!namaBank||!noRek||!namaRek){alert('Semua field wajib diisi!');return;}
+  const{error}=await db.from('users').update({
+    nama_bank:namaBank,
+    no_rekening:noRek,
+    nama_rekening:namaRek
+  }).eq('id',currentUser.id);
+  if(error){alert('Gagal simpan: '+error.message);return;}
+  currentUser.nama_bank=namaBank;
+  currentUser.no_rekening=noRek;
+  currentUser.nama_rekening=namaRek;
+  tampilRekeningInfo();
+  tutupFormRekening();
+  alert('✅ Rekening berhasil disimpan!');
+}
+
+function tampilRekeningInfo(){
+  const el=document.getElementById('rekeningInfo');
+  const btn=document.getElementById('btnRekeningLabel');
+  if(currentUser?.no_rekening){
+    el.innerHTML=`
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:11px;color:var(--muted)">Bank</span>
+        <b style="font-size:13px">${currentUser.nama_bank}</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:11px;color:var(--muted)">No. Rekening</span>
+        <b style="font-size:13px;letter-spacing:1px">${currentUser.no_rekening}</b>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="font-size:11px;color:var(--muted)">A/N</span>
+        <b style="font-size:13px">${currentUser.nama_rekening}</b>
+      </div>`;
+    if(btn) btn.textContent='Ubah Rekening';
+  } else {
+    el.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:8px">Belum ada rekening tersimpan</div>';
+    if(btn) btn.textContent='Tambah Rekening';
+  }
+}
+
 async function bukaHalamanPengaturan(){
   _prevScreen = currentRole==='mitra' ? 'screenMitra' : 'screenPengirim';
   goScreen('screenPengaturan');
@@ -4349,6 +4485,15 @@ async function bukaHalamanPengaturan(){
   // Isi data profil
   const u = currentUser;
   const isMitra = u.role==='mitra';
+
+  // Rekening mitra
+  const rekeningSection = document.getElementById('rekeningMitraSection');
+  if(rekeningSection) rekeningSection.style.display = isMitra ? 'block' : 'none';
+  if(isMitra) tampilRekeningInfo();
+  // Kontak darurat mitra
+  const kontakSection = document.getElementById('kontakDaruratSection');
+  if(kontakSection) kontakSection.style.display = isMitra ? 'block' : 'none';
+  if(isMitra) tampilKontakDaruratInfo();
 
   // Avatar
   const avatarEl = document.getElementById('pengaturanAvatar');
@@ -4779,6 +4924,88 @@ checkAdminHash();
       </div>
       <div class="info-row" id="infoPlatRow" style="display:none">
         <div><div class="info-label">Plat Nomor</div><div id="infoPlat">-</div></div>
+      </div>
+    </div>
+
+    <!-- Rekening Mitra -->
+    <div id="rekeningMitraSection" style="display:none;margin-bottom:16px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">🏦 Rekening Pencairan</div>
+      <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:16px">
+        <div id="rekeningInfo">
+          <div style="font-size:13px;color:var(--muted);text-align:center;padding:8px">
+            Belum ada rekening tersimpan
+          </div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="bukaFormRekening()" style="width:100%;margin-top:10px;font-size:13px">
+          <i class="ti ti-edit" style="font-size:13px" aria-hidden="true"></i> 
+          <span id="btnRekeningLabel">Tambah Rekening</span>
+        </button>
+      </div>
+
+      <!-- Form Rekening -->
+      <div id="formRekening" style="display:none;background:white;border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:8px">
+        <div style="background:#FFF3E0;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#E65100">
+          <i class="ti ti-alert-circle" aria-hidden="true"></i>
+          Nama pemilik rekening <b>wajib sama persis</b> dengan nama di KTP kamu.
+        </div>
+        <div class="field">
+          <label>Nama Bank</label>
+          <input type="text" id="inputNamaBank" placeholder="Contoh: BCA, BRI, Mandiri, GoPay, Dana...">
+        </div>
+        <div class="field">
+          <label>Nomor Rekening / Akun</label>
+          <input type="text" id="inputNoRekening" placeholder="Nomor rekening atau nomor HP e-wallet">
+        </div>
+        <div class="field">
+          <label>Nama Pemilik Rekening</label>
+          <input type="text" id="inputNamaRekening" placeholder="Harus sama dengan nama di KTP">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" onclick="tutupFormRekening()" style="flex:1">Batal</button>
+          <button class="btn btn-go" onclick="simpanRekening()" style="flex:2">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kontak Darurat Mitra -->
+    <div id="kontakDaruratSection" style="display:none;margin-bottom:16px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">🆘 Kontak Darurat</div>
+      <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:16px">
+        <div id="kontakDaruratInfo">
+          <div style="font-size:13px;color:var(--muted);text-align:center;padding:8px">Belum ada kontak darurat</div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="bukaFormKontakDarurat()" style="width:100%;margin-top:10px;font-size:13px">
+          <i class="ti ti-user-plus" style="font-size:13px" aria-hidden="true"></i>
+          <span id="btnKontakDaruratLabel">Tambah Kontak Darurat</span>
+        </button>
+      </div>
+      <div id="formKontakDarurat" style="display:none;background:white;border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:8px">
+        <div style="background:#EEF4FF;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#0047AB">
+          <i class="ti ti-info-circle" aria-hidden="true"></i>
+          Dihubungi saat terjadi insiden darurat di lapangan.
+        </div>
+        <div class="field">
+          <label>Nama Kerabat / Kontak</label>
+          <input type="text" id="inputNamaKontak" placeholder="Nama lengkap">
+        </div>
+        <div class="field">
+          <label>Hubungan</label>
+          <select id="inputHubunganKontak">
+            <option value="Orang Tua">Orang Tua</option>
+            <option value="Pasangan">Pasangan</option>
+            <option value="Saudara">Saudara</option>
+            <option value="Teman">Teman</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Nomor HP</label>
+          <input type="tel" id="inputHpKontak" placeholder="08xxxxxxxxxx" oninput="formatHP(this)">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" onclick="tutupFormKontakDarurat()" style="flex:1">Batal</button>
+          <button class="btn btn-go" onclick="simpanKontakDarurat()" style="flex:2">Simpan</button>
+        </div>
       </div>
     </div>
 
