@@ -3715,11 +3715,95 @@ async function loadAdminAkun(){
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           ${u.role==='mitra'?`<button class="btn btn-mitra btn-sm" style="padding:4px 8px;font-size:11px" onclick="ubahStatusMitra('${u.id}','aktif')">Aktifkan</button>
           <button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="ubahStatusMitra('${u.id}','ditolak')">Nonaktif</button>`:''}
+          <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:#0047AB;border-color:#0047AB" onclick="lihatDetailMitra('${u.id}')">Detail</button>
           <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:red;border-color:red" onclick="hapusAkun('${u.id}')">Hapus</button>
         </div>
       </td>
     </tr>`).join('')}
   </table>`;
+}
+
+async function lihatDetailMitra(userId){
+  const{data:u}=await db.from('users').select('*').eq('id',userId).single();
+  if(!u){alert('Data tidak ditemukan');return;}
+
+  const modal=document.createElement('div');
+  modal.className='admin-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px';
+  modal.innerHTML=`
+    <div style="background:white;border-radius:16px;padding:20px;max-width:480px;width:100%;margin:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-weight:700;font-size:16px">Detail Mitra</div>
+        <button onclick="this.closest('.admin-modal').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)">✕</button>
+      </div>
+
+      <!-- Foto & Info Dasar -->
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
+        ${u.foto_profil?`<img src="${u.foto_profil}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0">`:`<div style="width:64px;height:64px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">🛵</div>`}
+        <div>
+          <div style="font-weight:700;font-size:16px">${u.nama}</div>
+          <div style="font-size:13px;color:var(--muted)">+${u.no_hp}</div>
+          <div style="font-size:12px;color:var(--muted)">${u.email||'-'}</div>
+          <span class="status-badge badge-${u.status_verifikasi||'aktif'}" style="margin-top:4px;display:inline-block">${u.status_verifikasi||'aktif'}</span>
+        </div>
+      </div>
+
+      <!-- Info Detail -->
+      <div style="background:var(--surface);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Tipe Mitra</span><b>${u.tipe_mitra==='service'?'Mitra Service':'Mitra Driver'}</b></div>
+        ${u.jenis_kendaraan?`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Kendaraan</span><b>${u.jenis_kendaraan}</b></div>`:''}
+        ${u.plat_nomor?`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Plat Nomor</span><b style="letter-spacing:1px">${u.plat_nomor}</b></div>`:''}
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Rating</span><b>⭐ ${u.rating||'5.0'} (${u.total_rating||0} ulasan)</b></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Total Order</span><b>${u.total_order||0} order</b></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Bergabung</span><b>${new Date(u.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</b></div>
+      </div>
+
+      <!-- Rekening -->
+      <div style="background:#EEF4FF;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
+        <div style="font-weight:600;color:#0047AB;margin-bottom:6px">🏦 Rekening Pencairan</div>
+        ${u.no_rekening?`
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">Bank</span><b>${u.nama_bank}</b></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">No. Rekening</span><b style="letter-spacing:1px">${u.no_rekening}</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">A/N</span><b>${u.nama_rekening}</b></div>
+        `:'<div style="color:#e53935;font-size:12px">⚠️ Belum ada rekening tersimpan</div>'}
+      </div>
+
+      <!-- Kontak Darurat -->
+      <div style="background:#FFF3E0;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
+        <div style="font-weight:600;color:#E65100;margin-bottom:6px">🆘 Kontak Darurat</div>
+        ${u.hp_kontak_darurat?`
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">Nama</span><b>${u.nama_kontak_darurat}</b></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">Hubungan</span><b>${u.hubungan_kontak_darurat}</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">No. HP</span><b>${u.hp_kontak_darurat}</b></div>
+        `:'<div style="color:#e53935;font-size:12px">⚠️ Belum ada kontak darurat</div>'}
+      </div>
+
+      <!-- Dokumen -->
+      <div style="margin-bottom:16px">
+        <div style="font-weight:600;font-size:13px;margin-bottom:8px">📄 Dokumen</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${u.foto_profil?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">SELFIE</div><img src="${u.foto_profil}" class="dok-thumb" onclick="openDokModal('${u.foto_profil}')"></div>`:''}
+          ${u.dok_ktp?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">KTP</div><img src="${u.dok_ktp}" class="dok-thumb" onclick="openDokModal('${u.dok_ktp}')"></div>`:''}
+          ${u.dok_sim?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">SIM</div><img src="${u.dok_sim}" class="dok-thumb" onclick="openDokModal('${u.dok_sim}')"></div>`:''}
+          ${u.dok_stnk?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">STNK</div><img src="${u.dok_stnk}" class="dok-thumb" onclick="openDokModal('${u.dok_stnk}')"></div>`:''}
+          ${u.dok_kendaraan?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Kendaraan</div><img src="${u.dok_kendaraan}" class="dok-thumb" onclick="openDokModal('${u.dok_kendaraan}')"></div>`:''}
+          ${u.dok_kk_ijazah?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">${u.tipe_dok_pendukung==='ijazah'?'Ijazah':'KK'}</div><img src="${u.dok_kk_ijazah}" class="dok-thumb" onclick="openDokModal('${u.dok_kk_ijazah}')"></div>`:''}
+        </div>
+      </div>
+
+      <!-- Aksi -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${u.status_verifikasi==='menunggu'?`
+          <button class="btn btn-mitra btn-sm" onclick="approveMitra('${u.id}','${u.no_hp}');this.closest('.admin-modal').remove()">✅ Approve</button>
+          <button class="btn btn-danger btn-sm" onclick="tolakMitra('${u.id}','${u.no_hp}');this.closest('.admin-modal').remove()">❌ Tolak</button>
+        `:''}
+        <button class="btn btn-outline btn-sm" onclick="ubahStatusMitra('${u.id}','aktif');this.closest('.admin-modal').remove()">Set Aktif</button>
+        <button class="btn btn-outline btn-sm" style="color:#e53935;border-color:#e53935" onclick="ubahStatusMitra('${u.id}','nonaktif');this.closest('.admin-modal').remove()">Nonaktifkan</button>
+        <button class="btn btn-outline btn-sm" onclick="this.closest('.admin-modal').remove()">Tutup</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
 }
 
 async function kirimEmailNotif(email, nama, status, alasan=''){
