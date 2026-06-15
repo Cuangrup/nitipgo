@@ -1704,6 +1704,7 @@ async function masukSebagai(user){
     setTimeout(cekStatusAudio,500);
     startFlagOrderCheck();
     setTimeout(cekKelengkapanMitra, 2000);
+    setTimeout(loadMitraSaldo, 500);
   }
 }
 
@@ -2857,6 +2858,72 @@ async function batalOrder(orderId){
   loadOrderAktifPengirim();
 }
 
+// ── SALDO & ONLINE MITRA ──
+let _mitraIsOnline = false;
+
+async function loadMitraSaldo(){
+  if(!currentUser) return;
+  const{data} = await db.from('users').select('saldo,is_online').eq('id',currentUser.id).single();
+  if(!data) return;
+  currentUser.saldo = data.saldo||0;
+  currentUser.is_online = data.is_online||false;
+  _mitraIsOnline = data.is_online||false;
+  tampilSaldo();
+  tampilToggleOnline();
+}
+
+function tampilSaldo(){
+  const saldo = currentUser.saldo||0;
+  const el = document.getElementById('mitraSaldo');
+  const info = document.getElementById('mitraSaldoInfo');
+  if(!el) return;
+  el.textContent = rupiah(saldo);
+  el.style.color = saldo < 0 ? '#FF6B6B' : 'white';
+  if(info) info.textContent = saldo < 0 ? '⚠️ Saldo minus! Top up untuk aktif' : 'Saldo aktif';
+}
+
+function tampilToggleOnline(){
+  const btn = document.getElementById('toggleOnlineBtn');
+  const thumb = document.getElementById('toggleOnlineThumb');
+  const label = document.getElementById('toggleOnlineLabel');
+  const saldo = currentUser.saldo||0;
+  if(!btn) return;
+  if(_mitraIsOnline && saldo >= 0){
+    btn.style.background = '#4ADE80';
+    thumb.style.left = '30px';
+    if(label) label.textContent = 'Online';
+  } else {
+    btn.style.background = saldo < 0 ? '#FF6B6B' : '#94A3B8';
+    thumb.style.left = '2px';
+    if(label) label.textContent = saldo < 0 ? 'Saldo Minus' : 'Offline';
+  }
+}
+
+async function toggleOnlineMitra(){
+  if(!currentUser) return;
+  const saldo = currentUser.saldo||0;
+  if(saldo < 0){
+    alert('⚠️ Saldo kamu minus! Top up saldo dulu untuk bisa online.\nHubungi admin untuk top up.');
+    return;
+  }
+  _mitraIsOnline = !_mitraIsOnline;
+  await db.from('users').update({is_online:_mitraIsOnline}).eq('id',currentUser.id);
+  currentUser.is_online = _mitraIsOnline;
+  tampilToggleOnline();
+}
+
+async function potongSaldoMitra(mitraId, hargaDeal){
+  const komisi = Math.round(hargaDeal * 0.075);
+  const{data:mitra} = await db.from('users').select('saldo').eq('id',mitraId).single();
+  const saldoBaru = (mitra?.saldo||0) - komisi;
+  await db.from('users').update({saldo:saldoBaru}).eq('id',mitraId);
+  // Kalau saldo minus, auto offline
+  if(saldoBaru < 0){
+    await db.from('users').update({is_online:false}).eq('id',mitraId);
+  }
+  return {komisi, saldoBaru};
+}
+
 // ── MITRA TABS ──
 function mitraTab(tab){
   document.querySelectorAll('.mitra-tab').forEach(t=>t.classList.remove('active'));
@@ -3703,7 +3770,7 @@ async function loadAdminAkun(){
   const{data}=await q;
   if(!data||!data.length){el.innerHTML='<div class="empty"><p>Tidak ada akun.</p></div>';return;}
   el.innerHTML=`<table class="admin-table">
-    <tr><th>Nama</th><th>HP</th><th>Role</th><th>Status</th><th>Order</th><th>Rating</th><th>Aksi</th></tr>
+    <tr><th>Nama</th><th>HP</th><th>Role</th><th>Status</th><th>Order</th><th>Rating</th><th>Saldo</th><th>Aksi</th></tr>
     ${data.map(u=>`<tr>
       <td><b>${u.nama}</b><br><small style="color:var(--muted)">${u.email||''}</small></td>
       <td>+${u.no_hp}</td>
@@ -3711,16 +3778,30 @@ async function loadAdminAkun(){
       <td><span class="status-badge badge-${u.status_verifikasi||'aktif'}">${u.status_verifikasi||'aktif'}</span></td>
       <td>${u.total_order||0}</td>
       <td>⭐ ${u.rating||5.0}</td>
+      <td style="font-weight:600;color:${(u.saldo||0)<0?'#e53935':'#0D9E6B'}">${rupiah(u.saldo||0)}</td>
       <td>
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           ${u.role==='mitra'?`<button class="btn btn-mitra btn-sm" style="padding:4px 8px;font-size:11px" onclick="ubahStatusMitra('${u.id}','aktif')">Aktifkan</button>
           <button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="ubahStatusMitra('${u.id}','ditolak')">Nonaktif</button>`:''}
           <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:#0047AB;border-color:#0047AB" onclick="lihatDetailMitra('${u.id}')">Detail</button>
+          ${u.role==='mitra'?`<button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:#0D9E6B;border-color:#0D9E6B" onclick="topUpSaldo('${u.id}','${u.nama}',${u.saldo||0})">Top Up</button>`:''}
           <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:red;border-color:red" onclick="hapusAkun('${u.id}')">Hapus</button>
         </div>
       </td>
     </tr>`).join('')}
   </table>`;
+}
+
+async function topUpSaldo(userId, nama, saldoSkrg){
+  const jumlah = prompt(`Top up saldo untuk ${nama}\nSaldo saat ini: ${rupiah(saldoSkrg)}\n\nMasukkan jumlah top up (Rp):`);
+  if(!jumlah) return;
+  const nominal = parseInt(jumlah.replace(/\D/g,''));
+  if(!nominal||nominal<1000){alert('Nominal tidak valid!');return;}
+  const saldoBaru = saldoSkrg + nominal;
+  const{error} = await db.from('users').update({saldo:saldoBaru}).eq('id',userId);
+  if(error){alert('Gagal: '+error.message);return;}
+  alert(`✅ Top up berhasil!\nSaldo ${nama}: ${rupiah(saldoBaru)}`);
+  loadAdminAkun();
 }
 
 async function lihatDetailMitra(userId){
