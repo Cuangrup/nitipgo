@@ -3322,8 +3322,14 @@ async function updateStatus(orderId,status){
     // Update total order mitra
     const{data:u}=await db.from('users').select('total_order').eq('id',currentUser.id).single();
     await db.from('users').update({total_order:(u?.total_order||0)+1}).eq('id',currentUser.id);
+    // Potong saldo 7.5% dari harga deal
+    const{data:order}=await db.from('orders').select('harga_deal,harga_tawar').eq('id',orderId).single();
+    const hargaDeal=order?.harga_deal||order?.harga_tawar||0;
+    if(hargaDeal>0){
+      await potongSaldoMitra(currentUser.id, hargaDeal);
+      await loadMitraSaldo();
+    }
     mitraTab('selesai');
-    // Tampilkan rating form untuk mitra
     showNotifSelesai(orderId,'mitra');
   } else {loadOrderAktifMitra();}
 }
