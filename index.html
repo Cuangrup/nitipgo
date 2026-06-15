@@ -3235,6 +3235,10 @@ function bulatkanBid(orderId, hargaTawar){
 }
 
 async function ajukanBid(orderId, hargaTawar=0){
+  if(!_mitraIsOnline){
+    alert('⚠️ Kamu sedang Offline! Nyalakan tombol Online dulu.');
+    return;
+  }
   // Cek apakah mitra masih punya order aktif
   const{data:orderAktif}=await db.from('orders')
     .select('id,kode')
