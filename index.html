@@ -1034,7 +1034,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div>
         <div style="font-size:10px;color:#BFDBFE;margin-bottom:4px">Saldo Kemitraan</div>
         <div style="font-size:20px;font-weight:500;color:white" id="mitraSaldo">Rp 0</div>
-        <div style="font-size:10px;color:#FF9999;margin-top:2px;display:none" id="mitraSaldoInfo">Saldo minus! Top up dulu</div>
+        <div style="font-size:10px;color:#FF9999;margin-top:2px;display:none" id="mitraSaldoInfo">Saldo minus! Top up dulu untuk bisa online.</div>
+        <button onclick="bukaModalTopUp()" style="margin-top:10px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.35);border-radius:8px;padding:7px 12px;color:white;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;width:auto">
+          <i class="ti ti-wallet" style="font-size:14px" aria-hidden="true"></i> Request Top Up Saldo
+        </button>
       </div>
       <div style="text-align:center">
         <div id="toggleOnlineBtn" onclick="toggleOnlineMitra()"
@@ -1124,6 +1127,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="admin-nav">
       <button class="admin-nav-btn active" onclick="adminTab('orders')" id="navOrders">📦 Order & Transaksi</button>
       <button class="admin-nav-btn" onclick="adminTab('mitra')" id="navMitra">🛵 Verifikasi Mitra</button>
+      <button class="admin-nav-btn" onclick="adminTab('topup')" id="navTopup">💰 Top Up <span id="badgeTopup" style="display:none;background:#e53935;color:white;border-radius:99px;font-size:10px;padding:1px 6px;margin-left:4px">0</span></button>
       <button class="admin-nav-btn" onclick="adminTab('akun')" id="navAkun">👤 Manajemen Akun</button>
       <button class="admin-nav-btn" onclick="adminTab('ratings')" id="navRatings">⭐ Rating & Ulasan</button>
     </div>
@@ -1160,6 +1164,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="adminTabRatings" style="display:none">
       <div style="font-weight:700;font-size:15px;margin-bottom:12px">Semua Rating & Ulasan</div>
       <div id="adminRatingsList"><div class="loading">Memuat...</div></div>
+    </div>
+
+    <!-- TAB: TOP UP -->
+    <div id="adminTabTopup" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap">
+        <div style="font-weight:700;font-size:15px">💰 Request Top Up Saldo</div>
+        <select id="filterTopupStatus" onchange="loadAdminTopup()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px">
+          <option value="">Semua Status</option>
+          <option value="pending">Menunggu</option>
+          <option value="disetujui">Disetujui</option>
+          <option value="ditolak">Ditolak</option>
+        </select>
+      </div>
+      <div id="adminTopupList"><div class="loading">Memuat...</div></div>
     </div>
 
     <!-- TAB: AKUN -->
@@ -3674,7 +3692,7 @@ function logoutAdmin(){
 }
 
 function adminTab(tab){
-  ['orders','mitra','akun','ratings'].forEach(t=>{
+  ['orders','mitra','topup','akun','ratings'].forEach(t=>{
     document.getElementById('adminTab'+t.charAt(0).toUpperCase()+t.slice(1)).style.display='none';
     document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1)).classList.remove('active');
   });
@@ -3682,23 +3700,90 @@ function adminTab(tab){
   document.getElementById('nav'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
   if(tab==='orders')loadAdminOrders();
   else if(tab==='mitra')loadAdminMitra();
+  else if(tab==='topup')loadAdminTopup();
   else if(tab==='ratings')loadAdminRatings();
   else loadAdminAkun();
 }
 
+async function loadAdminTopup(){
+  const el = document.getElementById('adminTopupList');
+  el.innerHTML='<div class="loading">Memuat...</div>';
+  const statusFilter = document.getElementById('filterTopupStatus').value;
+  let q = db.from('topup_requests').select('*').order('created_at',{ascending:false});
+  if(statusFilter) q = q.eq('status', statusFilter);
+  const {data,error} = await q;
+  if(error||!data||!data.length){
+    el.innerHTML='<div style="text-align:center;padding:32px;color:var(--muted)">Belum ada request top up</div>';
+    return;
+  }
+  const badge = document.getElementById('badgeTopup');
+  const pending = data.filter(r=>r.status==='pending').length;
+  if(pending>0){badge.textContent=pending;badge.style.display='inline';}else{badge.style.display='none';}
+  el.innerHTML = data.map(r=>{
+    const tgl = new Date(r.created_at).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const jam = new Date(r.created_at).getHours();
+    const lewatJam = jam >= 22;
+    const statusColor = r.status==='pending'?'#F59E0B':r.status==='disetujui'?'#10B981':'#EF4444';
+    const statusLabel = r.status==='pending'?'Menunggu':r.status==='disetujui'?'Disetujui':'Ditolak';
+    return `<div style="background:white;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-weight:700;font-size:14px">${r.nama_mitra}</div>
+          <div style="font-size:12px;color:var(--muted)">${r.no_hp} · ${tgl}</div>
+          ${lewatJam&&r.status==='pending'?'<div style="font-size:11px;color:#B45309;margin-top:2px">⏰ Dikirim lewat jam 22.00 — verifikasi besok</div>':''}
+        </div>
+        <span style="background:${statusColor}22;color:${statusColor};font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px">${statusLabel}</span>
+      </div>
+      <div style="background:#F8FAFC;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--muted)">Nominal dasar</span><b>${rupiah(r.nominal_dasar)}</b></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--muted)">Kode unik</span><b>+${r.kode_unik}</b></div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:6px;margin-top:4px"><span style="color:var(--muted)">Total transfer</span><b style="color:#0047AB;font-size:14px">${rupiah(r.nominal_dasar + r.kode_unik)}</b></div>
+      </div>
+      ${r.catatan?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">📝 ${r.catatan}</div>`:''}
+      ${r.status==='pending'?`
+      <div style="display:flex;gap:8px">
+        <button onclick="approveTopup('${r.id}','${r.mitra_id}',${r.nominal_dasar})" style="flex:1;padding:8px;background:#0047AB;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">✅ Setujui & Top Up</button>
+        <button onclick="tolakTopup('${r.id}')" style="flex:1;padding:8px;background:white;color:#e53935;border:1px solid #e53935;border-radius:8px;font-size:13px;cursor:pointer">❌ Tolak</button>
+      </div>`:`<div style="font-size:12px;color:var(--muted)">${r.status==='disetujui'?'✅ Disetujui oleh admin':'❌ Ditolak — '+( r.alasan_tolak||'-')}</div>`}
+    </div>`;
+  }).join('');
+}
+
+async function approveTopup(reqId, mitraId, nominalDasar){
+  if(!confirm(`Setujui top up ${rupiah(nominalDasar)} untuk mitra ini?\nSaldo akan ditambah sebesar nominal dasar (kode unik tidak dihitung).`)) return;
+  const {data:mitra} = await db.from('users').select('saldo,nama').eq('id',mitraId).single();
+  const saldoBaru = (mitra?.saldo||0) + nominalDasar;
+  const {error:e1} = await db.from('users').update({saldo:saldoBaru}).eq('id',mitraId);
+  if(e1){alert('Gagal update saldo!');return;}
+  await db.from('topup_requests').update({status:'disetujui',diproses_at:new Date().toISOString()}).eq('id',reqId);
+  alert(`✅ Saldo ${mitra?.nama} berhasil ditambah ${rupiah(nominalDasar)}.\nSaldo baru: ${rupiah(saldoBaru)}`);
+  loadAdminTopup();
+}
+
+async function tolakTopup(reqId){
+  const alasan = prompt('Alasan penolakan (opsional):');
+  if(alasan===null) return;
+  await db.from('topup_requests').update({status:'ditolak',alasan_tolak:alasan||'Tidak ada keterangan',diproses_at:new Date().toISOString()}).eq('id',reqId);
+  alert('Request top up ditolak.');
+  loadAdminTopup();
+}
+
 async function loadAdminStats(){
-  const[{count:mitraMenunggu},{count:mitraAktif},{count:pengirim},{count:orderTotal},{count:orderAktif}]=await Promise.all([
+  const[{count:mitraMenunggu},{count:mitraAktif},{count:pengirim},{count:orderTotal},{count:orderAktif},{count:topupPending}]=await Promise.all([
     db.from('users').select('*',{count:'exact',head:true}).eq('role','mitra').eq('status_verifikasi','menunggu'),
     db.from('users').select('*',{count:'exact',head:true}).eq('role','mitra').eq('status_verifikasi','aktif'),
     db.from('users').select('*',{count:'exact',head:true}).eq('role','pengirim'),
     db.from('orders').select('*',{count:'exact',head:true}),
     db.from('orders').select('*',{count:'exact',head:true}).in('status',['mencari','menunggu_konfirmasi','dijemput','diantar']),
+    db.from('topup_requests').select('*',{count:'exact',head:true}).eq('status','pending'),
   ]);
   document.getElementById('statMitraMenunggu').textContent=mitraMenunggu||0;
   document.getElementById('statMitraAktif').textContent=mitraAktif||0;
   document.getElementById('statPengguna').textContent=pengirim||0;
   document.getElementById('statOrderTotal').textContent=orderTotal||0;
   document.getElementById('statOrderAktif').textContent=orderAktif||0;
+  const badge = document.getElementById('badgeTopup');
+  if(badge){if((topupPending||0)>0){badge.textContent=topupPending;badge.style.display='inline';}else{badge.style.display='none';}}
   // Order hari ini
   const today=new Date().toISOString().split('T')[0];
   const{count:orderHari}=await db.from('orders').select('*',{count:'exact',head:true}).gte('created_at',today);
@@ -5307,6 +5392,7 @@ checkAdminHash();
         <label>Subjek</label>
         <select id="bantuanSubjek" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px">
           <option value="">-- Pilih subjek --</option>
+          <option value="Request Top Up Saldo">💰 Request Top Up Saldo</option>
           <option value="Ubah Data Akun">Ubah Data Akun (Nama/HP)</option>
           <option value="Masalah Order">Masalah Order</option>
           <option value="Masalah Pembayaran">Masalah Pembayaran</option>
@@ -5329,5 +5415,196 @@ checkAdminHash();
     <div id="notifContent"></div>
   </div>
 </div>
+
+<!-- MODAL REQUEST TOP UP SALDO -->
+<div id="modalTopUp" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:flex-end;justify-content:center">
+  <div style="background:white;border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;padding-bottom:24px">
+    <!-- Header -->
+    <div style="background:#0047AB;border-radius:16px 16px 0 0;padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="color:white;font-size:16px;font-weight:500">Request Top Up Saldo</div>
+          <div style="color:#BFDBFE;font-size:12px;margin-top:2px">Konfirmasi transfer ke admin</div>
+        </div>
+        <button onclick="tutupModalTopUp()" style="background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:30px;height:30px;color:white;font-size:18px;cursor:pointer;line-height:1">×</button>
+      </div>
+    </div>
+    <!-- Body -->
+    <div style="padding:16px">
+
+      <!-- Info rekening -->
+      <div style="background:#EEF4FF;border-radius:10px;padding:12px 14px;margin-bottom:16px">
+        <div style="font-size:11px;color:#185FA5;margin-bottom:6px;font-weight:500">Transfer ke rekening berikut:</div>
+        <div style="font-size:11px;color:#185FA5">BCA</div>
+        <div style="font-size:17px;font-weight:500;color:#0047AB;letter-spacing:1.5px">1300295441</div>
+        <div style="font-size:12px;color:#185FA5">a/n Mohammad Rusdianto</div>
+      </div>
+
+      <!-- Pilih nominal -->
+      <div style="font-size:13px;font-weight:500;color:#374151;margin-bottom:8px">Nominal yang ditransfer</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px" id="nominalGrid">
+        <button onclick="pilihNominal(20000,this)" class="nominal-btn" style="padding:11px 8px;border:1.5px solid #0047AB;border-radius:10px;background:#EEF4FF;color:#0047AB;font-size:13px;font-weight:500;cursor:pointer">Rp 20.000</button>
+        <button onclick="pilihNominal(50000,this)" class="nominal-btn" style="padding:11px 8px;border:1.5px solid #D1D5DB;border-radius:10px;background:white;color:#374151;font-size:13px;cursor:pointer">Rp 50.000</button>
+        <button onclick="pilihNominal(100000,this)" class="nominal-btn" style="padding:11px 8px;border:1.5px solid #D1D5DB;border-radius:10px;background:white;color:#374151;font-size:13px;cursor:pointer">Rp 100.000</button>
+        <button onclick="pilihNominalLain(this)" class="nominal-btn" style="padding:11px 8px;border:1.5px solid #D1D5DB;border-radius:10px;background:white;color:#374151;font-size:13px;cursor:pointer">Nominal lain</button>
+      </div>
+
+      <!-- Input nominal lain -->
+      <div id="inputNominalLainWrap" style="display:none;margin-bottom:14px">
+        <label style="font-size:13px;font-weight:500;color:#374151;display:block;margin-bottom:6px">Masukkan nominal (Rp)</label>
+        <input type="number" id="inputNominalLain" placeholder="Contoh: 75000" oninput="hitungUnik()" style="width:100%;padding:10px 12px;border:1.5px solid #D1D5DB;border-radius:10px;font-size:14px;box-sizing:border-box">
+      </div>
+
+      <!-- Nominal unik -->
+      <div id="nominalUnikWrap" style="display:none;background:#FFFBEA;border:1px solid #FCD34D;border-radius:10px;padding:12px 14px;margin-bottom:14px">
+        <div style="font-size:11px;color:#92400E;margin-bottom:4px">⚠️ Transfer tepat sebesar ini (sudah termasuk kode unik):</div>
+        <div style="font-size:20px;font-weight:500;color:#B45309" id="nominalUnikDisplay">Rp 0</div>
+        <div style="font-size:11px;color:#92400E;margin-top:3px">Kode unik akan dikurangkan otomatis oleh admin saat verifikasi.</div>
+      </div>
+
+      <!-- Upload bukti -->
+      <div style="font-size:13px;font-weight:500;color:#374151;margin-bottom:6px">Upload bukti transfer</div>
+      <div onclick="document.getElementById('inputBuktiTopUp').click()" style="border:1.5px dashed #9CA3AF;border-radius:10px;padding:20px;text-align:center;cursor:pointer;margin-bottom:14px" id="uploadBuktiArea">
+        <i class="ti ti-photo-up" style="font-size:24px;color:#9CA3AF" aria-hidden="true"></i>
+        <div style="font-size:12px;color:#6B7280;margin-top:6px" id="uploadBuktiLabel">Tap untuk upload foto/screenshot bukti transfer</div>
+      </div>
+      <input type="file" id="inputBuktiTopUp" accept="image/*" style="display:none" onchange="prevBuktiTopUp(this)">
+
+      <!-- Catatan -->
+      <div style="font-size:13px;font-weight:500;color:#374151;margin-bottom:6px">Catatan (opsional)</div>
+      <textarea id="catatanTopUp" placeholder="Contoh: transfer via BCA mobile jam 10.30" style="width:100%;padding:10px 12px;border:1.5px solid #D1D5DB;border-radius:10px;font-size:13px;height:80px;resize:none;font-family:inherit;box-sizing:border-box;margin-bottom:14px"></textarea>
+
+      <div style="background:#F0FDF4;border-radius:10px;padding:11px 13px;margin-bottom:14px;font-size:12px;line-height:1.6;color:#15803D">
+        <div style="font-weight:500;margin-bottom:3px;">🕙 Info jam operasional top up</div>
+        Request yang masuk <b>sebelum jam 22.00</b> akan diverifikasi di hari yang sama. Tenang aja, kalau kamu kirim lewat jam 22.00, saldo tetap akan diupdate keesokan harinya ya — nggak kemana-mana kok!
+      </div>
+
+      <div id="topUpAlert" style="margin-bottom:10px"></div>
+
+      <button onclick="kirimRequestTopUp()" id="btnKirimTopUp" style="width:100%;padding:13px;background:#0047AB;color:white;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer">
+        Kirim Request Top Up
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _topUpNominalDasar = 20000;
+let _topUpKodeUnik = 0;
+let _buktiTopUpBase64 = null;
+
+function bukaModalTopUp(){
+  _topUpNominalDasar = 20000;
+  _buktiTopUpBase64 = null;
+  _topUpKodeUnik = Math.floor(Math.random()*900)+100;
+  document.getElementById('modalTopUp').style.display='flex';
+  document.getElementById('nominalUnikWrap').style.display='block';
+  document.getElementById('nominalUnikDisplay').textContent = rupiah(_topUpNominalDasar + _topUpKodeUnik);
+  document.getElementById('inputNominalLainWrap').style.display='none';
+  document.getElementById('uploadBuktiLabel').textContent='Tap untuk upload foto/screenshot bukti transfer';
+  document.getElementById('uploadBuktiArea').style.borderColor='#9CA3AF';
+  document.getElementById('catatanTopUp').value='';
+  document.getElementById('topUpAlert').innerHTML='';
+  document.querySelectorAll('.nominal-btn').forEach(b=>{ b.style.border='1.5px solid #D1D5DB'; b.style.background='white'; b.style.color='#374151'; });
+  document.querySelectorAll('.nominal-btn')[0].style.border='1.5px solid #0047AB';
+  document.querySelectorAll('.nominal-btn')[0].style.background='#EEF4FF';
+  document.querySelectorAll('.nominal-btn')[0].style.color='#0047AB';
+}
+
+function tutupModalTopUp(){
+  document.getElementById('modalTopUp').style.display='none';
+}
+
+function pilihNominal(nominal, btn){
+  _topUpNominalDasar = nominal;
+  document.getElementById('inputNominalLainWrap').style.display='none';
+  document.querySelectorAll('.nominal-btn').forEach(b=>{ b.style.border='1.5px solid #D1D5DB'; b.style.background='white'; b.style.color='#374151'; });
+  btn.style.border='1.5px solid #0047AB'; btn.style.background='#EEF4FF'; btn.style.color='#0047AB';
+  _topUpKodeUnik = Math.floor(Math.random()*900)+100;
+  document.getElementById('nominalUnikWrap').style.display='block';
+  document.getElementById('nominalUnikDisplay').textContent = rupiah(_topUpNominalDasar + _topUpKodeUnik);
+}
+
+function pilihNominalLain(btn){
+  document.querySelectorAll('.nominal-btn').forEach(b=>{ b.style.border='1.5px solid #D1D5DB'; b.style.background='white'; b.style.color='#374151'; });
+  btn.style.border='1.5px solid #0047AB'; btn.style.background='#EEF4FF'; btn.style.color='#0047AB';
+  document.getElementById('inputNominalLainWrap').style.display='block';
+  document.getElementById('nominalUnikWrap').style.display='none';
+  document.getElementById('inputNominalLain').value='';
+  _topUpNominalDasar = 0;
+}
+
+function hitungUnik(){
+  const val = parseInt(document.getElementById('inputNominalLain').value)||0;
+  if(val >= 10000){
+    _topUpNominalDasar = val;
+    _topUpKodeUnik = Math.floor(Math.random()*900)+100;
+    document.getElementById('nominalUnikWrap').style.display='block';
+    document.getElementById('nominalUnikDisplay').textContent = rupiah(val + _topUpKodeUnik);
+  } else {
+    document.getElementById('nominalUnikWrap').style.display='none';
+  }
+}
+
+function prevBuktiTopUp(input){
+  if(!input.files||!input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    _buktiTopUpBase64 = e.target.result;
+    document.getElementById('uploadBuktiLabel').textContent = '✅ ' + file.name;
+    document.getElementById('uploadBuktiArea').style.borderColor='#0047AB';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function kirimRequestTopUp(){
+  if(!_topUpNominalDasar || _topUpNominalDasar < 20000){
+    document.getElementById('topUpAlert').innerHTML='<div style="background:#FEF2F2;color:#B91C1C;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px">⚠️ Minimal top up adalah Rp 20.000</div>';
+    return;
+  }
+  const totalTransfer = _topUpNominalDasar + _topUpKodeUnik;
+  const catatan = document.getElementById('catatanTopUp').value.trim();
+  const btn = document.getElementById('btnKirimTopUp');
+  btn.disabled=true; btn.textContent='Mengirim...';
+  document.getElementById('topUpAlert').innerHTML='';
+
+  const jam = new Date().getHours();
+  const infoJam = jam >= 22
+    ? 'Dikirim lewat jam 22.00 — saldo akan diupdate besok.'
+    : 'Dikirim sebelum jam 22.00 — saldo akan diupdate hari ini.';
+
+  try{
+    await db.from('topup_requests').insert({
+      mitra_id: currentUser.id,
+      nama_mitra: currentUser.nama,
+      no_hp: currentUser.no_hp,
+      nominal_dasar: _topUpNominalDasar,
+      kode_unik: _topUpKodeUnik,
+      catatan: catatan||null,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    });
+
+    const pesan = `REQUEST TOP UP SALDO\n\nNama: ${currentUser.nama}\nHP: +${currentUser.no_hp}\nEmail: ${currentUser.email||'-'}\nID Mitra: ${currentUser.id}\n\nNominal dasar: ${rupiah(_topUpNominalDasar)}\nKode unik: ${_topUpKodeUnik}\nTotal transfer: ${rupiah(totalTransfer)}\n\n${infoJam}\n${catatan?'Catatan: '+catatan:''}`;
+
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_NOTIF,{
+      to_email:'nitipgo000@gmail.com',
+      to_name:'Admin NitipGo',
+      subject:`[Top Up] ${currentUser.nama} — ${rupiah(totalTransfer)}`,
+      body: pesan,
+      name: currentUser.nama
+    });
+
+    document.getElementById('topUpAlert').innerHTML='<div style="background:#F0FDF4;color:#15803D;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px">✅ Request berhasil dikirim! Cek tab Top Up di dashboard admin untuk verifikasi.</div>';
+    btn.textContent='Terkirim ✓';
+    setTimeout(()=>tutupModalTopUp(), 2500);
+  }catch(e){
+    document.getElementById('topUpAlert').innerHTML='<div style="background:#FEF2F2;color:#B91C1C;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px">Gagal mengirim. Coba lagi.</div>';
+    btn.disabled=false; btn.textContent='Kirim Request Top Up';
+  }
+}
+</script>
+
 </body>
 </html>
