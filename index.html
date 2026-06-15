@@ -3712,7 +3712,11 @@ async function loadAdminTopup(){
   let q = db.from('topup_requests').select('*').order('created_at',{ascending:false});
   if(statusFilter) q = q.eq('status', statusFilter);
   const {data,error} = await q;
-  if(error||!data||!data.length){
+  if(error){
+    el.innerHTML='<div style="background:#FEF2F2;color:#B91C1C;padding:14px;border-radius:8px;font-size:13px">⚠️ Error: '+error.message+'<br><br>Kemungkinan RLS aktif. Jalankan di Supabase SQL Editor:<br><code>ALTER TABLE topup_requests DISABLE ROW LEVEL SECURITY;</code></div>';
+    return;
+  }
+  if(!data||!data.length){
     el.innerHTML='<div style="text-align:center;padding:32px;color:var(--muted)">Belum ada request top up</div>';
     return;
   }
