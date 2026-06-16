@@ -3798,7 +3798,6 @@ async function detailTopup(id){
   const catatan = r.catatan ? '<div style="font-size:12px;color:#6B7280;margin-bottom:12px">Catatan: '+r.catatan+'</div>' : '';
   const infoJam = lewatJam&&r.status==='pending' ? '<div style="font-size:11px;color:#B45309;margin-top:3px">⏰ Dikirim lewat jam 22.00 — verifikasi besok</div>' : '';
 
-  const panel = document.getElementById('topupDetailPanel');
   panel.innerHTML = '<div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;padding:16px">'
     +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">'
     +'<div><div style="font-size:15px;font-weight:500;color:#111827">'+r.nama_mitra+'</div>'
