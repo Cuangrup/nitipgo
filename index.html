@@ -3370,7 +3370,9 @@ async function ajukanBid(orderId, hargaTawar=0){
 }
 
 function uploadFotoPickup(orderId){
-  openFotoModal(orderId,'pickup','📸 Foto Bukti Pickup','Upload foto barang sebelum dibawa',()=>{
+  openFotoModal(orderId,'pickup','📸 Foto Bukti Pickup','Upload foto barang sebelum dibawa',async ()=>{
+    await db.from('orders').update({status:'diantar', updated_at: new Date().toISOString()}).eq('id',orderId);
+    showToast('Foto pickup berhasil! Status diubah ke Sedang Diantar.');
     loadOrderAktifMitra();
   });
 }
