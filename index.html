@@ -1255,6 +1255,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
     <!-- TAB: ORDER -->
     <div id="adminTabOrders">
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button onclick="switchKomisi('harian')" id="btnKomisiHarian" style="padding:5px 14px;border-radius:99px;border:0.5px solid #0047AB;background:#0047AB;color:white;font-size:12px;cursor:pointer;">Harian</button>
+        <button onclick="switchKomisi('mingguan')" id="btnKomisiMingguan" style="padding:5px 14px;border-radius:99px;border:0.5px solid #D1D5DB;background:white;color:#6B7280;font-size:12px;cursor:pointer;">Mingguan</button>
+        <button onclick="switchKomisi('bulanan')" id="btnKomisiBulanan" style="padding:5px 14px;border-radius:99px;border:0.5px solid #D1D5DB;background:white;color:#6B7280;font-size:12px;cursor:pointer;">Bulanan</button>
+      </div>
+      <div id="panelKomisi" style="margin-bottom:20px;"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap">
         <div style="font-weight:700;font-size:15px">Semua Order</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -3986,7 +3992,7 @@ function adminTab(tab){
   if(activeTab) activeTab.style.display='block';
   const activeNav=document.getElementById('nav'+tab.charAt(0).toUpperCase()+tab.slice(1));
   if(activeNav) activeNav.classList.add('active');
-  if(tab==='orders')loadAdminOrders();
+  if(tab==='orders'){loadAdminOrders();switchKomisi('harian');}
   else if(tab==='mitra')loadAdminMitra();
   else if(tab==='topup')loadAdminTopup();
   else if(tab==='ratings')loadAdminRatings();
@@ -4147,6 +4153,119 @@ async function loadAdminStats(){
   if(elPend) elPend.textContent=rupiah(Math.round(pendHari));
 }
 
+async function switchKomisi(mode){
+  ['harian','mingguan','bulanan'].forEach(m=>{
+    const btn = document.getElementById('btnKomisi'+m.charAt(0).toUpperCase()+m.slice(1));
+    if(btn){
+      if(m===mode){btn.style.background='#0047AB';btn.style.color='white';btn.style.borderColor='#0047AB';}
+      else{btn.style.background='white';btn.style.color='#6B7280';btn.style.borderColor='#D1D5DB';}
+    }
+  });
+  await loadKomisi(mode);
+}
+
+async function loadKomisi(mode){
+  const panel = document.getElementById('panelKomisi');
+  panel.innerHTML='<div class="loading">Memuat...</div>';
+  const now = new Date();
+  let startDate, label, breakdown='hari', perLabel='hari';
+
+  if(mode==='harian'){
+    startDate = new Date(now.getFullYear(),now.getMonth(),now.getDate()).toISOString();
+    label = now.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    breakdown='jenis'; perLabel='order';
+  } else if(mode==='mingguan'){
+    const day = now.getDay()===0?6:now.getDay()-1;
+    startDate = new Date(now.getFullYear(),now.getMonth(),now.getDate()-day).toISOString();
+    const endDay = new Date(now); endDay.setDate(endDay.getDate()+(6-day));
+    label = `${new Date(startDate).toLocaleDateString('id-ID',{day:'numeric',month:'short'})} – ${endDay.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}`;
+    perLabel='hari';
+  } else {
+    startDate = new Date(now.getFullYear(),now.getMonth(),1).toISOString();
+    label = now.toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+    perLabel='minggu';
+  }
+
+  const {data} = await db.from('orders').select('harga_deal,jenis,updated_at').eq('status','selesai').gte('updated_at',startDate);
+  const orders = data||[];
+  const total = orders.reduce((s,o)=>s+(o.harga_deal||0)*0.075,0);
+  const jumlah = orders.length;
+  const kirim = orders.filter(o=>o.jenis==='kirim').reduce((s,o)=>s+(o.harga_deal||0)*0.075,0);
+  const beli = orders.filter(o=>o.jenis==='beli').reduce((s,o)=>s+(o.harga_deal||0)*0.075,0);
+  const suruh = orders.filter(o=>o.jenis==='suruh').reduce((s,o)=>s+(o.harga_deal||0)*0.075,0);
+  const maxBar = Math.max(kirim,beli,suruh)||1;
+  const rataRata = jumlah>0 ? Math.round(total/jumlah) : 0;
+
+  let detailHtml = '';
+  if(mode==='mingguan'){
+    const perHari = {};
+    orders.forEach(o=>{
+      const tgl = new Date(o.updated_at).toLocaleDateString('id-ID',{weekday:'short',day:'numeric',month:'short'});
+      perHari[tgl] = (perHari[tgl]||0) + (o.harga_deal||0)*0.075;
+    });
+    detailHtml = Object.entries(perHari).map(([tgl,val])=>
+      `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #F3F4F6;font-size:12px;">
+        <span style="color:#374151;">${tgl}</span>
+        <span style="color:#27500A;font-weight:500;">${rupiah(Math.round(val))}</span>
+      </div>`).join('') || '<div style="font-size:12px;color:#9CA3AF;padding:6px 0;">Belum ada data</div>';
+  } else if(mode==='bulanan'){
+    const perMinggu = {};
+    orders.forEach(o=>{
+      const d = new Date(o.updated_at);
+      const minggu = 'Minggu '+(Math.ceil(d.getDate()/7));
+      perMinggu[minggu] = (perMinggu[minggu]||0) + (o.harga_deal||0)*0.075;
+    });
+    detailHtml = Object.entries(perMinggu).map(([m,val])=>
+      `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #F3F4F6;font-size:12px;">
+        <span style="color:#374151;">${m}</span>
+        <span style="color:#27500A;font-weight:500;">${rupiah(Math.round(val))}</span>
+      </div>`).join('') || '<div style="font-size:12px;color:#9CA3AF;padding:6px 0;">Belum ada data</div>';
+  }
+
+  panel.innerHTML = `
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px;">
+    <div style="background:#F9FAFB;border-radius:8px;padding:12px;">
+      <div style="font-size:11px;color:#6B7280;margin-bottom:4px;">Total komisi</div>
+      <div style="font-size:20px;font-weight:500;color:#27500A;">${rupiah(Math.round(total))}</div>
+    </div>
+    <div style="background:#F9FAFB;border-radius:8px;padding:12px;">
+      <div style="font-size:11px;color:#6B7280;margin-bottom:4px;">Order selesai</div>
+      <div style="font-size:20px;font-weight:500;color:#111827;">${jumlah}</div>
+    </div>
+    <div style="background:#F9FAFB;border-radius:8px;padding:12px;">
+      <div style="font-size:11px;color:#6B7280;margin-bottom:4px;">Rata-rata/${perLabel}</div>
+      <div style="font-size:20px;font-weight:500;color:#111827;">${rupiah(rataRata)}</div>
+    </div>
+  </div>
+  <div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;overflow:hidden;">
+    <div style="padding:12px 14px;border-bottom:0.5px solid #F3F4F6;">
+      <div style="font-size:11px;color:#6B7280;font-weight:500;margin-bottom:10px;">Per jenis · ${label}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#0047AB;flex-shrink:0;"></div>
+        <div style="font-size:12px;color:#374151;flex:1;">NitipKirim</div>
+        <div style="flex:2;height:4px;background:#F3F4F6;border-radius:2px;overflow:hidden;"><div style="width:${Math.round(kirim/maxBar*100)}%;height:100%;background:#0047AB;border-radius:2px;"></div></div>
+        <div style="font-size:12px;font-weight:500;color:${kirim>0?'#27500A':'#9CA3AF'};width:70px;text-align:right;">${rupiah(Math.round(kirim))}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#85B7EB;flex-shrink:0;"></div>
+        <div style="font-size:12px;color:#374151;flex:1;">NitipBeli</div>
+        <div style="flex:2;height:4px;background:#F3F4F6;border-radius:2px;overflow:hidden;"><div style="width:${Math.round(beli/maxBar*100)}%;height:100%;background:#85B7EB;border-radius:2px;"></div></div>
+        <div style="font-size:12px;font-weight:500;color:${beli>0?'#27500A':'#9CA3AF'};width:70px;text-align:right;">${rupiah(Math.round(beli))}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#B5D4F4;flex-shrink:0;"></div>
+        <div style="font-size:12px;color:#374151;flex:1;">NitipSuruh</div>
+        <div style="flex:2;height:4px;background:#F3F4F6;border-radius:2px;overflow:hidden;"><div style="width:${Math.round(suruh/maxBar*100)}%;height:100%;background:#B5D4F4;border-radius:2px;"></div></div>
+        <div style="font-size:12px;font-weight:500;color:${suruh>0?'#27500A':'#9CA3AF'};width:70px;text-align:right;">${rupiah(Math.round(suruh))}</div>
+      </div>
+    </div>
+    ${detailHtml?`<div style="padding:12px 14px;">
+      <div style="font-size:11px;color:#6B7280;font-weight:500;margin-bottom:8px;">Per ${perLabel}</div>
+      ${detailHtml}
+    </div>`:''}
+  </div>`;
+}
+
 async function loadAdminOrders(){
   const el=document.getElementById('adminOrdersList');
   el.innerHTML='<div class="loading">Memuat...</div>';
@@ -4170,12 +4289,14 @@ async function loadAdminOrders(){
       <th>No. Order</th>
       <th>Pengguna</th>
       <th>Mitra</th>
-      <th>Harga</th>
+      <th>Komisi</th>
       <th>Status</th>
-      <th>Bukti</th>
       <th>Aksi</th>
     </tr>
-    ${filtered.map(o=>`<tr>
+    ${filtered.map(o=>{
+      const komisi = o.status==='selesai' ? rupiah(Math.round((o.harga_deal||o.harga_tawar||0)*0.075)) : '-';
+      const komisiColor = o.status==='selesai' ? 'color:#27500A;font-weight:500;' : 'color:#9CA3AF;';
+      return `<tr>
       <td>
         <b style="font-size:12px">${o.kode}</b>
         <div style="font-size:10px;color:var(--muted)">${new Date(o.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
@@ -4183,21 +4304,15 @@ async function loadAdminOrders(){
       </td>
       <td style="font-size:12px"><b>${o.pengirim?.nama||'-'}</b><br><span style="color:var(--muted)">${o.pengirim?.no_hp||''}</span></td>
       <td style="font-size:12px"><b>${o.mitra?.nama||'-'}</b><br><span style="color:var(--muted)">${o.mitra?.no_hp||''}</span></td>
-      <td><b style="font-size:12px;color:var(--go)">${rupiah(o.harga_deal||o.harga_tawar)}</b></td>
+      <td><span style="font-size:12px;${komisiColor}">${komisi}</span></td>
       <td><span class="status-pill status-${o.status}">${statusLabel(o.status)}</span></td>
-      <td>
-        <div style="display:flex;gap:4px">
-          ${o.foto_pickup?`<img src="${o.foto_pickup}" onclick="openDokModal('${o.foto_pickup}')" style="width:36px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer" title="Foto Pickup">`:'<span style="font-size:10px;color:var(--muted)">-</span>'}
-          ${o.foto_selesai?`<img src="${o.foto_selesai}" onclick="openDokModal('${o.foto_selesai}')" style="width:36px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer" title="Foto Selesai">`:''}
-        </div>
-      </td>
       <td>
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px" onclick="lihatDetailOrder('${o.id}')">Detail</button>
           <button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="hapusOrder('${o.id}')">Hapus</button>
         </div>
       </td>
-    </tr>`).join('')}
+    </tr>`;}).join('')}
   </table>`;
 }
 
