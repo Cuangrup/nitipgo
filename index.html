@@ -5623,9 +5623,20 @@ function prevBuktiTopUp(input){
   const file = input.files[0];
   const reader = new FileReader();
   reader.onload = e => {
-    _buktiTopUpBase64 = e.target.result;
-    document.getElementById('uploadBuktiLabel').textContent = '✅ ' + file.name;
-    document.getElementById('uploadBuktiArea').style.borderColor='#0047AB';
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX = 800;
+      let w = img.width, h = img.height;
+      if(w > MAX){ h = Math.round(h * MAX/w); w = MAX; }
+      if(h > MAX){ w = Math.round(w * MAX/h); h = MAX; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      _buktiTopUpBase64 = canvas.toDataURL('image/jpeg', 0.7);
+      document.getElementById('uploadBuktiLabel').textContent = '✅ ' + file.name;
+      document.getElementById('uploadBuktiArea').style.borderColor='#0047AB';
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
