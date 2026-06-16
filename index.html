@@ -5277,6 +5277,134 @@ async function bukaRiwayatSaldo(){
 function tutupRiwayatSaldo(){
   document.getElementById('modalRiwayatSaldo').style.display='none';
 }
+let _topUpNominalDasar = 20000;
+let _topUpKodeUnik = 0;
+let _buktiTopUpBase64 = null;
+
+function bukaModalTopUp(){
+  _topUpNominalDasar = 20000;
+  _buktiTopUpBase64 = null;
+  _topUpKodeUnik = Math.floor(Math.random()*900)+100;
+  document.getElementById('modalTopUp').style.display='flex';
+  document.getElementById('nominalUnikWrap').style.display='block';
+  document.getElementById('nominalUnikDisplay').textContent = rupiah(_topUpNominalDasar + _topUpKodeUnik);
+  document.getElementById('inputNominalLainWrap').style.display='none';
+  document.getElementById('uploadBuktiLabel').textContent='Tap untuk upload foto/screenshot bukti transfer';
+  document.getElementById('uploadBuktiArea').style.borderColor='#9CA3AF';
+  document.getElementById('catatanTopUp').value='';
+  document.getElementById('topUpAlert').innerHTML='';
+  document.querySelectorAll('.nominal-btn').forEach(b=>{ b.style.border='1.5px solid #D1D5DB'; b.style.background='white'; b.style.color='#374151'; });
+  document.querySelectorAll('.nominal-btn')[0].style.border='1.5px solid #0047AB';
+  document.querySelectorAll('.nominal-btn')[0].style.background='#EEF4FF';
+  document.querySelectorAll('.nominal-btn')[0].style.color='#0047AB';
+}
+
+function tutupModalTopUp(){
+  document.getElementById('modalTopUp').style.display='none';
+}
+
+function pilihNominal(nominal, btn){
+  _topUpNominalDasar = nominal;
+  document.getElementById('inputNominalLainWrap').style.display='none';
+  document.querySelectorAll('.nominal-btn').forEach(b=>{ b.style.border='1.5px solid #D1D5DB'; b.style.background='white'; b.style.color='#374151'; });
+  btn.style.border='1.5px solid #0047AB'; btn.style.background='#EEF4FF'; btn.style.color='#0047AB';
+  _topUpKodeUnik = Math.floor(Math.random()*900)+100;
+  document.getElementById('nominalUnikWrap').style.display='block';
+  document.getElementById('nominalUnikDisplay').textContent = rupiah(_topUpNominalDasar + _topUpKodeUnik);
+}
+
+function pilihNominalLain(btn){
+  document.querySelectorAll('.nominal-btn').forEach(b=>{ b.style.border='1.5px solid #D1D5DB'; b.style.background='white'; b.style.color='#374151'; });
+  btn.style.border='1.5px solid #0047AB'; btn.style.background='#EEF4FF'; btn.style.color='#0047AB';
+  document.getElementById('inputNominalLainWrap').style.display='block';
+  document.getElementById('nominalUnikWrap').style.display='none';
+  document.getElementById('inputNominalLain').value='';
+  _topUpNominalDasar = 0;
+}
+
+function hitungUnik(){
+  const val = parseInt(document.getElementById('inputNominalLain').value)||0;
+  if(val >= 10000){
+    _topUpNominalDasar = val;
+    _topUpKodeUnik = Math.floor(Math.random()*900)+100;
+    document.getElementById('nominalUnikWrap').style.display='block';
+    document.getElementById('nominalUnikDisplay').textContent = rupiah(val + _topUpKodeUnik);
+  } else {
+    document.getElementById('nominalUnikWrap').style.display='none';
+  }
+}
+
+function prevBuktiTopUp(input){
+  if(!input.files||!input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX = 800;
+      let w = img.width, h = img.height;
+      if(w > MAX){ h = Math.round(h * MAX/w); w = MAX; }
+      if(h > MAX){ w = Math.round(w * MAX/h); h = MAX; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      _buktiTopUpBase64 = canvas.toDataURL('image/jpeg', 0.7);
+      document.getElementById('uploadBuktiLabel').textContent = '✅ ' + file.name;
+      document.getElementById('uploadBuktiArea').style.borderColor='#0047AB';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function kirimRequestTopUp(){
+  if(!_topUpNominalDasar || _topUpNominalDasar < 20000){
+    document.getElementById('topUpAlert').innerHTML='<div style="background:#FEF2F2;color:#B91C1C;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px">⚠️ Minimal top up adalah Rp 20.000</div>';
+    return;
+  }
+  const totalTransfer = _topUpNominalDasar + _topUpKodeUnik;
+  const catatan = document.getElementById('catatanTopUp').value.trim();
+  const btn = document.getElementById('btnKirimTopUp');
+  btn.disabled=true; btn.textContent='Menyimpan...';
+  document.getElementById('topUpAlert').innerHTML='';
+
+  const jam = new Date().getHours();
+  const infoJam = jam >= 22
+    ? 'Dikirim lewat jam 22.00 — saldo akan diupdate besok.'
+    : 'Dikirim sebelum jam 22.00 — saldo akan diupdate hari ini.';
+
+  try{
+    const {error: insertError} = await db.from('topup_requests').insert({
+      mitra_id: currentUser.id,
+      nama_mitra: currentUser.nama,
+      no_hp: currentUser.no_hp,
+      nominal_dasar: _topUpNominalDasar,
+      kode_unik: _topUpKodeUnik,
+      catatan: catatan||null,
+      bukti_transfer: _buktiTopUpBase64||null,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    });
+
+    if(insertError) throw new Error('DB: '+insertError.message);
+
+    const pesan = `REQUEST TOP UP SALDO\n\nNama: ${currentUser.nama}\nHP: +${currentUser.no_hp}\nEmail: ${currentUser.email||'-'}\nID Mitra: ${currentUser.id}\n\nNominal dasar: ${rupiah(_topUpNominalDasar)}\nKode unik: ${_topUpKodeUnik}\nTotal transfer: ${rupiah(totalTransfer)}\n\n${infoJam}\n${catatan?'Catatan: '+catatan:''}`;
+    emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_NOTIF,{
+      to_email:'nitipgo000@gmail.com',
+      to_name:'Admin NitipGo',
+      subject:`[Top Up] ${currentUser.nama} — ${rupiah(totalTransfer)}`,
+      body: pesan,
+      name: currentUser.nama
+    }).catch(err=>console.warn('Email notif gagal:', err));
+
+    document.getElementById('topUpAlert').innerHTML='<div style="background:#F0FDF4;color:#15803D;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px">✅ Request berhasil dikirim! Admin akan memverifikasi dalam 1x24 jam.</div>';
+    btn.textContent='Terkirim ✓';
+    setTimeout(()=>tutupModalTopUp(), 2500);
+  }catch(e){
+    document.getElementById('topUpAlert').innerHTML='<div style="background:#FEF2F2;color:#B91C1C;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px">⚠️ Gagal: '+e.message+'</div>';
+    btn.disabled=false; btn.textContent='Kirim Request Top Up';
+  }
+}
 
 </script>
 
@@ -5604,135 +5732,6 @@ function tutupRiwayatSaldo(){
   </div>
 </div>
 
-<script>
-let _topUpNominalDasar = 20000;
-let _topUpKodeUnik = 0;
-let _buktiTopUpBase64 = null;
-
-function bukaModalTopUp(){
-  _topUpNominalDasar = 20000;
-  _buktiTopUpBase64 = null;
-  _topUpKodeUnik = Math.floor(Math.random()*900)+100;
-  document.getElementById('modalTopUp').style.display='flex';
-  document.getElementById('nominalUnikWrap').style.display='block';
-  document.getElementById('nominalUnikDisplay').textContent = rupiah(_topUpNominalDasar + _topUpKodeUnik);
-  document.getElementById('inputNominalLainWrap').style.display='none';
-  document.getElementById('uploadBuktiLabel').textContent='Tap untuk upload foto/screenshot bukti transfer';
-  document.getElementById('uploadBuktiArea').style.borderColor='#9CA3AF';
-  document.getElementById('catatanTopUp').value='';
-  document.getElementById('topUpAlert').innerHTML='';
-  document.querySelectorAll('.nominal-btn').forEach(b=>{ b.style.border='1.5px solid #D1D5DB'; b.style.background='white'; b.style.color='#374151'; });
-  document.querySelectorAll('.nominal-btn')[0].style.border='1.5px solid #0047AB';
-  document.querySelectorAll('.nominal-btn')[0].style.background='#EEF4FF';
-  document.querySelectorAll('.nominal-btn')[0].style.color='#0047AB';
-}
-
-function tutupModalTopUp(){
-  document.getElementById('modalTopUp').style.display='none';
-}
-
-function pilihNominal(nominal, btn){
-  _topUpNominalDasar = nominal;
-  document.getElementById('inputNominalLainWrap').style.display='none';
-  document.querySelectorAll('.nominal-btn').forEach(b=>{ b.style.border='1.5px solid #D1D5DB'; b.style.background='white'; b.style.color='#374151'; });
-  btn.style.border='1.5px solid #0047AB'; btn.style.background='#EEF4FF'; btn.style.color='#0047AB';
-  _topUpKodeUnik = Math.floor(Math.random()*900)+100;
-  document.getElementById('nominalUnikWrap').style.display='block';
-  document.getElementById('nominalUnikDisplay').textContent = rupiah(_topUpNominalDasar + _topUpKodeUnik);
-}
-
-function pilihNominalLain(btn){
-  document.querySelectorAll('.nominal-btn').forEach(b=>{ b.style.border='1.5px solid #D1D5DB'; b.style.background='white'; b.style.color='#374151'; });
-  btn.style.border='1.5px solid #0047AB'; btn.style.background='#EEF4FF'; btn.style.color='#0047AB';
-  document.getElementById('inputNominalLainWrap').style.display='block';
-  document.getElementById('nominalUnikWrap').style.display='none';
-  document.getElementById('inputNominalLain').value='';
-  _topUpNominalDasar = 0;
-}
-
-function hitungUnik(){
-  const val = parseInt(document.getElementById('inputNominalLain').value)||0;
-  if(val >= 10000){
-    _topUpNominalDasar = val;
-    _topUpKodeUnik = Math.floor(Math.random()*900)+100;
-    document.getElementById('nominalUnikWrap').style.display='block';
-    document.getElementById('nominalUnikDisplay').textContent = rupiah(val + _topUpKodeUnik);
-  } else {
-    document.getElementById('nominalUnikWrap').style.display='none';
-  }
-}
-
-function prevBuktiTopUp(input){
-  if(!input.files||!input.files[0]) return;
-  const file = input.files[0];
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const MAX = 800;
-      let w = img.width, h = img.height;
-      if(w > MAX){ h = Math.round(h * MAX/w); w = MAX; }
-      if(h > MAX){ w = Math.round(w * MAX/h); h = MAX; }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      _buktiTopUpBase64 = canvas.toDataURL('image/jpeg', 0.7);
-      document.getElementById('uploadBuktiLabel').textContent = '✅ ' + file.name;
-      document.getElementById('uploadBuktiArea').style.borderColor='#0047AB';
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-
-async function kirimRequestTopUp(){
-  if(!_topUpNominalDasar || _topUpNominalDasar < 20000){
-    document.getElementById('topUpAlert').innerHTML='<div style="background:#FEF2F2;color:#B91C1C;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px">⚠️ Minimal top up adalah Rp 20.000</div>';
-    return;
-  }
-  const totalTransfer = _topUpNominalDasar + _topUpKodeUnik;
-  const catatan = document.getElementById('catatanTopUp').value.trim();
-  const btn = document.getElementById('btnKirimTopUp');
-  btn.disabled=true; btn.textContent='Menyimpan...';
-  document.getElementById('topUpAlert').innerHTML='';
-
-  const jam = new Date().getHours();
-  const infoJam = jam >= 22
-    ? 'Dikirim lewat jam 22.00 — saldo akan diupdate besok.'
-    : 'Dikirim sebelum jam 22.00 — saldo akan diupdate hari ini.';
-
-  try{
-    const {error: insertError} = await db.from('topup_requests').insert({
-      mitra_id: currentUser.id,
-      nama_mitra: currentUser.nama,
-      no_hp: currentUser.no_hp,
-      nominal_dasar: _topUpNominalDasar,
-      kode_unik: _topUpKodeUnik,
-      catatan: catatan||null,
-      bukti_transfer: _buktiTopUpBase64||null,
-      status: 'pending',
-      created_at: new Date().toISOString()
-    });
-
-    if(insertError) throw new Error('DB: '+insertError.message);
-
-    const pesan = `REQUEST TOP UP SALDO\n\nNama: ${currentUser.nama}\nHP: +${currentUser.no_hp}\nEmail: ${currentUser.email||'-'}\nID Mitra: ${currentUser.id}\n\nNominal dasar: ${rupiah(_topUpNominalDasar)}\nKode unik: ${_topUpKodeUnik}\nTotal transfer: ${rupiah(totalTransfer)}\n\n${infoJam}\n${catatan?'Catatan: '+catatan:''}`;
-    emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_NOTIF,{
-      to_email:'nitipgo000@gmail.com',
-      to_name:'Admin NitipGo',
-      subject:`[Top Up] ${currentUser.nama} — ${rupiah(totalTransfer)}`,
-      body: pesan,
-      name: currentUser.nama
-    }).catch(err=>console.warn('Email notif gagal:', err));
-
-    document.getElementById('topUpAlert').innerHTML='<div style="background:#F0FDF4;color:#15803D;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px">✅ Request berhasil dikirim! Admin akan memverifikasi dalam 1x24 jam.</div>';
-    btn.textContent='Terkirim ✓';
-    setTimeout(()=>tutupModalTopUp(), 2500);
-  }catch(e){
-    document.getElementById('topUpAlert').innerHTML='<div style="background:#FEF2F2;color:#B91C1C;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px">⚠️ Gagal: '+e.message+'</div>';
-    btn.disabled=false; btn.textContent='Kirim Request Top Up';
-  }
-}
 <!-- MODAL RIWAYAT SALDO -->
 <div id="modalRiwayatSaldo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:flex-end;justify-content:center;">
   <div style="background:white;border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;">
