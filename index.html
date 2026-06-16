@@ -5238,6 +5238,46 @@ async function resetPassword(){
 }
 checkAdminHash();
 checkSession();
+
+async function bukaRiwayatSaldo(){
+  document.getElementById('modalRiwayatSaldo').style.display='flex';
+  document.getElementById('riwayatNamaMitra').textContent=currentUser.nama||'';
+  const list = document.getElementById('riwayatList');
+  const totalMasukEl = document.getElementById('riwayatTotalMasuk');
+  const totalKeluarEl = document.getElementById('riwayatTotalKeluar');
+  list.innerHTML='<div style="text-align:center;padding:24px;color:#6B7280;font-size:13px;">Memuat...</div>';
+  const {data,error} = await db.from('saldo_logs').select('*').eq('mitra_id',currentUser.id).order('created_at',{ascending:false}).limit(50);
+  if(error||!data||!data.length){
+    list.innerHTML='<div style="text-align:center;padding:24px;color:#6B7280;font-size:13px;">Belum ada riwayat transaksi</div>';
+    totalMasukEl.textContent='Rp 0'; totalKeluarEl.textContent='Rp 0'; return;
+  }
+  totalMasukEl.textContent=rupiah(data.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+r.jumlah,0));
+  totalKeluarEl.textContent=rupiah(data.filter(r=>r.tipe==='keluar').reduce((s,r)=>s+r.jumlah,0));
+  let lastTgl='';
+  list.innerHTML=data.map(r=>{
+    const d=new Date(r.created_at);
+    const tgl=d.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+    const jam=d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+    const hariIni=new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+    const kemarin=new Date(Date.now()-86400000).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+    const labelTgl=tgl===hariIni?'Hari ini':tgl===kemarin?'Kemarin':tgl;
+    const hdr=tgl!==lastTgl?(lastTgl=tgl,'<div style="font-size:11px;color:#6B7280;padding:10px 0 4px;font-weight:500;">'+labelTgl+'</div>'):'';
+    const masuk=r.tipe==='masuk';
+    return hdr
+      +'<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid #F3F4F6;">'
+      +'<div style="width:34px;height:34px;border-radius:50%;background:'+(masuk?'#EAF3DE':'#FCEBEB')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+      +'<i class="ti ti-arrow-'+(masuk?'down-left':'up-right')+'" style="font-size:16px;color:'+(masuk?'#27500A':'#791F1F')+';" aria-hidden="true"></i></div>'
+      +'<div style="flex:1;"><div style="font-size:13px;font-weight:500;color:#111827;">'+r.keterangan+'</div>'
+      +'<div style="font-size:11px;color:#6B7280;">'+jam+'</div></div>'
+      +'<div style="text-align:right;"><div style="font-size:13px;font-weight:500;color:'+(masuk?'#27500A':'#791F1F')+';">'+(masuk?'+':'-')+rupiah(r.jumlah)+'</div>'
+      +'<div style="font-size:11px;color:#6B7280;">Saldo: '+rupiah(r.saldo_setelah)+'</div></div></div>';
+  }).join('');
+}
+
+function tutupRiwayatSaldo(){
+  document.getElementById('modalRiwayatSaldo').style.display='none';
+}
+
 </script>
 
 <!-- CHAT -->
@@ -5693,47 +5733,6 @@ async function kirimRequestTopUp(){
     btn.disabled=false; btn.textContent='Kirim Request Top Up';
   }
 }
-async function bukaRiwayatSaldo(){
-  document.getElementById('modalRiwayatSaldo').style.display='flex';
-  document.getElementById('riwayatNamaMitra').textContent=currentUser.nama||'';
-  const list = document.getElementById('riwayatList');
-  const totalMasukEl = document.getElementById('riwayatTotalMasuk');
-  const totalKeluarEl = document.getElementById('riwayatTotalKeluar');
-  list.innerHTML='<div style="text-align:center;padding:24px;color:#6B7280;font-size:13px;">Memuat...</div>';
-  const {data,error} = await db.from('saldo_logs').select('*').eq('mitra_id',currentUser.id).order('created_at',{ascending:false}).limit(50);
-  if(error||!data||!data.length){
-    list.innerHTML='<div style="text-align:center;padding:24px;color:#6B7280;font-size:13px;">Belum ada riwayat transaksi</div>';
-    totalMasukEl.textContent='Rp 0'; totalKeluarEl.textContent='Rp 0'; return;
-  }
-  totalMasukEl.textContent=rupiah(data.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+r.jumlah,0));
-  totalKeluarEl.textContent=rupiah(data.filter(r=>r.tipe==='keluar').reduce((s,r)=>s+r.jumlah,0));
-  let lastTgl='';
-  list.innerHTML=data.map(r=>{
-    const d=new Date(r.created_at);
-    const tgl=d.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-    const jam=d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
-    const hariIni=new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-    const kemarin=new Date(Date.now()-86400000).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-    const labelTgl=tgl===hariIni?'Hari ini':tgl===kemarin?'Kemarin':tgl;
-    const hdr=tgl!==lastTgl?(lastTgl=tgl,'<div style="font-size:11px;color:#6B7280;padding:10px 0 4px;font-weight:500;">'+labelTgl+'</div>'):'';
-    const masuk=r.tipe==='masuk';
-    return hdr
-      +'<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid #F3F4F6;">'
-      +'<div style="width:34px;height:34px;border-radius:50%;background:'+(masuk?'#EAF3DE':'#FCEBEB')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
-      +'<i class="ti ti-arrow-'+(masuk?'down-left':'up-right')+'" style="font-size:16px;color:'+(masuk?'#27500A':'#791F1F')+';" aria-hidden="true"></i></div>'
-      +'<div style="flex:1;"><div style="font-size:13px;font-weight:500;color:#111827;">'+r.keterangan+'</div>'
-      +'<div style="font-size:11px;color:#6B7280;">'+jam+'</div></div>'
-      +'<div style="text-align:right;"><div style="font-size:13px;font-weight:500;color:'+(masuk?'#27500A':'#791F1F')+';">'+(masuk?'+':'-')+rupiah(r.jumlah)+'</div>'
-      +'<div style="font-size:11px;color:#6B7280;">Saldo: '+rupiah(r.saldo_setelah)+'</div></div></div>';
-  }).join('');
-}
-
-function tutupRiwayatSaldo(){
-  document.getElementById('modalRiwayatSaldo').style.display='none';
-}
-
-</script>
-
 <!-- MODAL RIWAYAT SALDO -->
 <div id="modalRiwayatSaldo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:flex-end;justify-content:center;">
   <div style="background:white;border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;">
