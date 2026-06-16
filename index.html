@@ -2917,7 +2917,7 @@ async function renderOrderPengirim(o,simple=false){
         ${o.harga_deal?`<div style="text-align:right"><div style="font-size:11px;color:var(--muted)">Harga deal</div><div style="font-size:18px;font-weight:800;color:var(--mitra)">${rupiah(o.harga_deal)}</div></div>`:''}
     </div>
     ${o.mitra?.plat_nomor?`<div style="background:var(--surface);border-radius:8px;padding:8px 12px;margin-top:10px;font-size:13px"><span style="color:var(--muted);font-size:11px">PLAT NOMOR</span><br><b style="font-size:15px;letter-spacing:1px">${o.mitra.plat_nomor}</b></div>`:''} 
-    ${['dijemput','diantar','dikerjakan'].includes(o.status)?`<button onclick="bukaChat('${o.id}','${o.kode}','mitra')" style="width:100%;margin-top:10px;padding:10px;background:#1a5f3f;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-message-circle" style="font-size:16px" aria-hidden="true"></i> Chat dengan Mitra</button>`:''} 
+    ${['dijemput','diantar','dikerjakan','dibayar','diproses'].includes(o.status)?`<button onclick="bukaChat('${o.id}','${o.kode}','mitra')" style="width:100%;margin-top:10px;padding:10px;background:#1a5f3f;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-message-circle" style="font-size:16px" aria-hidden="true"></i> Chat dengan Mitra</button>`:''} 
     ${o.mitra?.no_hp?`<div style="background:var(--mitra-light);border:1.5px solid #b2dfdb;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px"><span style="color:var(--muted);font-size:11px">HUB MITRA</span><br><a href="https://wa.me/${o.mitra?.no_hp}" target="_blank" style="color:#25D366;font-weight:700;text-decoration:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="#25D366" style="vertical-align:middle;margin-right:4px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.998 2C6.477 2 2 6.477 2 12c0 1.989.574 3.842 1.562 5.408L2 22l4.744-1.521A9.96 9.96 0 0011.998 22c5.521 0 10-4.477 10-10S17.519 2 11.998 2zm0 18c-1.72 0-3.32-.463-4.699-1.268l-.333-.198-3.46 1.109 1.13-3.364-.217-.347A7.96 7.96 0 014 12c0-4.411 3.589-8 7.998-8C16.41 4 20 7.589 20 12s-3.59 8-8.002 8z"/></svg>${o.mitra?.no_hp}</a></div>`:''}
     <button onclick="bukabantuanDariOrder('${o.id}','${o.kode}')" style="width:100%;margin-top:8px;padding:8px;background:none;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--muted);cursor:pointer"><i class="ti ti-help-circle" style="font-size:14px;color:var(--muted)" aria-hidden="true"></i> Butuh Bantuan</button>
     ${bidsHtml}
@@ -3047,6 +3047,15 @@ async function loadOrderTersedia(){
   const sudahBidIds=new Set((myBids||[]).map(b=>b.order_id));
   el.innerHTML=data.map(o=>renderOrderMitra(o,false,sudahBidIds.has(o.id))).join('');
 }
+async function loadOrderAktifMitra_badge(){
+  const {data} = await db.from('orders').select('id',{count:'exact',head:true})
+    .eq('mitra_id',currentUser.id)
+    .in('status',['dijemput','diantar','diambil','dikerjakan','dibayar','diproses']);
+  const count = data?.length||0;
+  const tab = document.querySelectorAll('.mitra-tab')[1];
+  if(tab && count>0) tab.innerHTML = 'Aktifku <span style="background:#0047AB;color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">'+count+'</span>';
+}
+
 async function loadOrderAktifMitra(){
   const el=document.getElementById('listMitraAktif');
   el.innerHTML='<div class="loading">Memuat...</div>';
@@ -3366,7 +3375,12 @@ function uploadFotoPickup(orderId){
   });
 }
 function uploadFotoSelesai(orderId){
-  openFotoModal(orderId,'selesai','📸 Foto Bukti Selesai','Upload foto bukti barang sudah diantar',()=>{
+  openFotoModal(orderId,'selesai','📸 Foto Bukti Selesai','Upload foto bukti barang sudah diantar / pesanan selesai dibelikan',async ()=>{
+    const {data:order} = await db.from('orders').select('jenis').eq('id',orderId).single();
+    if(order?.jenis==='beli'){
+      await db.from('orders').update({status:'diantar'}).eq('id',orderId);
+      showToast('Foto berhasil diupload! Status diubah ke Dalam Perjalanan.');
+    }
     loadOrderAktifMitra();
   });
 }
@@ -3560,7 +3574,11 @@ function subscribeRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>{
       if(currentRole==='mitra'){
         const idx=Array.from(document.querySelectorAll('.mitra-tab')).findIndex(t=>t.classList.contains('active'));
-        if(idx===0)loadOrderTersedia();else if(idx===1)loadOrderAktifMitra();
+        if(idx===0)loadOrderTersedia();
+        else if(idx===1)loadOrderAktifMitra();
+        else loadOrderSelesaiMitra();
+        // Selalu refresh badge dan cek order aktif baru
+        loadOrderAktifMitra_badge();
       } else if(currentRole==='pengirim'){
         const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
         if(idx===1)loadOrderAktifPengirim();
