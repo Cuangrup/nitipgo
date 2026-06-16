@@ -3381,9 +3381,9 @@ function uploadFotoSelesai(orderId){
       await db.from('orders').update({status:'diantar'}).eq('id',orderId);
       showToast('Foto berhasil diupload! Status diubah ke Dalam Perjalanan.');
     } else if(order?.jenis==='suruh'){
-      await db.from('orders').update({status:'selesai'}).eq('id',orderId);
-      const {komisi,saldoBaru} = await potongSaldoMitra(currentUser.id, order.harga_deal||0, order.kode);
-      showToast('Pekerjaan selesai! Komisi Rp '+rupiah(komisi)+' dipotong dari saldo.');
+      await db.from('orders').update({status:'selesai', updated_at: new Date().toISOString()}).eq('id',orderId);
+      const {komisi} = await potongSaldoMitra(currentUser.id, order.harga_deal||0, order.kode);
+      showToast('Pekerjaan selesai! Komisi '+rupiah(komisi)+' dipotong dari saldo.');
     }
     loadOrderAktifMitra();
   });
@@ -5361,7 +5361,7 @@ async function loadStatMitraHariIni(){
     .select('harga_deal')
     .eq('mitra_id', currentUser.id)
     .eq('status','selesai')
-    .gte('created_at', todayStart);
+    .gte('updated_at', todayStart);
   const jumlah = data ? data.length : 0;
   const pendapatan = data ? data.reduce((s,o)=>s+(o.harga_deal||0),0) * 0.925 : 0;
   document.getElementById('mitraStatOrderHariIni').textContent = jumlah;
