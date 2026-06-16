@@ -5399,6 +5399,44 @@ async function resetPassword(){
 checkAdminHash();
 checkSession();
 
+async function bukaScreenUlasanUser(){
+  goScreen('screenUlasanUser');
+  const list = document.getElementById('ulasanUserList');
+  list.innerHTML = '<div class="loading">Memuat...</div>';
+
+  const {data} = await db.from('ratings')
+    .select('*,orders!inner(kode,jenis,mitra_id,pengirim_id),mitra:orders!inner(mitra:users!orders_mitra_id_fkey(nama))')
+    .eq('dari','pengirim')
+    .eq('orders.pengirim_id', currentUser.id)
+    .order('created_at',{ascending:false}).limit(30);
+
+  if(!data||!data.length){
+    list.innerHTML='<div class="empty"><p>Kamu belum pernah memberikan ulasan.</p></div>';
+    document.getElementById('jumlahUlasanUser').textContent='Belum ada ulasan diberikan';
+    return;
+  }
+
+  document.getElementById('jumlahUlasanUser').textContent = data.length+' ulasan diberikan';
+
+  list.innerHTML = data.map(r=>{
+    const tgl = new Date(r.created_at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+    const nilai = r.nilai||5;
+    const bintang = '★'.repeat(nilai)+'☆'.repeat(5-nilai);
+    const namaMitra = r.mitra?.mitra?.nama || 'Mitra';
+    const kodeOrder = r.orders?.kode||'-';
+    const jenisOrder = r.orders?.jenis ? jenisLabel(r.orders.jenis) : '-';
+    return '<div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;padding:12px 14px;margin-bottom:10px;">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">'
+      +'<div><div style="font-size:13px;font-weight:500;color:#111827;">'+namaMitra+'</div>'
+      +'<div style="font-size:11px;color:#6B7280;margin-top:2px;">'+kodeOrder+' · '+jenisOrder+'</div></div>'
+      +'<div style="color:#F59E0B;font-size:14px;">'+bintang+'</div></div>'
+      +'<div style="font-size:11px;color:#6B7280;margin-bottom:6px;">'+tgl+'</div>'
+      +(r.komentar?'<div style="font-size:13px;color:#374151;">"'+r.komentar+'"</div>':'<div style="font-size:12px;color:#9CA3AF;font-style:italic;">Tidak ada komentar</div>')
+      +'</div>';
+  }).join('');
+}
+
+
 async function bukaScreenUlasan(){
   goScreen('screenUlasanMitra');
   document.getElementById('ulasanMitraNama').textContent = currentUser.nama||'';
@@ -5663,13 +5701,24 @@ async function kirimRequestTopUp(){
     <div class="form-title">Pengaturan Akun</div>
 
     <!-- Profil -->
-    <div style="display:flex;align-items:center;gap:16px;padding:20px;background:var(--surface);border-radius:12px;margin-bottom:20px">
+    <div style="display:flex;align-items:center;gap:16px;padding:20px;background:var(--surface);border-radius:12px;margin-bottom:16px">
       <div id="pengaturanAvatar"></div>
-      <div>
+      <div style="flex:1;">
         <div style="font-weight:800;font-size:17px" id="pengaturanNama">-</div>
         <div style="font-size:13px;color:var(--muted)" id="pengaturanRole">-</div>
         <div style="margin-top:4px" id="pengaturanRating"></div>
       </div>
+    </div>
+
+    <div onclick="bukaScreenUlasanUser()" style="background:#EEF4FF;border:0.5px solid #BFDBFE;border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <i class="ti ti-star" style="font-size:18px;color:#0047AB;" aria-hidden="true"></i>
+        <div>
+          <div style="font-size:13px;font-weight:500;color:#0C447C;">Ulasan saya</div>
+          <div style="font-size:11px;color:#185FA5;" id="jumlahUlasanUser">Ulasan yang pernah kamu berikan</div>
+        </div>
+      </div>
+      <i class="ti ti-chevron-right" style="font-size:15px;color:#185FA5;" aria-hidden="true"></i>
     </div>
 
     <!-- Ganti Foto Profil -->
@@ -5779,12 +5828,6 @@ async function kirimRequestTopUp(){
       </div>
     </div>
 
-    <!-- Rating diterima -->
-    <div id="pengaturanRatingSection" style="margin-bottom:16px">
-      <div style="font-weight:700;font-size:14px;margin-bottom:10px">⭐ Ulasan yang Diterima</div>
-      <div id="pengaturanUlasanList"><div style="font-size:13px;color:var(--muted)">Memuat...</div></div>
-    </div>
-
     <!-- Menu -->
     <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:0 16px;margin-bottom:16px">
       <div class="menu-item" onclick="goScreen('screenGantiPassword')">
@@ -5806,6 +5849,15 @@ async function kirimRequestTopUp(){
     <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:8px">
       Untuk mengubah nama atau nomor HP,<br>hubungi admin melalui menu Bantuan.
     </div>
+  </div>
+</div>
+
+<div id="screenUlasanUser" class="screen">
+  <div class="form-wrap">
+    <button class="back-btn" onclick="goScreen('screenPengaturan')">← Kembali</button>
+    <div class="form-title">Ulasan saya</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;" id="ulasanUserSubtitle">Ulasan yang pernah kamu berikan ke mitra</div>
+    <div id="ulasanUserList"><div class="loading">Memuat...</div></div>
   </div>
 </div>
 
