@@ -1806,7 +1806,7 @@ function updateTopbar(user){
   if(mitraHeaderNama) mitraHeaderNama.textContent = user.nama;
   const mitraHeaderRating = document.getElementById('mitraHeaderRating');
   const totalRating = user.total_rating||0;
-  const rataRata = totalRating>0 ? (user.rating/totalRating).toFixed(1) : '5.0';
+  const rataRata = totalRating>0 ? parseFloat(user.rating||5).toFixed(1) : '5.0';
   if(mitraHeaderRating) mitraHeaderRating.textContent = '⭐ '+rataRata;
   const mitraHeaderJmlUlasan = document.getElementById('mitraHeaderJmlUlasan');
   if(mitraHeaderJmlUlasan) mitraHeaderJmlUlasan.textContent = totalRating+' ulasan';
@@ -5057,8 +5057,8 @@ async function bukaHalamanPengaturan(){
     document.getElementById('infoPlat').textContent = u.plat_nomor;
   }
 
-  // Load ulasan
-  loadUlasanDiterima();
+  // Load ulasan hanya untuk pengguna (bukan mitra)
+  if(currentRole !== 'mitra') loadUlasanDiterima();
 }
 
 async function loadUlasanDiterima(){
@@ -5445,7 +5445,7 @@ async function bukaScreenUlasan(){
 
   const {data:user} = await db.from('users').select('rating,total_rating').eq('id',currentUser.id).single();
   const totalRating = user?.total_rating||0;
-  const rataRata = totalRating>0 ? (user.rating/totalRating).toFixed(1) : '5.0';
+  const rataRata = totalRating>0 ? parseFloat(user.rating||5).toFixed(1) : '5.0';
   document.getElementById('ulasanRataRata').textContent = rataRata;
   document.getElementById('ulasanTotal').textContent = totalRating;
   const bintang = Math.round(parseFloat(rataRata));
@@ -5491,7 +5491,7 @@ async function loadStatMitraHariIni(){
     currentUser.rating = user.rating||0;
     currentUser.total_rating = user.total_rating||0;
     const totalRating = user.total_rating||0;
-    const rataRata = totalRating>0 ? (user.rating/totalRating).toFixed(1) : '5.0';
+    const rataRata = totalRating>0 ? parseFloat(user.rating||5).toFixed(1) : '5.0';
     const el = document.getElementById('mitraHeaderRating');
     const elJml = document.getElementById('mitraHeaderJmlUlasan');
     if(el) el.textContent = '⭐ '+rataRata;
