@@ -5317,24 +5317,32 @@ checkSession();
 async function bukaScreenUlasan(){
   goScreen('screenUlasanMitra');
   document.getElementById('ulasanMitraNama').textContent = currentUser.nama||'';
-  const rating = currentUser.rating||0;
-  const totalRating = currentUser.total_rating||0;
-  const rataRata = totalRating>0 ? (rating/totalRating).toFixed(1) : '5.0';
+  const list = document.getElementById('ulasanList');
+  list.innerHTML = '<div class="loading">Memuat ulasan...</div>';
+
+  const {data:user} = await db.from('users').select('rating,total_rating').eq('id',currentUser.id).single();
+  const totalRating = user?.total_rating||0;
+  const rataRata = totalRating>0 ? (user.rating/totalRating).toFixed(1) : '5.0';
   document.getElementById('ulasanRataRata').textContent = rataRata;
   document.getElementById('ulasanTotal').textContent = totalRating;
   const bintang = Math.round(parseFloat(rataRata));
-  document.getElementById('ulasanBintang').textContent = '★'.repeat(bintang) + '☆'.repeat(5-bintang);
-  const list = document.getElementById('ulasanList');
-  list.innerHTML = '<div class="loading">Memuat ulasan...</div>';
-  const {data} = await db.from('ratings').select('*,pengirim:users!ratings_pengirim_id_fkey(nama)').eq('mitra_id',currentUser.id).order('created_at',{ascending:false}).limit(30);
+  document.getElementById('ulasanBintang').textContent = '★'.repeat(bintang)+'☆'.repeat(5-bintang);
+
+  const {data} = await db.from('ratings')
+    .select('*,orders!inner(pengirim_id,mitra_id),pengirim:orders!inner(pengirim:users!orders_pengirim_id_fkey(nama))')
+    .eq('untuk','mitra')
+    .eq('orders.mitra_id', currentUser.id)
+    .order('created_at',{ascending:false}).limit(30);
   if(!data||!data.length){list.innerHTML='<div class="empty"><p>Belum ada ulasan.</p></div>';return;}
   list.innerHTML = '<div style="font-size:12px;font-weight:500;color:#6B7280;margin-bottom:10px;">Ulasan terbaru</div>'
     + data.map(r=>{
       const tgl = new Date(r.created_at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
-      const bintang = '★'.repeat(r.rating||5)+'☆'.repeat(5-(r.rating||5));
+      const nilai = r.nilai||5;
+      const bintang = '★'.repeat(nilai)+'☆'.repeat(5-nilai);
+      const namaPengirim = r.pengirim?.pengirim?.nama || r.pengirim?.nama || 'Pengguna';
       return '<div style="border-bottom:0.5px solid #F3F4F6;padding-bottom:12px;margin-bottom:12px;">'
         +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">'
-        +'<div style="font-size:13px;font-weight:500;color:#111827;">'+(r.pengirim?.nama||'Pengguna')+'</div>'
+        +'<div style="font-size:13px;font-weight:500;color:#111827;">'+namaPengirim+'</div>'
         +'<div style="color:#F59E0B;font-size:13px;">'+bintang+'</div></div>'
         +'<div style="font-size:11px;color:#6B7280;margin-bottom:4px;">'+tgl+'</div>'
         +(r.komentar?'<div style="font-size:13px;color:#374151;">"'+r.komentar+'"</div>':'')
@@ -5343,16 +5351,29 @@ async function bukaScreenUlasan(){
 }
 
 async function loadStatMitraHariIni(){
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const {data} = await db.from('orders')
     .select('harga_deal')
     .eq('mitra_id', currentUser.id)
     .eq('status','selesai')
-    .gte('created_at', today);
+    .gte('created_at', todayStart);
   const jumlah = data ? data.length : 0;
   const pendapatan = data ? data.reduce((s,o)=>s+(o.harga_deal||0),0) * 0.925 : 0;
   document.getElementById('mitraStatOrderHariIni').textContent = jumlah;
   document.getElementById('mitraStatPendapatanHariIni').textContent = jumlah>0 ? rupiah(Math.round(pendapatan)) : 'Rp 0';
+
+  const {data:user} = await db.from('users').select('rating,total_rating').eq('id',currentUser.id).single();
+  if(user){
+    currentUser.rating = user.rating||0;
+    currentUser.total_rating = user.total_rating||0;
+    const totalRating = user.total_rating||0;
+    const rataRata = totalRating>0 ? (user.rating/totalRating).toFixed(1) : '5.0';
+    const el = document.getElementById('mitraHeaderRating');
+    const elJml = document.getElementById('mitraHeaderJmlUlasan');
+    if(el) el.textContent = '⭐ '+rataRata;
+    if(elJml) elJml.textContent = totalRating+' ulasan';
+  }
 }
 
 
