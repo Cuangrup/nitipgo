@@ -2995,7 +2995,7 @@ function mitraTab(tab){
 async function loadOrderTersedia(){
   const el=document.getElementById('listTersedia');
   el.innerHTML='<div class="loading">Mencari order...</div>';
-  const{data}=await db.from('orders').select('*,users!orders_pengirim_id_fkey(nama)')
+  const{data}=await db.from('orders').select('id,kode,jenis,status,created_at,alamat_pickup,alamat_tujuan,harga_tawar,harga_deal,nama_penerima,hp_penerima,deskripsi,estimasi_harga_barang,pengirim_id,mitra_id,users!orders_pengirim_id_fkey(nama)')
     .in('status',['mencari','menunggu_konfirmasi','menunggu_pembayaran']).is('mitra_id',null).order('created_at',{ascending:false});
   document.getElementById('badgeTersedia').textContent=data?data.length:0;
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">🔍</div><p>Belum ada order tersedia.</p><button class="btn btn-outline" style="width:auto;margin-top:16px" onclick="loadOrderTersedia()">🔄 Refresh</button></div>';return;}
@@ -3870,7 +3870,7 @@ async function loadAdminOrders(){
   const el=document.getElementById('adminOrdersList');
   el.innerHTML='<div class="loading">Memuat...</div>';
   const status=document.getElementById('filterStatus').value;
-  let q=db.from('orders').select('*,pengirim:users!orders_pengirim_id_fkey(nama,no_hp),mitra:users!orders_mitra_id_fkey(nama,no_hp)').order('created_at',{ascending:false}).limit(50);
+  let q=db.from('orders').select('id,kode,jenis,status,created_at,alamat_pickup,alamat_tujuan,harga_tawar,harga_deal,nama_penerima,hp_penerima,nama_pengantar,hp_pengirim,deskripsi,nominal_bayar,estimasi_harga_barang,pengirim_id,mitra_id,pengirim:users!orders_pengirim_id_fkey(nama,no_hp),mitra:users!orders_mitra_id_fkey(nama,no_hp)').order('created_at',{ascending:false}).limit(50);
   if(status)q=q.eq('status',status);
   const{data}=await q;
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">📭</div><p>Tidak ada order.</p></div>';return;}
