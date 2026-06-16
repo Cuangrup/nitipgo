@@ -228,8 +228,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .admin-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
 .admin-nav-btn{padding:8px 16px;border:1.5px solid var(--border);border-radius:8px;background:white;font-size:13px;font-weight:600;cursor:pointer;color:var(--text);}
 .admin-nav-btn.active{background:var(--brand);color:white;border-color:var(--brand);}
-.sidebar-nav{display:flex;align-items:center;gap:10px;padding:9px 16px;color:#BFDBFE;font-size:13px;cursor:pointer;}
-.sidebar-nav:hover,.sidebar-nav.active{background:rgba(255,255,255,0.15);color:white;}
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;}
 .stat-num{font-size:28px;font-weight:900;color:var(--brand);}
@@ -1151,158 +1149,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <!-- ADMIN DASHBOARD -->
-<div id="screenAdmin" class="screen" style="padding:0;background:#F1F5F9;">
-<div style="display:grid;grid-template-columns:220px 1fr;min-height:100vh;">
-
-  <!-- SIDEBAR -->
-  <div style="background:#0047AB;display:flex;flex-direction:column;min-height:100vh;">
-    <div style="padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,0.1);">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="width:32px;height:32px;background:white;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#0047AB;">N</div>
-        <div>
-          <div style="color:white;font-size:15px;font-weight:500;">NitipGo</div>
-          <div style="color:#BFDBFE;font-size:11px;">Developer Panel</div>
-        </div>
-      </div>
+<div id="screenAdmin" class="screen">
+  <div class="admin-wrap">
+    <div class="admin-topbar">
+      <div style="font-weight:800;font-size:16px">🛠️ NitipGo Developer Dashboard</div>
+      <button class="logout-btn" onclick="logoutAdmin()">Keluar Admin</button>
     </div>
-    <div style="flex:1;padding:12px 0;">
-      <div style="font-size:10px;color:rgba(255,255,255,0.4);padding:10px 16px 4px;letter-spacing:0.5px;">UTAMA</div>
-      <div onclick="adminTab('overview')" id="navOverview" class="sidebar-nav active">
-        <i class="ti ti-layout-dashboard" style="font-size:16px;" aria-hidden="true"></i> Overview
-      </div>
-      <div onclick="adminTab('orders')" id="navOrders" class="sidebar-nav">
-        <i class="ti ti-package" style="font-size:16px;" aria-hidden="true"></i> Order & Transaksi
-      </div>
-      <div onclick="adminTab('topup')" id="navTopup" class="sidebar-nav">
-        <i class="ti ti-wallet" style="font-size:16px;" aria-hidden="true"></i> Top Up
-        <span id="badgeTopup" style="display:none;background:#ef4444;color:white;border-radius:99px;font-size:10px;padding:1px 6px;margin-left:auto;">0</span>
-      </div>
-      <div style="font-size:10px;color:rgba(255,255,255,0.4);padding:10px 16px 4px;letter-spacing:0.5px;">MANAJEMEN</div>
-      <div onclick="adminTab('mitra')" id="navMitra" class="sidebar-nav">
-        <i class="ti ti-motorbike" style="font-size:16px;" aria-hidden="true"></i> Verifikasi Mitra
-      </div>
-      <div onclick="adminTab('akun')" id="navAkun" class="sidebar-nav">
-        <i class="ti ti-users" style="font-size:16px;" aria-hidden="true"></i> Manajemen Akun
-      </div>
-      <div onclick="adminTab('ratings')" id="navRatings" class="sidebar-nav">
-        <i class="ti ti-star" style="font-size:16px;" aria-hidden="true"></i> Rating & Ulasan
-      </div>
+
+    <!-- STATS -->
+    <div class="stat-grid" id="adminStats">
+      <div class="stat-card"><div class="stat-num" id="statMitraMenunggu">-</div><div class="stat-label">Mitra Menunggu</div></div>
+      <div class="stat-card"><div class="stat-num" id="statMitraAktif">-</div><div class="stat-label">Mitra Aktif</div></div>
+      <div class="stat-card"><div class="stat-num" id="statPengguna">-</div><div class="stat-label">Pengguna</div></div>
+      <div class="stat-card"><div class="stat-num" id="statOrderHari">-</div><div class="stat-label">Order Hari Ini</div></div>
+      <div class="stat-card"><div class="stat-num" id="statOrderTotal">-</div><div class="stat-label">Total Order</div></div>
+      <div class="stat-card"><div class="stat-num" id="statOrderAktif">-</div><div class="stat-label">Order Aktif</div></div>
     </div>
-    <div style="padding:14px 16px;border-top:1px solid rgba(255,255,255,0.1);">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <div style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:13px;color:white;font-weight:500;">M</div>
-        <div>
-          <div style="font-size:12px;color:white;font-weight:500;">Mohammad R.</div>
-          <div style="font-size:10px;color:#BFDBFE;">Developer</div>
-        </div>
-      </div>
-      <button onclick="logoutAdmin()" style="width:100%;background:rgba(255,255,255,0.12);border:none;border-radius:8px;padding:7px;color:#BFDBFE;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-        <i class="ti ti-logout" style="font-size:14px;" aria-hidden="true"></i> Keluar
-      </button>
-    </div>
-  </div>
 
-  <!-- MAIN CONTENT -->
-  <div style="padding:24px;overflow-y:auto;">
-
-    <!-- TAB: OVERVIEW -->
-    <div id="adminTabOverview">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-        <div>
-          <div style="font-size:18px;font-weight:500;color:#111827;">Overview</div>
-          <div style="font-size:12px;color:#6B7280;margin-top:2px;" id="adminTanggal">-</div>
-        </div>
-        <button onclick="loadAdminStats();loadAdminOverviewExtra();" style="background:#0047AB;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">
-          <i class="ti ti-refresh" style="font-size:14px;" aria-hidden="true"></i> Refresh
-        </button>
-      </div>
-
-      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px;">
-        <div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;padding:14px;">
-          <div style="width:32px;height:32px;background:#EAF3DE;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
-            <i class="ti ti-currency-dollar" style="font-size:17px;color:#27500A;" aria-hidden="true"></i>
-          </div>
-          <div style="font-size:18px;font-weight:500;color:#27500A;" id="statPendapatanHari">-</div>
-          <div style="font-size:11px;color:#6B7280;margin-top:3px;">Pendapatan hari ini</div>
-        </div>
-        <div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;padding:14px;">
-          <div style="width:32px;height:32px;background:#E6F1FB;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
-            <i class="ti ti-package" style="font-size:17px;color:#0C447C;" aria-hidden="true"></i>
-          </div>
-          <div style="font-size:18px;font-weight:500;color:#111827;" id="statOrderHari">-</div>
-          <div style="font-size:11px;color:#6B7280;margin-top:3px;">Order hari ini</div>
-        </div>
-        <div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;padding:14px;">
-          <div style="width:32px;height:32px;background:#FAEEDA;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
-            <i class="ti ti-users" style="font-size:17px;color:#633806;" aria-hidden="true"></i>
-          </div>
-          <div style="font-size:18px;font-weight:500;color:#111827;" id="statPengguna">-</div>
-          <div style="font-size:11px;color:#6B7280;margin-top:3px;">Total pengguna</div>
-        </div>
-        <div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;padding:14px;">
-          <div style="width:32px;height:32px;background:#FCEBEB;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
-            <i class="ti ti-clock" style="font-size:17px;color:#791F1F;" aria-hidden="true"></i>
-          </div>
-          <div style="font-size:18px;font-weight:500;color:#791F1F;" id="statMitraMenunggu">-</div>
-          <div style="font-size:11px;color:#6B7280;margin-top:3px;">Mitra menunggu verifikasi</div>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-        <div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;padding:16px;">
-          <div style="font-size:13px;font-weight:500;color:#111827;margin-bottom:14px;">Pendapatan developer (7.5% komisi)</div>
-          <div style="font-size:26px;font-weight:500;color:#27500A;" id="statTotalKomisi">-</div>
-          <div style="font-size:11px;color:#6B7280;margin-top:2px;">Total akumulasi</div>
-          <div style="margin-top:14px;padding-top:14px;border-top:0.5px solid #F3F4F6;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              <div style="font-size:11px;color:#6B7280;width:70px;">NitipKirim</div>
-              <div style="flex:1;height:6px;background:#F3F4F6;border-radius:3px;overflow:hidden;">
-                <div id="barKirim" style="height:100%;background:#0047AB;border-radius:3px;width:0%;transition:width 0.5s;"></div>
-              </div>
-              <div style="font-size:11px;color:#111827;font-weight:500;width:60px;text-align:right;" id="valKirim">-</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              <div style="font-size:11px;color:#6B7280;width:70px;">NitipBeli</div>
-              <div style="flex:1;height:6px;background:#F3F4F6;border-radius:3px;overflow:hidden;">
-                <div id="barBeli" style="height:100%;background:#378ADD;border-radius:3px;width:0%;transition:width 0.5s;"></div>
-              </div>
-              <div style="font-size:11px;color:#111827;font-weight:500;width:60px;text-align:right;" id="valBeli">-</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div style="font-size:11px;color:#6B7280;width:70px;">NitipSuruh</div>
-              <div style="flex:1;height:6px;background:#F3F4F6;border-radius:3px;overflow:hidden;">
-                <div id="barSuruh" style="height:100%;background:#85B7EB;border-radius:3px;width:0%;transition:width 0.5s;"></div>
-              </div>
-              <div style="font-size:11px;color:#111827;font-weight:500;width:60px;text-align:right;" id="valSuruh">-</div>
-            </div>
-          </div>
-        </div>
-
-        <div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;padding:16px;">
-          <div style="font-size:13px;font-weight:500;color:#111827;margin-bottom:12px;">Order terbaru</div>
-          <div id="overviewOrderList"><div style="color:#6B7280;font-size:13px;">Memuat...</div></div>
-        </div>
-      </div>
-
-      <div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;padding:16px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <div style="font-size:13px;font-weight:500;color:#111827;">Statistik platform</div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
-          <div style="background:#F9FAFB;border-radius:8px;padding:12px;text-align:center;">
-            <div style="font-size:22px;font-weight:500;color:#111827;" id="statOrderTotal">-</div>
-            <div style="font-size:11px;color:#6B7280;margin-top:2px;">Total order</div>
-          </div>
-          <div style="background:#F9FAFB;border-radius:8px;padding:12px;text-align:center;">
-            <div style="font-size:22px;font-weight:500;color:#27500A;" id="statOrderAktif">-</div>
-            <div style="font-size:11px;color:#6B7280;margin-top:2px;">Order aktif sekarang</div>
-          </div>
-          <div style="background:#F9FAFB;border-radius:8px;padding:12px;text-align:center;">
-            <div style="font-size:22px;font-weight:500;color:#111827;" id="statMitraAktif">-</div>
-            <div style="font-size:11px;color:#6B7280;margin-top:2px;">Mitra aktif</div>
-          </div>
-        </div>
-      </div>
+    <!-- NAV -->
+    <div class="admin-nav">
+      <button class="admin-nav-btn active" onclick="adminTab('orders')" id="navOrders">📦 Order & Transaksi</button>
+      <button class="admin-nav-btn" onclick="adminTab('mitra')" id="navMitra">🛵 Verifikasi Mitra</button>
+      <button class="admin-nav-btn" onclick="adminTab('topup')" id="navTopup">💰 Top Up <span id="badgeTopup" style="display:none;background:#e53935;color:white;border-radius:99px;font-size:10px;padding:1px 6px;margin-left:4px">0</span></button>
+      <button class="admin-nav-btn" onclick="adminTab('akun')" id="navAkun">👤 Manajemen Akun</button>
+      <button class="admin-nav-btn" onclick="adminTab('ratings')" id="navRatings">⭐ Rating & Ulasan</button>
     </div>
 
     <!-- TAB: ORDER -->
@@ -3998,7 +3868,7 @@ function checkAdminHash(){
   if(localStorage.getItem('nitipgo_admin')==='1'){
     goScreen('screenAdmin');
     loadAdminStats();
-    loadAdminOverviewExtra();
+    loadAdminOrders();
     return;
   }
   if(window.location.hash==='#RajaNitipGo2026'){
@@ -4017,7 +3887,7 @@ async function loginAdmin(){
   localStorage.setItem('nitipgo_admin','1');
   goScreen('screenAdmin');
   loadAdminStats();
-  loadAdminOverviewExtra();
+  loadAdminOrders();
 }
 
 function logoutAdmin(){
@@ -4027,19 +3897,13 @@ function logoutAdmin(){
 }
 
 function adminTab(tab){
-  ['overview','orders','mitra','topup','akun','ratings'].forEach(t=>{
-    const tabEl = document.getElementById('adminTab'+t.charAt(0).toUpperCase()+t.slice(1));
-    if(tabEl) tabEl.style.display='none';
-    const navEl = document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));
-    if(navEl) navEl.classList.remove('active');
+  ['orders','mitra','topup','akun','ratings'].forEach(t=>{
+    document.getElementById('adminTab'+t.charAt(0).toUpperCase()+t.slice(1)).style.display='none';
+    document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1)).classList.remove('active');
   });
-  const activeTab = document.getElementById('adminTab'+tab.charAt(0).toUpperCase()+tab.slice(1));
-  if(activeTab) activeTab.style.display='block';
-  const activeNav = document.getElementById('nav'+tab.charAt(0).toUpperCase()+tab.slice(1));
-  if(activeNav) activeNav.classList.add('active');
-
-  if(tab==='overview'){loadAdminStats();loadAdminOverviewExtra();}
-  else if(tab==='orders')loadAdminOrders();
+  document.getElementById('adminTab'+tab.charAt(0).toUpperCase()+tab.slice(1)).style.display='block';
+  document.getElementById('nav'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+  if(tab==='orders')loadAdminOrders();
   else if(tab==='mitra')loadAdminMitra();
   else if(tab==='topup')loadAdminTopup();
   else if(tab==='ratings')loadAdminRatings();
@@ -4173,10 +4037,6 @@ async function tolakTopup(reqId){
 }
 
 async function loadAdminStats(){
-  const today = new Date();
-  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-  const elTgl = document.getElementById('adminTanggal');
-  if(elTgl) elTgl.textContent = today.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const[{count:mitraMenunggu},{count:mitraAktif},{count:pengirim},{count:orderTotal},{count:orderAktif},{count:topupPending}]=await Promise.all([
     db.from('users').select('*',{count:'exact',head:true}).eq('role','mitra').eq('status_verifikasi','menunggu'),
     db.from('users').select('*',{count:'exact',head:true}).eq('role','mitra').eq('status_verifikasi','aktif'),
@@ -4185,50 +4045,17 @@ async function loadAdminStats(){
     db.from('orders').select('*',{count:'exact',head:true}).in('status',['mencari','menunggu_konfirmasi','dijemput','diantar']),
     db.from('topup_requests').select('*',{count:'exact',head:true}).eq('status','pending'),
   ]);
-  const setEl = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
-  setEl('statMitraMenunggu', mitraMenunggu||0);
-  setEl('statMitraAktif', mitraAktif||0);
-  setEl('statPengguna', pengirim||0);
-  setEl('statOrderTotal', orderTotal||0);
-  setEl('statOrderAktif', orderAktif||0);
+  document.getElementById('statMitraMenunggu').textContent=mitraMenunggu||0;
+  document.getElementById('statMitraAktif').textContent=mitraAktif||0;
+  document.getElementById('statPengguna').textContent=pengirim||0;
+  document.getElementById('statOrderTotal').textContent=orderTotal||0;
+  document.getElementById('statOrderAktif').textContent=orderAktif||0;
   const badge = document.getElementById('badgeTopup');
   if(badge){if((topupPending||0)>0){badge.textContent=topupPending;badge.style.display='inline';}else{badge.style.display='none';}}
-  const{count:orderHari}=await db.from('orders').select('*',{count:'exact',head:true}).gte('created_at',todayStart);
-  setEl('statOrderHari', orderHari||0);
-  const{data:ordersSelesaiHari}=await db.from('orders').select('harga_deal').eq('status','selesai').gte('updated_at',todayStart);
-  const pendapatanHari = (ordersSelesaiHari||[]).reduce((s,o)=>s+(o.harga_deal||0)*0.075,0);
-  setEl('statPendapatanHari', rupiah(Math.round(pendapatanHari)));
-}
-
-async function loadAdminOverviewExtra(){
-  const{data:allOrders}=await db.from('orders').select('jenis,harga_deal').eq('status','selesai');
-  const kirim=(allOrders||[]).filter(o=>o.jenis==='kirim').reduce((s,o)=>s+(o.harga_deal||0)*0.075,0);
-  const beli=(allOrders||[]).filter(o=>o.jenis==='beli').reduce((s,o)=>s+(o.harga_deal||0)*0.075,0);
-  const suruh=(allOrders||[]).filter(o=>o.jenis==='suruh').reduce((s,o)=>s+(o.harga_deal||0)*0.075,0);
-  const total=kirim+beli+suruh;
-  const setEl = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
-  setEl('statTotalKomisi', rupiah(Math.round(total)));
-  setEl('valKirim', rupiah(Math.round(kirim)));
-  setEl('valBeli', rupiah(Math.round(beli)));
-  setEl('valSuruh', rupiah(Math.round(suruh)));
-  if(total>0){
-    const bK=document.getElementById('barKirim');const bB=document.getElementById('barBeli');const bS=document.getElementById('barSuruh');
-    if(bK) bK.style.width=Math.round(kirim/total*100)+'%';
-    if(bB) bB.style.width=Math.round(beli/total*100)+'%';
-    if(bS) bS.style.width=Math.round(suruh/total*100)+'%';
-  }
-  const{data:recentOrders}=await db.from('orders').select('kode,jenis,harga_deal,status').order('created_at',{ascending:false}).limit(5);
-  const ol=document.getElementById('overviewOrderList');
-  if(ol&&recentOrders){
-    ol.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:12px;">'
-      +'<thead><tr><th style="text-align:left;color:#6B7280;font-weight:500;padding:5px 6px;border-bottom:0.5px solid #F3F4F6;">Kode</th><th style="text-align:left;color:#6B7280;font-weight:500;padding:5px 6px;border-bottom:0.5px solid #F3F4F6;">Jenis</th><th style="text-align:right;color:#6B7280;font-weight:500;padding:5px 6px;border-bottom:0.5px solid #F3F4F6;">Komisi</th><th style="text-align:right;color:#6B7280;font-weight:500;padding:5px 6px;border-bottom:0.5px solid #F3F4F6;">Status</th></tr></thead><tbody>'
-      +recentOrders.map(o=>{
-        const komisi=o.status==='selesai'?rupiah(Math.round((o.harga_deal||0)*0.075)):'-';
-        const stPill=o.status==='selesai'?'<span style="background:#EAF3DE;color:#27500A;font-size:10px;font-weight:500;padding:2px 7px;border-radius:99px;">Selesai</span>':o.status==='batal'?'<span style="background:#FCEBEB;color:#791F1F;font-size:10px;font-weight:500;padding:2px 7px;border-radius:99px;">Batal</span>':'<span style="background:#FAEEDA;color:#633806;font-size:10px;font-weight:500;padding:2px 7px;border-radius:99px;">Aktif</span>';
-        return '<tr><td style="padding:7px 6px;font-weight:500;color:#111827;">'+o.kode+'</td><td style="padding:7px 6px;color:#6B7280;">'+jenisLabel(o.jenis)+'</td><td style="padding:7px 6px;text-align:right;color:#27500A;">'+komisi+'</td><td style="padding:7px 6px;text-align:right;">'+stPill+'</td></tr>';
-      }).join('')
-      +'</tbody></table>';
-  }
+  // Order hari ini
+  const today=new Date().toISOString().split('T')[0];
+  const{count:orderHari}=await db.from('orders').select('*',{count:'exact',head:true}).gte('created_at',today);
+  document.getElementById('statOrderHari').textContent=orderHari||0;
 }
 
 async function loadAdminOrders(){
