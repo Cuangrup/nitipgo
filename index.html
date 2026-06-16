@@ -3379,8 +3379,12 @@ function uploadFotoPickup(orderId){
 function uploadFotoSelesai(orderId){
   openFotoModal(orderId,'selesai','📸 Foto Bukti Selesai','Upload foto bukti barang sudah diantar / pesanan selesai dibelikan / pekerjaan selesai',async ()=>{
     const {data:order} = await db.from('orders').select('jenis,harga_deal,kode').eq('id',orderId).single();
-    if(order?.jenis==='beli'){
-      await db.from('orders').update({status:'diantar'}).eq('id',orderId);
+    if(order?.jenis==='kirim'){
+      await db.from('orders').update({status:'selesai', updated_at: new Date().toISOString()}).eq('id',orderId);
+      const {komisi} = await potongSaldoMitra(currentUser.id, order.harga_deal||0, order.kode);
+      showToast('Pengiriman selesai! Komisi '+rupiah(komisi)+' dipotong dari saldo.');
+    } else if(order?.jenis==='beli'){
+      await db.from('orders').update({status:'diantar', updated_at: new Date().toISOString()}).eq('id',orderId);
       showToast('Foto berhasil diupload! Status diubah ke Dalam Perjalanan.');
     } else if(order?.jenis==='suruh'){
       await db.from('orders').update({status:'selesai', updated_at: new Date().toISOString()}).eq('id',orderId);
