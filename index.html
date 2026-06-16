@@ -1862,11 +1862,13 @@ async function checkSession(){
 
 
 // ── NAVIGATION ──
+let currentScreen = '';
 function goScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const el=document.getElementById(id);
   if(el) el.classList.add('active');
   else console.warn('goScreen: element not found:', id);
+  currentScreen = id;
   if(id==='screenBantuan'){
     if(typeof renderFAQ==='function') renderFAQ();
     const subtitle=document.getElementById('faqSubtitle');
@@ -3662,20 +3664,27 @@ function subscribeRealtime(){
         if(idx===0)loadOrderTersedia();
         else if(idx===1)loadOrderAktifMitra();
         else loadOrderSelesaiMitra();
-        // Selalu refresh badge dan cek order aktif baru
         loadOrderAktifMitra_badge();
       } else if(currentRole==='pengirim'){
         const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
         if(idx===1)loadOrderAktifPengirim();
       }
     })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'chats'},(payload)=>{
+      const msg = payload.new;
+      if(!msg) return;
+      const sedangDiChat = currentScreen==='screenChat' && _chatOrderId===msg.order_id;
+      if(sedangDiChat) return;
+      const pengirimMsg = msg.pengirim;
+      const bukanDariSaya = (currentRole==='mitra' && pengirimMsg==='pengirim') || (currentRole==='pengirim' && pengirimMsg==='mitra');
+      if(!bukanDariSaya) return;
+      tambahBadgeChat(msg.order_id);
+    })
     .on('postgres_changes',{event:'*',schema:'public',table:'bids'},()=>{
       if(currentRole==='pengirim'){
-        // Auto switch ke tab aktif dan refresh
         const idx=Array.from(document.querySelectorAll('.pengirim-tab')).findIndex(t=>t.classList.contains('active'));
         if(idx===1)loadOrderAktifPengirim();
         else{
-          // Tampilkan notif ada bid baru
           const badge=document.getElementById('tabAktifLabel');
           badge.innerHTML='Order Aktif <span style="background:var(--go);color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">BARU!</span>';
         }
@@ -3686,6 +3695,27 @@ function subscribeRealtime(){
     })
     .subscribe();
   startMitraPolling();
+}
+
+const _chatUnread = {};
+
+function tambahBadgeChat(orderId){
+  _chatUnread[orderId] = (_chatUnread[orderId]||0) + 1;
+  const btns = document.querySelectorAll(`[onclick*="bukaChat('${orderId}'"]`);
+  btns.forEach(btn=>{
+    let badge = btn.querySelector('.chat-unread-dot');
+    if(!badge){
+      badge = document.createElement('span');
+      badge.className = 'chat-unread-dot';
+      badge.style.cssText = 'width:8px;height:8px;background:#ef4444;border-radius:50%;display:inline-block;margin-left:6px;flex-shrink:0;';
+      btn.appendChild(badge);
+    }
+  });
+}
+
+function hapusBadgeChat(orderId){
+  delete _chatUnread[orderId];
+  document.querySelectorAll('.chat-unread-dot').forEach(el=>el.remove());
 }
 
 // Polling timer untuk pengirim
@@ -4801,6 +4831,7 @@ function bukaChat(orderId, kode, lawanRole){
   document.getElementById('chatOrderKode').textContent = kode;
   document.getElementById('chatOrderInfo').textContent = 
     lawanRole==='mitra' ? 'Chat dengan Mitra' : 'Chat dengan Pengguna';
+  hapusBadgeChat(orderId);
   goScreen('screenChat');
   loadChatMessages();
   startChatPolling();
