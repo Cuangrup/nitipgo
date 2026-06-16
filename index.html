@@ -1173,6 +1173,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <button class="sidebar-nav-item active" onclick="adminTab('orders')" id="navOrders">
         <i class="ti ti-package" style="font-size:15px;" aria-hidden="true"></i> Order & Transaksi
       </button>
+      <button class="sidebar-nav-item" onclick="adminTab('komisi')" id="navKomisi">
+        <i class="ti ti-coin" style="font-size:15px;" aria-hidden="true"></i> Komisi
+      </button>
       <button class="sidebar-nav-item" onclick="adminTab('topup')" id="navTopup">
         <i class="ti ti-wallet" style="font-size:15px;" aria-hidden="true"></i> Top Up
         <span id="badgeTopup" style="display:none;background:#ef4444;color:white;border-radius:99px;font-size:10px;padding:1px 6px;margin-left:auto;">0</span>
@@ -1255,12 +1258,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
     <!-- TAB: ORDER -->
     <div id="adminTabOrders">
-      <div style="display:flex;gap:8px;margin-bottom:16px;">
-        <button onclick="switchKomisi('harian')" id="btnKomisiHarian" style="padding:5px 14px;border-radius:99px;border:0.5px solid #0047AB;background:#0047AB;color:white;font-size:12px;cursor:pointer;">Harian</button>
-        <button onclick="switchKomisi('mingguan')" id="btnKomisiMingguan" style="padding:5px 14px;border-radius:99px;border:0.5px solid #D1D5DB;background:white;color:#6B7280;font-size:12px;cursor:pointer;">Mingguan</button>
-        <button onclick="switchKomisi('bulanan')" id="btnKomisiBulanan" style="padding:5px 14px;border-radius:99px;border:0.5px solid #D1D5DB;background:white;color:#6B7280;font-size:12px;cursor:pointer;">Bulanan</button>
-      </div>
-      <div id="panelKomisi" style="margin-bottom:20px;"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap">
         <div style="font-weight:700;font-size:15px">Semua Order</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1279,6 +1276,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
       <div id="adminOrdersList"><div class="loading">Memuat...</div></div>
+    </div>
+
+    <!-- TAB: KOMISI -->
+    <div id="adminTabKomisi" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="font-weight:700;font-size:15px;">Komisi Developer</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="switchKomisi('harian')" id="btnKomisiHarian" style="padding:5px 14px;border-radius:99px;border:0.5px solid #0047AB;background:#0047AB;color:white;font-size:12px;cursor:pointer;">Harian</button>
+          <button onclick="switchKomisi('mingguan')" id="btnKomisiMingguan" style="padding:5px 14px;border-radius:99px;border:0.5px solid #D1D5DB;background:white;color:#6B7280;font-size:12px;cursor:pointer;">Mingguan</button>
+          <button onclick="switchKomisi('bulanan')" id="btnKomisiBulanan" style="padding:5px 14px;border-radius:99px;border:0.5px solid #D1D5DB;background:white;color:#6B7280;font-size:12px;cursor:pointer;">Bulanan</button>
+        </div>
+      </div>
+      <div id="panelKomisi"><div class="loading">Memuat...</div></div>
     </div>
 
     <!-- TAB: MITRA -->
@@ -3982,7 +3992,7 @@ function logoutAdmin(){
 }
 
 function adminTab(tab){
-  ['orders','mitra','topup','akun','ratings'].forEach(t=>{
+  ['orders','komisi','mitra','topup','akun','ratings'].forEach(t=>{
     const tabEl=document.getElementById('adminTab'+t.charAt(0).toUpperCase()+t.slice(1));
     if(tabEl) tabEl.style.display='none';
     const navEl=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));
@@ -3992,7 +4002,8 @@ function adminTab(tab){
   if(activeTab) activeTab.style.display='block';
   const activeNav=document.getElementById('nav'+tab.charAt(0).toUpperCase()+tab.slice(1));
   if(activeNav) activeNav.classList.add('active');
-  if(tab==='orders'){loadAdminOrders();switchKomisi('harian');}
+  if(tab==='orders'){loadAdminOrders();}
+  else if(tab==='komisi'){switchKomisi('harian');}
   else if(tab==='mitra')loadAdminMitra();
   else if(tab==='topup')loadAdminTopup();
   else if(tab==='ratings')loadAdminRatings();
