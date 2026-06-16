@@ -3722,7 +3722,7 @@ async function loadAdminTopup(){
   const el = document.getElementById('adminTopupList');
   el.innerHTML='<div class="loading">Memuat...</div>';
   const statusFilter = document.getElementById('filterTopupStatus').value;
-  let q = db.from('topup_requests').select('*').order('created_at',{ascending:false});
+  let q = db.from('topup_requests').select('id,mitra_id,nama_mitra,no_hp,nominal_dasar,kode_unik,catatan,status,alasan_tolak,created_at,diproses_at').order('created_at',{ascending:false});
   if(statusFilter) q = q.eq('status', statusFilter);
   const {data,error} = await q;
   if(error){
@@ -3770,9 +3770,14 @@ async function loadAdminTopup(){
     +'<div id="topupDetailPanel"></div>';
 }
 
-function detailTopup(id){
+async function detailTopup(id){
   const r = window._topupData.find(x=>x.id===id);
   if(!r) return;
+  const panel = document.getElementById('topupDetailPanel');
+  panel.innerHTML='<div style="padding:16px;text-align:center;color:#6B7280;font-size:13px;">Memuat detail...</div>';
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  const {data:detail} = await db.from('topup_requests').select('bukti_transfer').eq('id',id).single();
+  r.bukti_transfer = detail?.bukti_transfer||null;
   const tgl = new Date(r.created_at).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
   const lewatJam = new Date(r.created_at).getHours() >= 22;
   const badgePill = r.status==='pending'
