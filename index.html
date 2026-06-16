@@ -5616,7 +5616,7 @@ async function kirimRequestTopUp(){
   const totalTransfer = _topUpNominalDasar + _topUpKodeUnik;
   const catatan = document.getElementById('catatanTopUp').value.trim();
   const btn = document.getElementById('btnKirimTopUp');
-  btn.disabled=true; btn.textContent='Mengirim...';
+  btn.disabled=true; btn.textContent='Menyimpan...';
   document.getElementById('topUpAlert').innerHTML='';
 
   const jam = new Date().getHours();
@@ -5639,18 +5639,14 @@ async function kirimRequestTopUp(){
 
     if(insertError) throw new Error('DB: '+insertError.message);
 
-    try{
-      const pesan = `REQUEST TOP UP SALDO\n\nNama: ${currentUser.nama}\nHP: +${currentUser.no_hp}\nEmail: ${currentUser.email||'-'}\nID Mitra: ${currentUser.id}\n\nNominal dasar: ${rupiah(_topUpNominalDasar)}\nKode unik: ${_topUpKodeUnik}\nTotal transfer: ${rupiah(totalTransfer)}\n\n${infoJam}\n${catatan?'Catatan: '+catatan:''}`;
-      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_NOTIF,{
-        to_email:'nitipgo000@gmail.com',
-        to_name:'Admin NitipGo',
-        subject:`[Top Up] ${currentUser.nama} — ${rupiah(totalTransfer)}`,
-        body: pesan,
-        name: currentUser.nama
-      });
-    }catch(emailErr){
-      console.warn('Email gagal tapi data sudah tersimpan:', emailErr);
-    }
+    const pesan = `REQUEST TOP UP SALDO\n\nNama: ${currentUser.nama}\nHP: +${currentUser.no_hp}\nEmail: ${currentUser.email||'-'}\nID Mitra: ${currentUser.id}\n\nNominal dasar: ${rupiah(_topUpNominalDasar)}\nKode unik: ${_topUpKodeUnik}\nTotal transfer: ${rupiah(totalTransfer)}\n\n${infoJam}\n${catatan?'Catatan: '+catatan:''}`;
+    emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_NOTIF,{
+      to_email:'nitipgo000@gmail.com',
+      to_name:'Admin NitipGo',
+      subject:`[Top Up] ${currentUser.nama} — ${rupiah(totalTransfer)}`,
+      body: pesan,
+      name: currentUser.nama
+    }).catch(err=>console.warn('Email notif gagal:', err));
 
     document.getElementById('topUpAlert').innerHTML='<div style="background:#F0FDF4;color:#15803D;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px">✅ Request berhasil dikirim! Admin akan memverifikasi dalam 1x24 jam.</div>';
     btn.textContent='Terkirim ✓';
