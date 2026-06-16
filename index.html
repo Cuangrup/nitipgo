@@ -2781,8 +2781,8 @@ async function loadOrderAktifPengirim(){
 async function loadRiwayatPengirim(){
   const el=document.getElementById('listRiwayat');
   el.innerHTML='<div class="loading">Memuat...</div>';
-  const{data}=await db.from('orders').select('*').eq('pengirim_id',currentUser.id)
-    .in('status',['selesai','batal']).order('created_at',{ascending:false});
+  const{data}=await db.from('orders').select('id,kode,jenis,alamat_pickup,alamat_tujuan,harga_deal,harga_tawar,status,created_at,pengirim_id,mitra_id,nama_penerima,deskripsi,nama_pengantar').eq('pengirim_id',currentUser.id)
+    .in('status',['selesai','batal']).order('created_at',{ascending:false}).limit(50);
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">📋</div><p>Belum ada riwayat.</p></div>';return;}
   const html=await Promise.all(data.map(o=>renderOrderPengirim(o,true)));
   el.innerHTML=html.join('');
@@ -3008,7 +3008,7 @@ async function loadOrderTersedia(){
 async function loadOrderAktifMitra(){
   const el=document.getElementById('listMitraAktif');
   el.innerHTML='<div class="loading">Memuat...</div>';
-  const{data}=await db.from('orders').select('*,pengirim:users!orders_pengirim_id_fkey(no_hp)').eq('mitra_id',currentUser.id)
+  const{data}=await db.from('orders').select('id,kode,jenis,alamat_pickup,alamat_tujuan,harga_deal,harga_tawar,status,created_at,pengirim_id,mitra_id,nama_penerima,hp_penerima,nama_pengantar,hp_pengirim,deskripsi,nominal_bayar,estimasi_harga_barang,pengirim:users!orders_pengirim_id_fkey(no_hp)').eq('mitra_id',currentUser.id)
     .in('status',['dijemput','diantar','diambil','dikerjakan','dibayar','diproses']).order('created_at',{ascending:false});
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">🛵</div><p>Belum ada order aktif.</p></div>';return;}
   el.innerHTML=data.map(o=>renderOrderAktifMitra(o)).join('');
@@ -3016,8 +3016,8 @@ async function loadOrderAktifMitra(){
 async function loadOrderSelesaiMitra(){
   const el=document.getElementById('listMitraSelesai');
   el.innerHTML='<div class="loading">Memuat...</div>';
-  const{data}=await db.from('orders').select('*').eq('mitra_id',currentUser.id)
-    .eq('status','selesai').order('created_at',{ascending:false});
+  const{data}=await db.from('orders').select('id,kode,jenis,alamat_pickup,alamat_tujuan,harga_deal,harga_tawar,status,created_at,pengirim_id,mitra_id,nama_penerima,deskripsi').eq('mitra_id',currentUser.id)
+    .eq('status','selesai').order('created_at',{ascending:false}).limit(50);
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">✅</div><p>Belum ada order selesai.</p></div>';return;}
   const total=data.reduce((s,o)=>s+(o.harga_deal||o.harga_tawar),0);
   el.innerHTML=`<div class="card" style="background:var(--mitra-light);border-color:#b2dfdb">
