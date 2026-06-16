@@ -3791,7 +3791,9 @@ function detailTopup(id){
     +'<div style="padding:12px;text-align:center;border-left:0.5px solid #E5E7EB;border-right:0.5px solid #E5E7EB"><div style="font-size:11px;color:#6B7280;margin-bottom:4px">Kode unik</div><div style="font-size:15px;font-weight:500;color:#111827">+'+r.kode_unik+'</div></div>'
     +'<div style="padding:12px;text-align:center"><div style="font-size:11px;color:#6B7280;margin-bottom:4px">Total transfer</div><div style="font-size:15px;font-weight:500;color:#0C447C">'+rupiah(r.nominal_dasar+r.kode_unik)+'</div></div>'
     +'</div>'+catatan
-    +'<div style="background:#F9FAFB;border-radius:8px;padding:10px 12px;text-align:center;font-size:12px;color:#9CA3AF;margin-bottom:14px">Bukti transfer belum diupload</div>'
+    +(r.bukti_transfer
+      ?'<div style="margin-bottom:14px"><div style="font-size:12px;color:#6B7280;font-weight:500;margin-bottom:6px">Bukti transfer:</div><img src="'+r.bukti_transfer+'" style="width:100%;border-radius:8px;border:0.5px solid #E5E7EB;cursor:pointer;max-height:280px;object-fit:contain;background:#F9FAFB" onclick="window.open(this.src)" title="Klik untuk perbesar"></div>'
+      :'<div style="background:#F9FAFB;border-radius:8px;padding:10px 12px;text-align:center;font-size:12px;color:#9CA3AF;margin-bottom:14px">Bukti transfer belum diupload</div>')
     +aksi+'</div>';
   panel.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
@@ -5630,6 +5632,7 @@ async function kirimRequestTopUp(){
       nominal_dasar: _topUpNominalDasar,
       kode_unik: _topUpKodeUnik,
       catatan: catatan||null,
+      bukti_transfer: _buktiTopUpBase64||null,
       status: 'pending',
       created_at: new Date().toISOString()
     });
