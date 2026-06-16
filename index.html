@@ -3713,7 +3713,7 @@ async function loadAdminTopup(){
   if(statusFilter) q = q.eq('status', statusFilter);
   const {data,error} = await q;
   if(error){
-    el.innerHTML='<div style="background:#FEF2F2;color:#B91C1C;padding:14px;border-radius:8px;font-size:13px">⚠️ Error: '+error.message+'<br><br>Kemungkinan RLS aktif. Jalankan di Supabase SQL Editor:<br><code>ALTER TABLE topup_requests DISABLE ROW LEVEL SECURITY;</code></div>';
+    el.innerHTML='<div style="background:#FEF2F2;color:#B91C1C;padding:14px;border-radius:8px;font-size:13px">Error: '+error.message+'</div>';
     return;
   }
   if(!data||!data.length){
@@ -3723,35 +3723,79 @@ async function loadAdminTopup(){
   const badge = document.getElementById('badgeTopup');
   const pending = data.filter(r=>r.status==='pending').length;
   if(pending>0){badge.textContent=pending;badge.style.display='inline';}else{badge.style.display='none';}
-  el.innerHTML = data.map(r=>{
-    const tgl = new Date(r.created_at).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    const jam = new Date(r.created_at).getHours();
-    const lewatJam = jam >= 22;
-    const statusColor = r.status==='pending'?'#F59E0B':r.status==='disetujui'?'#10B981':'#EF4444';
-    const statusLabel = r.status==='pending'?'Menunggu':r.status==='disetujui'?'Disetujui':'Ditolak';
-    return `<div style="background:white;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-        <div>
-          <div style="font-weight:700;font-size:14px">${r.nama_mitra}</div>
-          <div style="font-size:12px;color:var(--muted)">${r.no_hp} · ${tgl}</div>
-          ${lewatJam&&r.status==='pending'?'<div style="font-size:11px;color:#B45309;margin-top:2px">⏰ Dikirim lewat jam 22.00 — verifikasi besok</div>':''}
-        </div>
-        <span style="background:${statusColor}22;color:${statusColor};font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px">${statusLabel}</span>
-      </div>
-      <div style="background:#F8FAFC;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--muted)">Nominal dasar</span><b>${rupiah(r.nominal_dasar)}</b></div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--muted)">Kode unik</span><b>+${r.kode_unik}</b></div>
-        <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:6px;margin-top:4px"><span style="color:var(--muted)">Total transfer</span><b style="color:#0047AB;font-size:14px">${rupiah(r.nominal_dasar + r.kode_unik)}</b></div>
-      </div>
-      ${r.catatan?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">📝 ${r.catatan}</div>`:''}
-      ${r.status==='pending'?`
-      <div style="display:flex;gap:8px">
-        <button onclick="approveTopup('${r.id}','${r.mitra_id}',${r.nominal_dasar})" style="flex:1;padding:8px;background:#0047AB;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">✅ Setujui & Top Up</button>
-        <button onclick="tolakTopup('${r.id}')" style="flex:1;padding:8px;background:white;color:#e53935;border:1px solid #e53935;border-radius:8px;font-size:13px;cursor:pointer">❌ Tolak</button>
-      </div>`:`<div style="font-size:12px;color:var(--muted)">${r.status==='disetujui'?'✅ Disetujui oleh admin':'❌ Ditolak — '+( r.alasan_tolak||'-')}</div>`}
-    </div>`;
+  window._topupData = data;
+
+  const badgePill = s => {
+    if(s==='pending') return '<span style="background:#FAEEDA;color:#633806;font-size:11px;font-weight:500;padding:3px 10px;border-radius:99px">Menunggu</span>';
+    if(s==='disetujui') return '<span style="background:#EAF3DE;color:#27500A;font-size:11px;font-weight:500;padding:3px 10px;border-radius:99px">Disetujui</span>';
+    return '<span style="background:#FCEBEB;color:#791F1F;font-size:11px;font-weight:500;padding:3px 10px;border-radius:99px">Ditolak</span>';
+  };
+
+  const rows = data.map((r,i)=>{
+    const tgl = new Date(r.created_at).toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    const lewatJam = new Date(r.created_at).getHours() >= 22;
+    const br = i<data.length-1 ? 'border-bottom:0.5px solid #F3F4F6;' : '';
+    return '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 72px;padding:11px 14px;align-items:center;'+br+'">'
+      +'<div><div style="font-size:13px;font-weight:500;color:#111827">'+r.nama_mitra+'</div>'
+      +'<div style="font-size:11px;color:#6B7280">'+r.no_hp+'</div></div>'
+      +'<div style="font-size:13px;font-weight:500;color:#0C447C">'+rupiah(r.nominal_dasar+r.kode_unik)+'</div>'
+      +'<div style="font-size:12px;color:#6B7280">'+tgl+(lewatJam&&r.status==='pending'?' ⏰':'')+'</div>'
+      +'<div>'+badgePill(r.status)+'</div>'
+      +'<div><button onclick="detailTopup(\''+r.id+'\')" style="font-size:12px;padding:5px 10px;cursor:pointer;border-radius:6px;border:0.5px solid #D1D5DB;background:white;color:#374151">Detail</button></div>'
+      +'</div>';
   }).join('');
+
+  el.innerHTML = '<div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;overflow:hidden;margin-bottom:8px">'
+    +'<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 72px;padding:8px 14px;background:#F9FAFB;border-bottom:0.5px solid #E5E7EB">'
+    +'<div style="font-size:12px;color:#6B7280;font-weight:500">Mitra</div>'
+    +'<div style="font-size:12px;color:#6B7280;font-weight:500">Total transfer</div>'
+    +'<div style="font-size:12px;color:#6B7280;font-weight:500">Waktu</div>'
+    +'<div style="font-size:12px;color:#6B7280;font-weight:500">Status</div>'
+    +'<div></div></div>'
+    +rows+'</div>'
+    +'<div style="font-size:11px;color:#9CA3AF;margin-bottom:16px">⏰ = dikirim lewat jam 22.00, verifikasi besok</div>'
+    +'<div id="topupDetailPanel"></div>';
 }
+
+function detailTopup(id){
+  const r = window._topupData.find(x=>x.id===id);
+  if(!r) return;
+  const tgl = new Date(r.created_at).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const lewatJam = new Date(r.created_at).getHours() >= 22;
+  const badgePill = r.status==='pending'
+    ?'<span style="background:#FAEEDA;color:#633806;font-size:11px;font-weight:500;padding:3px 10px;border-radius:99px">Menunggu</span>'
+    :r.status==='disetujui'
+    ?'<span style="background:#EAF3DE;color:#27500A;font-size:11px;font-weight:500;padding:3px 10px;border-radius:99px">Disetujui</span>'
+    :'<span style="background:#FCEBEB;color:#791F1F;font-size:11px;font-weight:500;padding:3px 10px;border-radius:99px">Ditolak</span>';
+
+  const aksi = r.status==='pending'
+    ?'<div style="display:flex;gap:8px">'
+      +'<button onclick="approveTopup(\''+r.id+'\',\''+r.mitra_id+'\','+r.nominal_dasar+')" style="flex:1;padding:10px;background:#0047AB;color:white;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer">Setujui &amp; Top Up</button>'
+      +'<button onclick="tolakTopup(\''+r.id+'\')" style="flex:1;padding:10px;background:white;color:#A32D2D;border:0.5px solid #A32D2D;border-radius:8px;font-size:13px;cursor:pointer">Tolak</button>'
+      +'</div>'
+    :r.status==='disetujui'
+    ?'<div style="font-size:12px;color:#27500A">Sudah disetujui dan saldo sudah ditambah.</div>'
+    :'<div style="font-size:12px;color:#A32D2D">Ditolak &mdash; '+(r.alasan_tolak||'-')+'</div>';
+
+  const catatan = r.catatan ? '<div style="font-size:12px;color:#6B7280;margin-bottom:12px">Catatan: '+r.catatan+'</div>' : '';
+  const infoJam = lewatJam&&r.status==='pending' ? '<div style="font-size:11px;color:#B45309;margin-top:3px">⏰ Dikirim lewat jam 22.00 — verifikasi besok</div>' : '';
+
+  const panel = document.getElementById('topupDetailPanel');
+  panel.innerHTML = '<div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;padding:16px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">'
+    +'<div><div style="font-size:15px;font-weight:500;color:#111827">'+r.nama_mitra+'</div>'
+    +'<div style="font-size:12px;color:#6B7280">'+r.no_hp+' &middot; '+tgl+'</div>'+infoJam+'</div>'
+    +badgePill+'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;background:#F9FAFB;border-radius:8px;overflow:hidden;border:0.5px solid #E5E7EB;margin-bottom:14px">'
+    +'<div style="padding:12px;text-align:center"><div style="font-size:11px;color:#6B7280;margin-bottom:4px">Nominal dasar</div><div style="font-size:15px;font-weight:500;color:#111827">'+rupiah(r.nominal_dasar)+'</div></div>'
+    +'<div style="padding:12px;text-align:center;border-left:0.5px solid #E5E7EB;border-right:0.5px solid #E5E7EB"><div style="font-size:11px;color:#6B7280;margin-bottom:4px">Kode unik</div><div style="font-size:15px;font-weight:500;color:#111827">+'+r.kode_unik+'</div></div>'
+    +'<div style="padding:12px;text-align:center"><div style="font-size:11px;color:#6B7280;margin-bottom:4px">Total transfer</div><div style="font-size:15px;font-weight:500;color:#0C447C">'+rupiah(r.nominal_dasar+r.kode_unik)+'</div></div>'
+    +'</div>'+catatan
+    +'<div style="background:#F9FAFB;border-radius:8px;padding:10px 12px;text-align:center;font-size:12px;color:#9CA3AF;margin-bottom:14px">Bukti transfer belum diupload</div>'
+    +aksi+'</div>';
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
 
 async function approveTopup(reqId, mitraId, nominalDasar){
   if(!confirm(`Setujui top up ${rupiah(nominalDasar)} untuk mitra ini?\nSaldo akan ditambah sebesar nominal dasar (kode unik tidak dihitung).`)) return;
