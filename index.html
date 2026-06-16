@@ -5625,7 +5625,7 @@ async function kirimRequestTopUp(){
     : 'Dikirim sebelum jam 22.00 — saldo akan diupdate hari ini.';
 
   try{
-    await db.from('topup_requests').insert({
+    const {error: insertError} = await db.from('topup_requests').insert({
       mitra_id: currentUser.id,
       nama_mitra: currentUser.nama,
       no_hp: currentUser.no_hp,
@@ -5637,21 +5637,26 @@ async function kirimRequestTopUp(){
       created_at: new Date().toISOString()
     });
 
-    const pesan = `REQUEST TOP UP SALDO\n\nNama: ${currentUser.nama}\nHP: +${currentUser.no_hp}\nEmail: ${currentUser.email||'-'}\nID Mitra: ${currentUser.id}\n\nNominal dasar: ${rupiah(_topUpNominalDasar)}\nKode unik: ${_topUpKodeUnik}\nTotal transfer: ${rupiah(totalTransfer)}\n\n${infoJam}\n${catatan?'Catatan: '+catatan:''}`;
+    if(insertError) throw new Error('DB: '+insertError.message);
 
-    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_NOTIF,{
-      to_email:'nitipgo000@gmail.com',
-      to_name:'Admin NitipGo',
-      subject:`[Top Up] ${currentUser.nama} — ${rupiah(totalTransfer)}`,
-      body: pesan,
-      name: currentUser.nama
-    });
+    try{
+      const pesan = `REQUEST TOP UP SALDO\n\nNama: ${currentUser.nama}\nHP: +${currentUser.no_hp}\nEmail: ${currentUser.email||'-'}\nID Mitra: ${currentUser.id}\n\nNominal dasar: ${rupiah(_topUpNominalDasar)}\nKode unik: ${_topUpKodeUnik}\nTotal transfer: ${rupiah(totalTransfer)}\n\n${infoJam}\n${catatan?'Catatan: '+catatan:''}`;
+      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_NOTIF,{
+        to_email:'nitipgo000@gmail.com',
+        to_name:'Admin NitipGo',
+        subject:`[Top Up] ${currentUser.nama} — ${rupiah(totalTransfer)}`,
+        body: pesan,
+        name: currentUser.nama
+      });
+    }catch(emailErr){
+      console.warn('Email gagal tapi data sudah tersimpan:', emailErr);
+    }
 
-    document.getElementById('topUpAlert').innerHTML='<div style="background:#F0FDF4;color:#15803D;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px">✅ Request berhasil dikirim! Cek tab Top Up di dashboard admin untuk verifikasi.</div>';
+    document.getElementById('topUpAlert').innerHTML='<div style="background:#F0FDF4;color:#15803D;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px">✅ Request berhasil dikirim! Admin akan memverifikasi dalam 1x24 jam.</div>';
     btn.textContent='Terkirim ✓';
     setTimeout(()=>tutupModalTopUp(), 2500);
   }catch(e){
-    document.getElementById('topUpAlert').innerHTML='<div style="background:#FEF2F2;color:#B91C1C;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px">Gagal mengirim. Coba lagi.</div>';
+    document.getElementById('topUpAlert').innerHTML='<div style="background:#FEF2F2;color:#B91C1C;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px">⚠️ Gagal: '+e.message+'</div>';
     btn.disabled=false; btn.textContent='Kirim Request Top Up';
   }
 }
