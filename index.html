@@ -1790,6 +1790,7 @@ async function masukSebagai(user){
     setTimeout(cekStatusAudio,500);
     startFlagOrderCheck();
     setTimeout(cekKelengkapanMitra, 2000);
+    setTimeout(loadStatMitraHariIni, 300);
     setTimeout(loadMitraSaldo, 500);
   }
 }
@@ -2717,7 +2718,7 @@ async function loginMitra(){
   currentUser=user;currentRole='mitra';
   document.getElementById('topRoleBadge').textContent='🛵 '+user.nama;
   document.getElementById('topRoleBadge').style.display='';
-  goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();setTimeout(cekStatusAudio,500);loadStatMitraHariIni();
+  goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();setTimeout(cekStatusAudio,500);setTimeout(loadStatMitraHariIni, 300);
 }
 
 // ── PENGIRIM TABS ──
