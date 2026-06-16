@@ -1035,9 +1035,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div style="font-size:10px;color:#BFDBFE;margin-bottom:4px">Saldo Kemitraan</div>
         <div style="font-size:20px;font-weight:500;color:white" id="mitraSaldo">Rp 0</div>
         <div style="font-size:10px;color:#FF9999;margin-top:2px;display:none" id="mitraSaldoInfo">Saldo minus! Top up dulu untuk bisa online.</div>
-        <button onclick="bukaModalTopUp()" style="margin-top:10px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.35);border-radius:8px;padding:7px 12px;color:white;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;width:auto">
-          <i class="ti ti-wallet" style="font-size:14px" aria-hidden="true"></i> Request Top Up Saldo
-        </button>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button onclick="bukaModalTopUp()" style="background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.35);border-radius:8px;padding:7px 12px;color:white;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;">
+            <i class="ti ti-wallet" style="font-size:13px" aria-hidden="true"></i> Request Top Up
+          </button>
+          <button onclick="bukaRiwayatSaldo()" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:7px 12px;color:#BFDBFE;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+            <i class="ti ti-history" style="font-size:13px" aria-hidden="true"></i> Riwayat
+          </button>
+        </div>
       </div>
       <div style="text-align:center">
         <div id="toggleOnlineBtn" onclick="toggleOnlineMitra()"
@@ -2957,12 +2962,20 @@ async function toggleOnlineMitra(){
   tampilToggleOnline();
 }
 
-async function potongSaldoMitra(mitraId, hargaDeal){
+async function potongSaldoMitra(mitraId, hargaDeal, kodeOrder){
   const komisi = Math.round(hargaDeal * 0.075);
   const{data:mitra} = await db.from('users').select('saldo').eq('id',mitraId).single();
   const saldoBaru = (mitra?.saldo||0) - komisi;
   await db.from('users').update({saldo:saldoBaru}).eq('id',mitraId);
-  // Kalau saldo minus, auto offline
+  db.from('saldo_logs').insert({
+    mitra_id: mitraId,
+    tipe: 'keluar',
+    jumlah: komisi,
+    saldo_setelah: saldoBaru,
+    keterangan: 'Komisi order '+(kodeOrder||''),
+    ref_id: kodeOrder||null,
+    created_at: new Date().toISOString()
+  }).then(()=>{});
   if(saldoBaru < 0){
     await db.from('users').update({is_online:false}).eq('id',mitraId);
   }
@@ -3806,6 +3819,15 @@ async function approveTopup(reqId, mitraId, nominalDasar){
   const {error:e1} = await db.from('users').update({saldo:saldoBaru}).eq('id',mitraId);
   if(e1){alert('Gagal update saldo!');return;}
   await db.from('topup_requests').update({status:'disetujui',diproses_at:new Date().toISOString()}).eq('id',reqId);
+  db.from('saldo_logs').insert({
+    mitra_id: mitraId,
+    tipe: 'masuk',
+    jumlah: nominalDasar,
+    saldo_setelah: saldoBaru,
+    keterangan: 'Top up saldo',
+    ref_id: reqId,
+    created_at: new Date().toISOString()
+  }).then(()=>{});
   alert(`✅ Saldo ${mitra?.nama} berhasil ditambah ${rupiah(nominalDasar)}.\nSaldo baru: ${rupiah(saldoBaru)}`);
   loadAdminTopup();
 }
@@ -5656,7 +5678,72 @@ async function kirimRequestTopUp(){
     btn.disabled=false; btn.textContent='Kirim Request Top Up';
   }
 }
+async function bukaRiwayatSaldo(){
+  document.getElementById('modalRiwayatSaldo').style.display='flex';
+  document.getElementById('riwayatNamaMitra').textContent=currentUser.nama||'';
+  const list = document.getElementById('riwayatList');
+  const totalMasukEl = document.getElementById('riwayatTotalMasuk');
+  const totalKeluarEl = document.getElementById('riwayatTotalKeluar');
+  list.innerHTML='<div style="text-align:center;padding:24px;color:#6B7280;font-size:13px;">Memuat...</div>';
+  const {data,error} = await db.from('saldo_logs').select('*').eq('mitra_id',currentUser.id).order('created_at',{ascending:false}).limit(50);
+  if(error||!data||!data.length){
+    list.innerHTML='<div style="text-align:center;padding:24px;color:#6B7280;font-size:13px;">Belum ada riwayat transaksi</div>';
+    totalMasukEl.textContent='Rp 0'; totalKeluarEl.textContent='Rp 0'; return;
+  }
+  totalMasukEl.textContent=rupiah(data.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+r.jumlah,0));
+  totalKeluarEl.textContent=rupiah(data.filter(r=>r.tipe==='keluar').reduce((s,r)=>s+r.jumlah,0));
+  let lastTgl='';
+  list.innerHTML=data.map(r=>{
+    const d=new Date(r.created_at);
+    const tgl=d.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+    const jam=d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+    const hariIni=new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+    const kemarin=new Date(Date.now()-86400000).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+    const labelTgl=tgl===hariIni?'Hari ini':tgl===kemarin?'Kemarin':tgl;
+    const hdr=tgl!==lastTgl?(lastTgl=tgl,'<div style="font-size:11px;color:#6B7280;padding:10px 0 4px;font-weight:500;">'+labelTgl+'</div>'):'';
+    const masuk=r.tipe==='masuk';
+    return hdr
+      +'<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid #F3F4F6;">'
+      +'<div style="width:34px;height:34px;border-radius:50%;background:'+(masuk?'#EAF3DE':'#FCEBEB')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+      +'<i class="ti ti-arrow-'+(masuk?'down-left':'up-right')+'" style="font-size:16px;color:'+(masuk?'#27500A':'#791F1F')+';" aria-hidden="true"></i></div>'
+      +'<div style="flex:1;"><div style="font-size:13px;font-weight:500;color:#111827;">'+r.keterangan+'</div>'
+      +'<div style="font-size:11px;color:#6B7280;">'+jam+'</div></div>'
+      +'<div style="text-align:right;"><div style="font-size:13px;font-weight:500;color:'+(masuk?'#27500A':'#791F1F')+';">'+(masuk?'+':'-')+rupiah(r.jumlah)+'</div>'
+      +'<div style="font-size:11px;color:#6B7280;">Saldo: '+rupiah(r.saldo_setelah)+'</div></div></div>';
+  }).join('');
+}
+
+function tutupRiwayatSaldo(){
+  document.getElementById('modalRiwayatSaldo').style.display='none';
+}
+
 </script>
+
+<!-- MODAL RIWAYAT SALDO -->
+<div id="modalRiwayatSaldo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:flex-end;justify-content:center;">
+  <div style="background:white;border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;">
+    <div style="background:#0047AB;border-radius:16px 16px 0 0;padding:16px;flex-shrink:0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="color:white;font-size:16px;font-weight:500;">Riwayat Saldo</div>
+          <div style="color:#BFDBFE;font-size:12px;margin-top:1px;" id="riwayatNamaMitra"></div>
+        </div>
+        <button onclick="tutupRiwayatSaldo()" style="background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:30px;height:30px;color:white;font-size:18px;cursor:pointer;line-height:1;">×</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:0.5px solid #E5E7EB;flex-shrink:0;">
+      <div style="padding:12px;text-align:center;border-right:0.5px solid #E5E7EB;">
+        <div style="font-size:11px;color:#6B7280;margin-bottom:3px;">Total masuk</div>
+        <div style="font-size:15px;font-weight:500;color:#27500A;" id="riwayatTotalMasuk">Rp 0</div>
+      </div>
+      <div style="padding:12px;text-align:center;">
+        <div style="font-size:11px;color:#6B7280;margin-bottom:3px;">Total keluar</div>
+        <div style="font-size:15px;font-weight:500;color:#791F1F;" id="riwayatTotalKeluar">Rp 0</div>
+      </div>
+    </div>
+    <div style="overflow-y:auto;padding:0 16px 24px;" id="riwayatList"></div>
+  </div>
+</div>
 
 </body>
 </html>
