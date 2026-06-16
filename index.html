@@ -3068,15 +3068,89 @@ async function loadOrderAktifMitra(){
 async function loadOrderSelesaiMitra(){
   const el=document.getElementById('listMitraSelesai');
   el.innerHTML='<div class="loading">Memuat...</div>';
-  const{data}=await db.from('orders').select('id,kode,jenis,alamat_pickup,alamat_tujuan,harga_deal,harga_tawar,status,created_at,pengirim_id,mitra_id,nama_penerima,deskripsi').eq('mitra_id',currentUser.id)
-    .eq('status','selesai').order('created_at',{ascending:false}).limit(50);
+  const{data}=await db.from('orders').select('id,kode,jenis,alamat_pickup,alamat_tujuan,harga_deal,harga_tawar,status,updated_at,deskripsi,nama_pengantar').eq('mitra_id',currentUser.id)
+    .eq('status','selesai').order('updated_at',{ascending:false}).limit(100);
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">✅</div><p>Belum ada order selesai.</p></div>';return;}
-  const total=data.reduce((s,o)=>s+(o.harga_deal||o.harga_tawar),0);
-  el.innerHTML=`<div class="card" style="background:var(--mitra-light);border-color:#b2dfdb">
-    <div style="font-size:13px;color:var(--muted)">Total pendapatan</div>
-    <div style="font-size:24px;font-weight:900;color:var(--mitra)">${rupiah(total*0.95)}</div>
-    <div style="font-size:11px;color:var(--muted)">${data.length} order • setelah biaya developer 7.5%</div>
-  </div>`+data.map(o=>renderOrderMitra(o,true)).join('');
+
+  const totalPendapatan = data.reduce((s,o)=>s+((o.harga_deal||o.harga_tawar||0)*0.925),0);
+  const totalOrder = data.length;
+
+  // Kelompokkan per tanggal
+  const perTanggal = {};
+  data.forEach(o=>{
+    const d = new Date(o.updated_at);
+    const key = d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    if(!perTanggal[key]) perTanggal[key] = [];
+    perTanggal[key].push(o);
+  });
+
+  const iconJenis = j => j==='kirim'?'ti-map-pin':j==='beli'?'ti-shopping-bag':'ti-tools';
+  const descOrder = o => o.jenis==='suruh'?(o.deskripsi||'-'):o.jenis==='beli'?(o.nama_pengantar||o.alamat_pickup||'-'):(o.alamat_pickup||'-')+' → '+(o.alamat_tujuan||'-');
+
+  let html = `<div style="background:var(--mitra-light);border:1px solid #b2dfdb;border-radius:10px;padding:12px 14px;margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div>
+      <div style="font-size:11px;color:var(--muted)">Total order</div>
+      <div style="font-size:20px;font-weight:700;color:var(--mitra)">${totalOrder} order</div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--muted)">Total Pendapatan bersama NitipGo</div>
+      <div style="font-size:18px;font-weight:700;color:var(--mitra)">${rupiah(Math.round(totalPendapatan))}</div>
+    </div>
+  </div>`;
+
+  let idx = 0;
+  for(const [tgl, orders] of Object.entries(perTanggal)){
+    const totalHari = orders.reduce((s,o)=>s+((o.harga_deal||o.harga_tawar||0)*0.925),0);
+    const isFirst = idx===0;
+    html += `<div style="border:0.5px solid #E5E7EB;border-radius:10px;overflow:hidden;margin-bottom:8px;">
+      <div onclick="toggleSelesai(${idx})" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;background:white;">
+        <div>
+          <div style="font-size:13px;font-weight:500;color:#111827;">${tgl}</div>
+          <div style="font-size:11px;color:#6B7280;margin-top:2px;">${orders.length} order selesai</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="text-align:right;">
+            <div style="font-size:13px;font-weight:500;color:#27500A;">${rupiah(Math.round(totalHari))}</div>
+            <div style="font-size:10px;color:#6B7280;">pendapatan</div>
+          </div>
+          <i id="iconSelesai_${idx}" class="ti ti-chevron-down" style="font-size:16px;color:#6B7280;transition:transform 0.2s;transform:rotate(${isFirst?'180':'0'}deg);" aria-hidden="true"></i>
+        </div>
+      </div>
+      <div id="detailSelesai_${idx}" style="display:${isFirst?'block':'none'};border-top:0.5px solid #F3F4F6;">
+        ${orders.map((o,j)=>{
+          const jam = new Date(o.updated_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+          const pendapatan = Math.round((o.harga_deal||o.harga_tawar||0)*0.925);
+          return `<div style="padding:10px 14px;${j<orders.length-1?'border-bottom:0.5px solid #F3F4F6;':''}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div style="flex:1;">
+                <div style="font-size:12px;font-weight:500;color:#111827;">${o.kode}</div>
+                <div style="font-size:11px;color:#6B7280;margin-top:2px;">${jenisLabel(o.jenis)} · ${jam}</div>
+                <div style="font-size:11px;color:#6B7280;margin-top:2px;">
+                  <i class="ti ${iconJenis(o.jenis)}" style="font-size:11px;vertical-align:-1px;" aria-hidden="true"></i>
+                  ${descOrder(o)}
+                </div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;margin-left:12px;">
+                <div style="font-size:13px;font-weight:500;color:#27500A;">${rupiah(pendapatan)}</div>
+                <div style="font-size:10px;color:#6B7280;">setelah komisi</div>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+    idx++;
+  }
+
+  el.innerHTML = html;
+}
+
+function toggleSelesai(idx){
+  const detail = document.getElementById('detailSelesai_'+idx);
+  const icon = document.getElementById('iconSelesai_'+idx);
+  const open = detail.style.display !== 'none';
+  detail.style.display = open ? 'none' : 'block';
+  icon.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
 }
 
 function renderOrderMitra(o,done=false,sudahBid=false){
