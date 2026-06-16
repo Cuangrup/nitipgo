@@ -3676,7 +3676,7 @@ function subscribeRealtime(){
       if(!msg) return;
       const sedangDiChat = currentScreen==='screenChat' && _chatOrderId===msg.order_id;
       if(sedangDiChat) return;
-      const pengirimMsg = msg.pengirim;
+      const pengirimMsg = msg.dari;
       const bukanDariSaya = (currentRole==='mitra' && pengirimMsg==='pengirim') || (currentRole==='pengirim' && pengirimMsg==='mitra');
       if(!bukanDariSaya) return;
       tambahBadgeChat(msg.order_id);
@@ -3736,7 +3736,7 @@ function subscribeRealtimeChat(){
       if(!msg) return;
       const sedangDiChat = currentScreen==='screenChat' && _chatOrderId===msg.order_id;
       if(sedangDiChat) return;
-      const pengirimMsg = msg.pengirim;
+      const pengirimMsg = msg.dari;
       const bukanDariSaya = (currentRole==='mitra' && pengirimMsg==='pengirim') || (currentRole==='pengirim' && pengirimMsg==='mitra');
       if(!bukanDariSaya) return;
       tambahBadgeChat(msg.order_id);
