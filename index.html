@@ -5362,9 +5362,7 @@ async function bukaScreenUlasan(){
 
 async function loadStatMitraHariIni(){
   const now = new Date();
-  const todayLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const todayUTC = new Date(todayLocal.getTime() - (7 * 60 * 60 * 1000));
-  const todayStart = todayUTC.toISOString();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).toISOString();
   const {data} = await db.from('orders')
     .select('harga_deal')
     .eq('mitra_id', currentUser.id)
