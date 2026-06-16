@@ -34,6 +34,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* SCREENS */
 .screen{display:none;min-height:100vh;}
+#screenAdmin{position:fixed;inset:0;z-index:1000;display:none;background:#F1F5F9;flex-direction:row;overflow:hidden;}
+#screenAdmin.active{display:flex!important;}
+.admin-sidebar{width:220px;min-width:220px;background:#0047AB;display:flex;flex-direction:column;height:100vh;overflow-y:auto;}
+.admin-main{flex:1;overflow-y:auto;height:100vh;padding:24px;}
+.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;color:#BFDBFE;font-size:13px;cursor:pointer;border:none;background:none;width:100%;text-align:left;}
+.sidebar-nav-item:hover,.sidebar-nav-item.active{background:rgba(255,255,255,0.15);color:white;}
 .screen.active{display:block;}
 
 /* HOME */
@@ -1150,17 +1156,58 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <!-- ADMIN DASHBOARD -->
 <div id="screenAdmin" class="screen">
-  <div class="admin-wrap">
-    <!-- TOPBAR -->
-    <div style="background:#0047AB;color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;border-radius:12px;">
+
+  <!-- SIDEBAR -->
+  <div class="admin-sidebar">
+    <div style="padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,0.1);">
       <div style="display:flex;align-items:center;gap:10px;">
-        <div style="width:32px;height:32px;background:white;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#0047AB;">N</div>
+        <div style="width:30px;height:30px;background:white;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#0047AB;">N</div>
         <div>
-          <div style="font-size:15px;font-weight:500;">NitipGo Developer Dashboard</div>
-          <div style="font-size:11px;color:#BFDBFE;" id="adminTanggal"></div>
+          <div style="color:white;font-size:14px;font-weight:500;">NitipGo</div>
+          <div style="color:#BFDBFE;font-size:10px;">Developer Panel</div>
         </div>
       </div>
-      <button class="logout-btn" onclick="logoutAdmin()">Keluar Admin</button>
+    </div>
+    <div style="flex:1;padding:8px 0;">
+      <div style="font-size:10px;color:rgba(255,255,255,0.4);padding:10px 16px 4px;letter-spacing:0.5px;">UTAMA</div>
+      <button class="sidebar-nav-item active" onclick="adminTab('orders')" id="navOrders">
+        <i class="ti ti-package" style="font-size:15px;" aria-hidden="true"></i> Order & Transaksi
+      </button>
+      <button class="sidebar-nav-item" onclick="adminTab('topup')" id="navTopup">
+        <i class="ti ti-wallet" style="font-size:15px;" aria-hidden="true"></i> Top Up
+        <span id="badgeTopup" style="display:none;background:#ef4444;color:white;border-radius:99px;font-size:10px;padding:1px 6px;margin-left:auto;">0</span>
+      </button>
+      <div style="font-size:10px;color:rgba(255,255,255,0.4);padding:10px 16px 4px;letter-spacing:0.5px;">MANAJEMEN</div>
+      <button class="sidebar-nav-item" onclick="adminTab('mitra')" id="navMitra">
+        <i class="ti ti-motorbike" style="font-size:15px;" aria-hidden="true"></i> Verifikasi Mitra
+      </button>
+      <button class="sidebar-nav-item" onclick="adminTab('akun')" id="navAkun">
+        <i class="ti ti-users" style="font-size:15px;" aria-hidden="true"></i> Manajemen Akun
+      </button>
+      <button class="sidebar-nav-item" onclick="adminTab('ratings')" id="navRatings">
+        <i class="ti ti-star" style="font-size:15px;" aria-hidden="true"></i> Rating & Ulasan
+      </button>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid rgba(255,255,255,0.1);">
+      <button onclick="logoutAdmin()" style="width:100%;background:rgba(255,255,255,0.1);border:none;border-radius:8px;padding:8px;color:#BFDBFE;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <i class="ti ti-logout" style="font-size:14px;" aria-hidden="true"></i> Keluar Admin
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="admin-main">
+    <div class="admin-wrap" style="max-width:none;padding:0;">
+
+    <!-- TOPBAR INFO -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div>
+        <div style="font-size:17px;font-weight:500;color:#111827;">Dashboard</div>
+        <div style="font-size:12px;color:#6B7280;" id="adminTanggal"></div>
+      </div>
+      <button onclick="loadAdminStats()" style="background:#0047AB;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+        <i class="ti ti-refresh" style="font-size:14px;" aria-hidden="true"></i> Refresh
+      </button>
     </div>
 
     <!-- STAT CARDS -->
@@ -1266,8 +1313,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
       <div id="adminAkunList"><div class="loading">Memuat...</div></div>
     </div>
-  </div>
-</div>
+    </div><!-- /admin-wrap -->
+  </div><!-- /admin-main -->
+</div><!-- /screenAdmin -->
 
 <!-- DOK MODAL (lihat dokumen fullscreen) -->
 <div id="dokModal" class="dok-modal" onclick="closeDokModal()">
@@ -3929,11 +3977,15 @@ function logoutAdmin(){
 
 function adminTab(tab){
   ['orders','mitra','topup','akun','ratings'].forEach(t=>{
-    document.getElementById('adminTab'+t.charAt(0).toUpperCase()+t.slice(1)).style.display='none';
-    document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1)).classList.remove('active');
+    const tabEl=document.getElementById('adminTab'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(tabEl) tabEl.style.display='none';
+    const navEl=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(navEl) navEl.classList.remove('active');
   });
-  document.getElementById('adminTab'+tab.charAt(0).toUpperCase()+tab.slice(1)).style.display='block';
-  document.getElementById('nav'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+  const activeTab=document.getElementById('adminTab'+tab.charAt(0).toUpperCase()+tab.slice(1));
+  if(activeTab) activeTab.style.display='block';
+  const activeNav=document.getElementById('nav'+tab.charAt(0).toUpperCase()+tab.slice(1));
+  if(activeNav) activeNav.classList.add('active');
   if(tab==='orders')loadAdminOrders();
   else if(tab==='mitra')loadAdminMitra();
   else if(tab==='topup')loadAdminTopup();
