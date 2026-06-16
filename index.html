@@ -1023,11 +1023,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </button>
     </div>
 
-    <!-- Baris 2: Nama -->
-    <div style="font-size:18px;font-weight:500;color:white;margin-bottom:3px" id="mitraHeaderNama">Mitra</div>
+    <div style="font-size:18px;font-weight:500;color:white;margin-bottom:10px" id="mitraHeaderNama">Mitra</div>
 
-    <!-- Baris 3: Rating -->
-    <div style="font-size:11px;color:#BFDBFE;margin-bottom:14px" id="mitraHeaderRating">⭐ 5.0</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:12px;">
+      <div onclick="bukaScreenUlasan()" style="background:rgba(0,0,0,0.18);border-radius:8px;padding:9px 10px;cursor:pointer;">
+        <div style="font-size:10px;color:#BFDBFE;margin-bottom:3px;">Rating</div>
+        <div style="font-size:16px;font-weight:500;color:white;" id="mitraHeaderRating">⭐ 5.0</div>
+        <div style="font-size:10px;color:#BFDBFE;margin-top:1px;" id="mitraHeaderJmlUlasan">0 ulasan</div>
+      </div>
+      <div style="background:rgba(0,0,0,0.18);border-radius:8px;padding:9px 10px;">
+        <div style="font-size:10px;color:#BFDBFE;margin-bottom:3px;">Order selesai</div>
+        <div style="font-size:16px;font-weight:500;color:white;" id="mitraStatOrderHariIni">0</div>
+        <div style="font-size:10px;color:#BFDBFE;margin-top:1px;">hari ini</div>
+      </div>
+      <div style="background:rgba(0,0,0,0.18);border-radius:8px;padding:9px 10px;">
+        <div style="font-size:10px;color:#BFDBFE;margin-bottom:3px;">Pendapatan</div>
+        <div style="font-size:13px;font-weight:500;color:#86EFAC;" id="mitraStatPendapatanHariIni">Rp 0</div>
+        <div style="font-size:10px;color:#BFDBFE;margin-top:1px;">hari ini</div>
+      </div>
+    </div>
 
     <!-- Baris 4: Saldo + Toggle -->
     <div style="background:rgba(0,0,0,0.2);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -1090,6 +1104,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
   </div>
 
+</div>
+
+<div id="screenUlasanMitra" class="screen">
+  <div style="background:#0047AB;padding:14px 16px;display:flex;align-items:center;gap:12px;">
+    <button onclick="goScreen('screenMitra')" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;padding:0;line-height:1;">←</button>
+    <div>
+      <div style="color:white;font-size:16px;font-weight:500;">Ulasan saya</div>
+      <div style="color:#BFDBFE;font-size:12px;" id="ulasanMitraNama"></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:0.5px solid #E5E7EB;">
+    <div style="padding:16px;text-align:center;border-right:0.5px solid #E5E7EB;">
+      <div style="font-size:30px;font-weight:500;color:#111827;" id="ulasanRataRata">5.0</div>
+      <div style="color:#F59E0B;font-size:18px;margin:3px 0;" id="ulasanBintang">★★★★★</div>
+      <div style="font-size:11px;color:#6B7280;">Rating rata-rata</div>
+    </div>
+    <div style="padding:16px;text-align:center;">
+      <div style="font-size:30px;font-weight:500;color:#111827;" id="ulasanTotal">0</div>
+      <div style="font-size:11px;color:#6B7280;margin-top:24px;">Total ulasan</div>
+    </div>
+  </div>
+  <div style="padding:12px 16px;" id="ulasanList">
+    <div class="loading">Memuat ulasan...</div>
+  </div>
 </div>
 
 <div id="screenAdminLogin" class="screen">
@@ -1766,7 +1804,11 @@ function updateTopbar(user){
   const mitraHeaderNama = document.getElementById('mitraHeaderNama');
   if(mitraHeaderNama) mitraHeaderNama.textContent = user.nama;
   const mitraHeaderRating = document.getElementById('mitraHeaderRating');
-  if(mitraHeaderRating) mitraHeaderRating.textContent = '⭐ '+(user.rating||'5.0')+' · '+(user.total_order||0)+' order';
+  const totalRating = user.total_rating||0;
+  const rataRata = totalRating>0 ? (user.rating/totalRating).toFixed(1) : '5.0';
+  if(mitraHeaderRating) mitraHeaderRating.textContent = '⭐ '+rataRata;
+  const mitraHeaderJmlUlasan = document.getElementById('mitraHeaderJmlUlasan');
+  if(mitraHeaderJmlUlasan) mitraHeaderJmlUlasan.textContent = totalRating+' ulasan';
   const mitraHeaderTipe = document.getElementById('mitraHeaderTipe');
   if(mitraHeaderTipe) mitraHeaderTipe.textContent = user.tipe_mitra==='service' ? 'Mitra Service' : 'Mitra Driver';
 }
@@ -2675,7 +2717,7 @@ async function loginMitra(){
   currentUser=user;currentRole='mitra';
   document.getElementById('topRoleBadge').textContent='🛵 '+user.nama;
   document.getElementById('topRoleBadge').style.display='';
-  goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();setTimeout(cekStatusAudio,500);
+  goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();setTimeout(cekStatusAudio,500);loadStatMitraHariIni();
 }
 
 // ── PENGIRIM TABS ──
@@ -5253,6 +5295,48 @@ async function resetPassword(){
 }
 checkAdminHash();
 checkSession();
+
+async function bukaScreenUlasan(){
+  goScreen('screenUlasanMitra');
+  document.getElementById('ulasanMitraNama').textContent = currentUser.nama||'';
+  const rating = currentUser.rating||0;
+  const totalRating = currentUser.total_rating||0;
+  const rataRata = totalRating>0 ? (rating/totalRating).toFixed(1) : '5.0';
+  document.getElementById('ulasanRataRata').textContent = rataRata;
+  document.getElementById('ulasanTotal').textContent = totalRating;
+  const bintang = Math.round(parseFloat(rataRata));
+  document.getElementById('ulasanBintang').textContent = '★'.repeat(bintang) + '☆'.repeat(5-bintang);
+  const list = document.getElementById('ulasanList');
+  list.innerHTML = '<div class="loading">Memuat ulasan...</div>';
+  const {data} = await db.from('ratings').select('*,pengirim:users!ratings_pengirim_id_fkey(nama)').eq('mitra_id',currentUser.id).order('created_at',{ascending:false}).limit(30);
+  if(!data||!data.length){list.innerHTML='<div class="empty"><p>Belum ada ulasan.</p></div>';return;}
+  list.innerHTML = '<div style="font-size:12px;font-weight:500;color:#6B7280;margin-bottom:10px;">Ulasan terbaru</div>'
+    + data.map(r=>{
+      const tgl = new Date(r.created_at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+      const bintang = '★'.repeat(r.rating||5)+'☆'.repeat(5-(r.rating||5));
+      return '<div style="border-bottom:0.5px solid #F3F4F6;padding-bottom:12px;margin-bottom:12px;">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">'
+        +'<div style="font-size:13px;font-weight:500;color:#111827;">'+(r.pengirim?.nama||'Pengguna')+'</div>'
+        +'<div style="color:#F59E0B;font-size:13px;">'+bintang+'</div></div>'
+        +'<div style="font-size:11px;color:#6B7280;margin-bottom:4px;">'+tgl+'</div>'
+        +(r.komentar?'<div style="font-size:13px;color:#374151;">"'+r.komentar+'"</div>':'')
+        +'</div>';
+    }).join('');
+}
+
+async function loadStatMitraHariIni(){
+  const today = new Date().toISOString().split('T')[0];
+  const {data} = await db.from('orders')
+    .select('harga_deal')
+    .eq('mitra_id', currentUser.id)
+    .eq('status','selesai')
+    .gte('created_at', today);
+  const jumlah = data ? data.length : 0;
+  const pendapatan = data ? data.reduce((s,o)=>s+(o.harga_deal||0),0) * 0.925 : 0;
+  document.getElementById('mitraStatOrderHariIni').textContent = jumlah;
+  document.getElementById('mitraStatPendapatanHariIni').textContent = jumlah>0 ? rupiah(Math.round(pendapatan)) : 'Rp 0';
+}
+
 
 async function bukaRiwayatSaldo(){
   document.getElementById('modalRiwayatSaldo').style.display='flex';
