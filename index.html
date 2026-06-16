@@ -5058,6 +5058,8 @@ async function bukaHalamanPengaturan(){
   }
 
   // Load ulasan hanya untuk pengguna (bukan mitra)
+  const ulasanBtn = document.querySelector('[onclick="bukaScreenUlasanUser()"]');
+  if(ulasanBtn) ulasanBtn.style.display = isMitra ? 'none' : 'flex';
   if(currentRole !== 'mitra') loadUlasanDiterima();
 }
 
