@@ -5237,8 +5237,8 @@ async function resetPassword(){
   showAlert('resetAlert','✅ Password berhasil direset! Silakan login.','success');
   setTimeout(()=>goScreen('screenLogin'),2000);
 }
-checkSession();
 checkAdminHash();
+checkSession();
 </script>
 
 <!-- CHAT -->
