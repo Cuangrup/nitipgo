@@ -3763,8 +3763,12 @@ async function startMitraPolling(){
   stopNotifBerulang();
   _mitraPollTimer=setInterval(async()=>{
     if(!currentUser||currentRole!=='mitra')return;
-    const{count}=await db.from('orders').select('*',{count:'exact',head:true})
-      .in('status',['mencari','menunggu_konfirmasi']).is('mitra_id',null);
+    const isDriver = currentUser.tipe_mitra !== 'service';
+    const jenisFilter = isDriver ? ['kirim','beli'] : ['suruh'];
+    let q = db.from('orders').select('*',{count:'exact',head:true})
+      .in('status',['mencari','menunggu_konfirmasi']).is('mitra_id',null)
+      .in('jenis', jenisFilter);
+    const{count}=await q;
     const newCount=count||0;
 
     if(newCount>0){
