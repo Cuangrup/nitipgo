@@ -5372,12 +5372,12 @@ async function bukaHalamanPengaturan(){
   if(u.foto_profil){
     avatarEl.innerHTML=`<img src="${u.foto_profil}" class="profil-avatar">`;
   } else {
-    avatarEl.innerHTML=`<div class="profil-avatar-placeholder">${isMitra?'🛵':'👤'}</div>`;
+    avatarEl.innerHTML=`<div class="profil-avatar-placeholder">${isMitra?(u.tipe_mitra==='service'?'🔧':'🛵'):'👤'}</div>`;
   }
 
   // Nama & role
   document.getElementById('pengaturanNama').textContent = u.nama;
-  document.getElementById('pengaturanRole').textContent = isMitra ? '🛵 Mitra Driver' : '👤 Pengguna';
+  document.getElementById('pengaturanRole').textContent = isMitra ? (u.tipe_mitra==='service' ? '🔧 Mitra Service' : '🛵 Mitra Driver') : '👤 Pengguna';
   document.getElementById('pengaturanRating').innerHTML = `⭐ <b>${u.rating||'5.0'}</b> <span style="color:var(--muted);font-size:12px">(${u.total_rating||0} ulasan)</span>`;
 
   // Info
