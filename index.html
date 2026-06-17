@@ -3195,8 +3195,15 @@ function mitraTab(tab){
 async function loadOrderTersedia(){
   const el=document.getElementById('listTersedia');
   el.innerHTML='<div class="loading">Mencari order...</div>';
+
+  // Filter berdasarkan tipe mitra
+  const isDriver = currentUser.tipe_mitra !== 'service';
+  const jenisFilter = isDriver ? ['kirim','beli'] : ['suruh'];
+
   const{data}=await db.from('orders').select('id,kode,jenis,status,created_at,alamat_pickup,alamat_tujuan,harga_tawar,harga_deal,nama_penerima,hp_penerima,deskripsi,estimasi_harga_barang,pengirim_id,mitra_id,users!orders_pengirim_id_fkey(nama)')
-    .in('status',['mencari','menunggu_konfirmasi','menunggu_pembayaran']).is('mitra_id',null).order('created_at',{ascending:false});
+    .in('status',['mencari','menunggu_konfirmasi','menunggu_pembayaran'])
+    .in('jenis', jenisFilter)
+    .is('mitra_id',null).order('created_at',{ascending:false});
   document.getElementById('badgeTersedia').textContent=data?data.length:0;
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">🔍</div><p>Belum ada order tersedia.</p><button class="btn btn-outline" style="width:auto;margin-top:16px" onclick="loadOrderTersedia()">🔄 Refresh</button></div>';return;}
   // Cek bid mitra ini untuk setiap order
