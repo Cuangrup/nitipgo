@@ -6376,6 +6376,50 @@ if('serviceWorker' in navigator){
       .catch(e => console.log('SW error:', e));
   });
 }
+
+// PWA Install Prompt
+let _pwaPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _pwaPrompt = e;
+  // Tampilkan banner install setelah 3 detik
+  setTimeout(() => {
+    if(_pwaPrompt) showInstallBanner();
+  }, 3000);
+});
+
+function showInstallBanner(){
+  if(document.getElementById('pwaBanner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'pwaBanner';
+  banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#0047AB;color:white;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;z-index:99999;box-shadow:0 -2px 10px rgba(0,0,0,0.2);';
+  banner.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img src="/icon-192.png" style="width:36px;height:36px;border-radius:8px;">
+      <div>
+        <div style="font-size:13px;font-weight:500;">Install NitipGo</div>
+        <div style="font-size:11px;color:#BFDBFE;">Tambah ke layar utama</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="document.getElementById('pwaBanner').remove();_pwaPrompt=null;" style="background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:7px 12px;color:white;font-size:12px;cursor:pointer;">Nanti</button>
+      <button onclick="installPWA()" style="background:white;border:none;border-radius:8px;padding:7px 14px;color:#0047AB;font-size:12px;font-weight:500;cursor:pointer;">Install</button>
+    </div>`;
+  document.body.appendChild(banner);
+}
+
+async function installPWA(){
+  if(!_pwaPrompt) return;
+  _pwaPrompt.prompt();
+  const {outcome} = await _pwaPrompt.userChoice;
+  _pwaPrompt = null;
+  document.getElementById('pwaBanner')?.remove();
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwaBanner')?.remove();
+  _pwaPrompt = null;
+});
 </script>
 </body>
 </html>
