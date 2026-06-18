@@ -3758,12 +3758,14 @@ async function ajukanBid(orderId, hargaTawar=0){
   if(existing&&existing.length){alert('Kamu sudah mengajukan penawaran untuk order ini. Tunggu pengirim memilih.');return;}
   await db.from('bids').insert({order_id:orderId,mitra_id:currentUser.id,harga,pesan});
   await db.from('orders').update({status:'menunggu_konfirmasi'}).eq('id',orderId).eq('status','mencari');
+  ambilSnapshotGPS(orderId, 'mengajukan_penawaran');
   alert('✅ Penawaran berhasil diajukan! Tunggu pengirim memilih kamu.');
   loadOrderTersedia();
 }
 
 function uploadFotoPickup(orderId){
   openFotoModal(orderId,'pickup','📸 Foto Bukti Pickup','Upload foto barang sebelum dibawa',async ()=>{
+    ambilSnapshotGPS(orderId, 'diantar');
     await db.from('orders').update({status:'diantar', updated_at: new Date().toISOString()}).eq('id',orderId);
     showToast('Foto pickup berhasil! Status diubah ke Sedang Diantar.');
     loadOrderAktifMitra();
@@ -3773,13 +3775,16 @@ function uploadFotoSelesai(orderId){
   openFotoModal(orderId,'selesai','📸 Foto Bukti Selesai','Upload foto bukti barang sudah diantar / pesanan selesai dibelikan / pekerjaan selesai',async ()=>{
     const {data:order} = await db.from('orders').select('jenis,harga_deal,kode').eq('id',orderId).single();
     if(order?.jenis==='kirim'){
+      ambilSnapshotGPS(orderId, 'selesai');
       await db.from('orders').update({status:'selesai', updated_at: new Date().toISOString()}).eq('id',orderId);
       const {komisi} = await potongSaldoMitra(currentUser.id, order.harga_deal||0, order.kode);
       showToast('Pengiriman selesai! Komisi '+rupiah(komisi)+' dipotong dari saldo.');
     } else if(order?.jenis==='beli'){
+      ambilSnapshotGPS(orderId, 'diantar');
       await db.from('orders').update({status:'diantar', updated_at: new Date().toISOString()}).eq('id',orderId);
       showToast('Foto berhasil diupload! Status diubah ke Dalam Perjalanan.');
     } else if(order?.jenis==='suruh'){
+      ambilSnapshotGPS(orderId, 'selesai');
       await db.from('orders').update({status:'selesai', updated_at: new Date().toISOString()}).eq('id',orderId);
       const {komisi} = await potongSaldoMitra(currentUser.id, order.harga_deal||0, order.kode);
       showToast('Pekerjaan selesai! Komisi '+rupiah(komisi)+' dipotong dari saldo.');
@@ -3816,7 +3821,34 @@ function bukabantuanDariOrder(orderId, kode){
   }, 300);
 }
 
+// === SNAPSHOT GPS PER CHECKPOINT ===
+function ambilSnapshotGPS(orderId, checkpoint){
+  if(!navigator.geolocation){
+    simpanSnapshotGPS(orderId, checkpoint, null, null, false);
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    (pos)=>{
+      simpanSnapshotGPS(orderId, checkpoint, pos.coords.latitude, pos.coords.longitude, true);
+    },
+    ()=>{
+      simpanSnapshotGPS(orderId, checkpoint, null, null, false);
+    },
+    {timeout:3000, maximumAge:0}
+  );
+}
+async function simpanSnapshotGPS(orderId, checkpoint, lat, lng, terekam){
+  try{
+    await db.from('gps_snapshot_log').insert({
+      order_id: orderId,
+      mitra_id: currentUser?.id || null,
+      checkpoint, lat, lng, terekam
+    });
+  }catch(e){console.log('Snapshot GPS gagal disimpan:', e.message);}
+}
+
 async function updateStatus(orderId,status){
+  ambilSnapshotGPS(orderId, status);
   await db.from('orders').update({status, updated_at: new Date().toISOString()}).eq('id',orderId);
   if(status==='selesai'){
     // Update total order mitra
