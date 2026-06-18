@@ -3189,7 +3189,7 @@ async function loadOrderTersedia(){
     .in('jenis', jenisFilter)
     .is('mitra_id',null).order('created_at',{ascending:false});
   document.getElementById('badgeTersedia').textContent=data?data.length:0;
-  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">🔍</div><p>Belum ada order tersedia.</p><button class="btn btn-outline" style="width:auto;margin-top:16px" onclick="loadOrderTersedia()">🔄 Refresh</button></div>';return;}
+  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">🔍</div><p style="font-weight:700;margin-bottom:4px">Belum ada Order Disekitarmu</p><p style="font-size:13px;color:var(--muted);margin-bottom:16px">Tetap online ya, kami akan memberi notifikasi saat ada order baru.</p><button class="btn btn-outline" style="width:auto" onclick="loadOrderTersedia()">🔄 Refresh</button></div>';return;}
   // Cek bid mitra ini untuk setiap order
   const orderIds=data.map(o=>o.id);
   const{data:myBids}=await db.from('bids').select('order_id').eq('mitra_id',currentUser.id).eq('status','menunggu').in('order_id',orderIds);
