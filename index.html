@@ -1398,6 +1398,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+<!-- MODAL KAMERA WAJIB UNTUK MITRA -->
+<div id="modalKameraWajib" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:18px;padding:24px 22px;max-width:360px;width:100%;text-align:center">
+    <div style="width:56px;height:56px;background:#E6F1FB;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <i class="ti ti-shield-check" style="font-size:28px;color:#0C447C" aria-hidden="true"></i>
+    </div>
+    <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:8px;line-height:1.4">Yuk, aktifkan kamera dulu</div>
+    <div style="font-size:13px;color:#6B7280;margin-bottom:20px;line-height:1.5">Ini cara kami menjaga kamu — kalau suatu saat ada yang menuduh kamu tidak sesuai, kamu sudah melampirkan bukti pekerjaan telah diselesaikan dengan baik.</div>
+    <button onclick="cekKameraMitra()" style="width:100%;padding:12px;background:#0047AB;color:white;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:8px">Aktifkan Sekarang</button>
+    <div style="font-size:11px;color:#9CA3AF">Cek izin kamera di pengaturan browser atau HP-mu ya.</div>
+  </div>
+</div>
+
 <!-- MODAL KONFIRMASI DARURAT -->
 <div id="modalKonfirmasiDarurat" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99998;align-items:center;justify-content:center;padding:20px">
   <div style="background:white;border-radius:16px;padding:24px 22px;max-width:320px;width:100%;text-align:center">
@@ -1423,6 +1436,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="teksKonfirmasiUmum" style="font-size:13px;color:#6B7280;margin-bottom:22px;line-height:1.6"></div>
     <button id="btnKonfirmasiUmumYa" style="width:100%;font-weight:600;padding:12px;border-radius:10px;margin-bottom:8px;cursor:pointer"></button>
     <button onclick="tutupModalKonfirmasiUmum()" style="width:100%;padding:12px;border-radius:10px;background:none;border:1px solid #E5E7EB;color:#374151;font-size:14px;cursor:pointer">Batal</button>
+  </div>
+</div>
+
+<!-- MODAL LIHAT FOTO SELFIE BESAR (developer) -->
+<div id="modalLihatFoto" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:99996;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)tutupModalLihatFoto()">
+  <div style="max-width:400px;width:100%;text-align:center">
+    <img id="imgModalLihatFoto" src="" style="width:100%;border-radius:12px;display:block">
+    <button onclick="tutupModalLihatFoto()" style="margin-top:16px;padding:10px 24px;border-radius:10px;background:white;border:none;font-size:14px;cursor:pointer">Tutup</button>
   </div>
 </div>
 
@@ -2017,6 +2038,7 @@ async function masukSebagai(user){
     setTimeout(cekKelengkapanMitra, 2000);
     setTimeout(loadStatMitraHariIni, 300);
     mulaiCekGPSBerkala();
+    mulaiCekKameraBerkala();
     mulaiPollingDarurat();
     setTimeout(loadMitraSaldo, 500);
   }
@@ -2057,8 +2079,10 @@ function logout(){
       stopNotifBerulang();
       stopFlagOrderCheck();
       hentikanCekGPSBerkala();
+      hentikanCekKameraBerkala();
       hentikanPollingDarurat();
       tutupModalGPSMati();
+      tutupModalKameraMati();
       _pendingOrderCount=0;
       _lastOrderCount=0;
       // Tutup AudioContext supaya suara benar-benar berhenti
@@ -3055,7 +3079,7 @@ async function loginMitra(){
   currentUser=user;currentRole='mitra';
   document.getElementById('topRoleBadge').textContent='🛵 '+user.nama;
   document.getElementById('topRoleBadge').style.display='';
-  goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();subscribeRealtimeChat();setTimeout(cekStatusAudio,500);setTimeout(loadStatMitraHariIni, 300);mulaiCekGPSBerkala();mulaiPollingDarurat();
+  goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();subscribeRealtimeChat();setTimeout(cekStatusAudio,500);setTimeout(loadStatMitraHariIni, 300);mulaiCekGPSBerkala();mulaiCekKameraBerkala();mulaiPollingDarurat();
 }
 
 // ── PENGIRIM TABS ──
@@ -3928,27 +3952,32 @@ function bukabantuanDariOrder(orderId, kode){
 }
 
 // === SNAPSHOT GPS PER CHECKPOINT ===
-function ambilSnapshotGPS(orderId, checkpoint){
+async function ambilSnapshotGPS(orderId, checkpoint){
+  // Ambil GPS dan selfie secara paralel
+  const fotoPromise = ambilSnapshotSelfie();
   if(!navigator.geolocation){
-    simpanSnapshotGPS(orderId, checkpoint, null, null, false);
+    const foto = await fotoPromise;
+    simpanSnapshotGPS(orderId, checkpoint, null, null, false, foto);
     return;
   }
   navigator.geolocation.getCurrentPosition(
-    (pos)=>{
-      simpanSnapshotGPS(orderId, checkpoint, pos.coords.latitude, pos.coords.longitude, true);
+    async (pos)=>{
+      const foto = await fotoPromise;
+      simpanSnapshotGPS(orderId, checkpoint, pos.coords.latitude, pos.coords.longitude, true, foto);
     },
-    ()=>{
-      simpanSnapshotGPS(orderId, checkpoint, null, null, false);
+    async ()=>{
+      const foto = await fotoPromise;
+      simpanSnapshotGPS(orderId, checkpoint, null, null, false, foto);
     },
     {timeout:3000, maximumAge:0}
   );
 }
-async function simpanSnapshotGPS(orderId, checkpoint, lat, lng, terekam){
+async function simpanSnapshotGPS(orderId, checkpoint, lat, lng, terekam, foto_selfie=null){
   try{
     await db.from('gps_snapshot_log').insert({
       order_id: orderId,
       mitra_id: currentUser?.id || null,
-      checkpoint, lat, lng, terekam
+      checkpoint, lat, lng, terekam, foto_selfie
     });
   }catch(e){console.log('Snapshot GPS gagal disimpan:', e.message);}
 }
@@ -4035,6 +4064,14 @@ function tutupModalKonfirmasiUmum(){
   document.getElementById('modalKonfirmasiUmum').style.display='none';
 }
 
+function lihatFotoBesar(url){
+  document.getElementById('imgModalLihatFoto').src = url;
+  document.getElementById('modalLihatFoto').style.display='flex';
+}
+function tutupModalLihatFoto(){
+  document.getElementById('modalLihatFoto').style.display='none';
+}
+
 async function picuSnapshotManual(orderId, mitraId){
   if(!confirm('Minta snapshot lokasi mitra ini sekarang?\n\nPermintaan akan tercatat di menu Insiden Darurat. Lokasi akan terambil otomatis begitu mitra online.'))return;
   try{
@@ -4049,23 +4086,26 @@ async function picuSnapshotManual(orderId, mitraId){
   }
 }
 
-function ambilSnapshotDarurat(daruratId){
+async function ambilSnapshotDarurat(daruratId){
+  const fotoPromise = ambilSnapshotSelfie();
   if(!navigator.geolocation){
-    simpanSnapshotDarurat(daruratId, null, null, false);
+    const foto = await fotoPromise;
+    simpanSnapshotDarurat(daruratId, null, null, false, foto);
     return;
   }
   navigator.geolocation.getCurrentPosition(
-    (pos)=>{ simpanSnapshotDarurat(daruratId, pos.coords.latitude, pos.coords.longitude, true); },
-    ()=>{ simpanSnapshotDarurat(daruratId, null, null, false); },
+    async (pos)=>{ const foto = await fotoPromise; simpanSnapshotDarurat(daruratId, pos.coords.latitude, pos.coords.longitude, true, foto); },
+    async ()=>{ const foto = await fotoPromise; simpanSnapshotDarurat(daruratId, null, null, false, foto); },
     {timeout:5000, maximumAge:0}
   );
 }
-async function simpanSnapshotDarurat(daruratId, lat, lng, berhasil){
+async function simpanSnapshotDarurat(daruratId, lat, lng, berhasil, foto_selfie=null){
   try{
     await db.from('darurat_log').update({
       lat, lng,
       status_snapshot: berhasil ? 'terpenuhi' : 'menunggu',
-      snapshot_at: berhasil ? new Date().toISOString() : null
+      snapshot_at: berhasil ? new Date().toISOString() : null,
+      foto_selfie
     }).eq('id', daruratId);
   }catch(e){console.log('Gagal simpan snapshot darurat:', e.message);}
 }
@@ -4144,6 +4184,71 @@ function mulaiCekGPSBerkala(){
 }
 function hentikanCekGPSBerkala(){
   if(_gpsCheckTimer){ clearInterval(_gpsCheckTimer); _gpsCheckTimer=null; }
+}
+
+// === KAMERA WAJIB MITRA ===
+let _cameraCheckTimer=null;
+let _cameraStreamCache=null;
+
+async function cekKameraMitra(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    tampilkanModalKameraMati();
+    return;
+  }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
+    _cameraStreamCache = stream;
+    tutupModalKameraMati();
+  }catch(e){
+    tampilkanModalKameraMati();
+  }
+}
+function tampilkanModalKameraMati(){
+  const modal = document.getElementById('modalKameraWajib');
+  if(modal) modal.style.display='flex';
+}
+function tutupModalKameraMati(){
+  const modal = document.getElementById('modalKameraWajib');
+  if(modal) modal.style.display='none';
+}
+function mulaiCekKameraBerkala(){
+  cekKameraMitra();
+  if(_cameraCheckTimer) clearInterval(_cameraCheckTimer);
+  _cameraCheckTimer = setInterval(cekKameraMitra, 30000);
+}
+function hentikanCekKameraBerkala(){
+  if(_cameraCheckTimer){ clearInterval(_cameraCheckTimer); _cameraCheckTimer=null; }
+  if(_cameraStreamCache){
+    try{ _cameraStreamCache.getTracks().forEach(t=>t.stop()); }catch(e){}
+    _cameraStreamCache=null;
+  }
+}
+
+// Ambil 1 frame selfie dari kamera depan, upload ke Storage, return URL (atau null jika gagal)
+async function ambilSnapshotSelfie(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return null;
+  let stream;
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    video.muted = true;
+    await video.play();
+    await new Promise(r=>setTimeout(r,300));
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth||480;
+    canvas.height = video.videoHeight||640;
+    canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+    const blob = await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.7));
+    stream.getTracks().forEach(t=>t.stop());
+    if(!blob) return null;
+    const url = await uploadToStorage(blob, 'selfie-checkpoint');
+    return url;
+  }catch(e){
+    if(stream){ try{stream.getTracks().forEach(t=>t.stop());}catch(_){} }
+    console.log('Snapshot selfie gagal:', e.message);
+    return null;
+  }
 }
 
 function aktifkanAudio(){
@@ -4651,7 +4756,7 @@ async function loadAdminLokasi(){
     const checkpointFilter = document.getElementById('filterLokasiCheckpoint').value;
 
     let q = db.from('gps_snapshot_log')
-      .select('id,checkpoint,lat,lng,terekam,created_at,orders(kode),users(nama)')
+      .select('id,checkpoint,lat,lng,terekam,foto_selfie,created_at,orders(kode),users(nama)')
       .order('created_at',{ascending:false}).limit(200);
 
     if(checkpointFilter) q = q.eq('checkpoint', checkpointFilter);
@@ -4697,7 +4802,8 @@ async function loadAdminLokasi(){
       const border = i<filtered.length-1 ? 'border-bottom:0.5px solid #F3F4F6;' : '';
 
       html += `<div style="padding:12px 14px;${border}">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:6px;">
+          ${d.foto_selfie?`<img src="${d.foto_selfie}" onclick="lihatFotoBesar('${d.foto_selfie}')" style="width:44px;height:44px;border-radius:8px;object-fit:cover;cursor:pointer;flex-shrink:0;">`:`<div style="width:44px;height:44px;border-radius:8px;background:#F3F4F6;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-user" style="font-size:18px;color:#9CA3AF" aria-hidden="true"></i></div>`}
           <div>
             <div style="font-size:12px;font-weight:500;color:#111827;">${kodeOrder} · ${cpLabel}</div>
             <div style="font-size:11px;color:#6B7280;margin-top:2px;">${namaMitra} · ${tgl}</div>
@@ -4741,7 +4847,7 @@ async function loadAdminDarurat(){
   el.innerHTML='<div class="loading">Memuat...</div>';
   try{
     const {data, error} = await db.from('darurat_log')
-      .select('id,order_id,mitra_id,dipicu_oleh,status_snapshot,lat,lng,status_investigasi,created_at,snapshot_at,orders(kode),users(nama)')
+      .select('id,order_id,mitra_id,dipicu_oleh,status_snapshot,lat,lng,foto_selfie,status_investigasi,created_at,snapshot_at,orders(kode),users(nama)')
       .order('created_at',{ascending:false}).limit(100);
     if(error) throw error;
 
@@ -4786,9 +4892,12 @@ async function loadAdminDarurat(){
 
       html += `<div style="background:white;border:0.5px solid ${borderColor};${isBaru?'border-width:1.5px;':''}border-radius:10px;padding:14px 16px;margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
-          <div>
-            <div style="font-size:13px;font-weight:500;color:#111827;">${kodeOrder}</div>
-            <div style="font-size:12px;color:#6B7280;margin-top:2px;">${dipicuLabel} · ${namaMitra} · ${tgl}</div>
+          <div style="display:flex;gap:10px;align-items:flex-start;">
+            ${d.foto_selfie?`<img src="${d.foto_selfie}" onclick="lihatFotoBesar('${d.foto_selfie}')" style="width:44px;height:44px;border-radius:8px;object-fit:cover;cursor:pointer;flex-shrink:0;">`:`<div style="width:44px;height:44px;border-radius:8px;background:#F3F4F6;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-user" style="font-size:18px;color:#9CA3AF" aria-hidden="true"></i></div>`}
+            <div>
+              <div style="font-size:13px;font-weight:500;color:#111827;">${kodeOrder}</div>
+              <div style="font-size:12px;color:#6B7280;margin-top:2px;">${dipicuLabel} · ${namaMitra} · ${tgl}</div>
+            </div>
           </div>
           <div style="background:${bgInvestigasi(d.status_investigasi)};color:${warnaInvestigasi(d.status_investigasi)};font-size:11px;padding:4px 10px;border-radius:8px;flex-shrink:0;margin-left:10px;">${labelInvestigasi(d.status_investigasi)}</div>
         </div>
@@ -4805,6 +4914,7 @@ async function loadAdminDarurat(){
           <button onclick="navigator.clipboard.writeText('${d.lat},${d.lng}');showToast('📋 Koordinat disalin!')" style="background:#F3F4F6;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;color:#374151;">📋 Copy</button>
           <a href="https://www.google.com/maps?q=${d.lat},${d.lng}" target="_blank" style="background:#EEF4FF;color:#0047AB;text-decoration:none;border-radius:6px;padding:4px 10px;font-size:11px;">🗺️ Lihat di Peta</a>
           <a href="https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}" target="_blank" style="background:#EEF4FF;color:#0047AB;text-decoration:none;border-radius:6px;padding:4px 10px;font-size:11px;">🧭 Petunjuk Arah</a>
+          ${d.foto_selfie?`<button onclick="lihatFotoBesar('${d.foto_selfie}')" style="background:#EEF4FF;color:#0047AB;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">📷 Lihat Foto</button>`:''}
         </div>` : `<div style="font-size:11px;color:#854F0B;background:#FAEEDA;padding:6px 10px;border-radius:6px;margin-bottom:12px;display:inline-block;">⏳ Menunggu mitra online untuk ambil snapshot</div>`}
 
         <div style="font-size:12px;color:#6B7280;margin-bottom:6px;">Status investigasi</div>
