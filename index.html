@@ -4764,7 +4764,7 @@ async function loadAdminBatalMitra(){
   el.innerHTML='<div class="loading">Memuat...</div>';
   try{
     const {data, error} = await db.from('batal_mitra_log')
-      .select('id,order_id,mitra_id,kode_order,created_at,users(nama)')
+      .select('id,order_id,mitra_id,kode_order,created_at,users!batal_mitra_log_mitra_id_fkey(nama)')
       .order('created_at',{ascending:false}).limit(100);
     if(error) throw error;
 
