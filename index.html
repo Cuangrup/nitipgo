@@ -2411,6 +2411,15 @@ function previewBuktiBeli(input){
   reader.readAsDataURL(file);
 }
 
+function cekKataBeli(teks){
+  if(!teks) return false;
+  // Word-boundary supaya tidak false-positive ke kata lain yang mengandung substring "beli" (misal: "kebelinger" jarang dipakai, tapi tetap aman)
+  return /\bbeli\b/i.test(teks);
+}
+function tampilkanWarningBeli(){
+  alert('⚠️ Terdeteksi kata "beli" di deskripsi.\n\nNitipKirim & NitipSuruh tidak memiliki sistem pembayaran aman seperti NitipBeli. Untuk menghindari penipuan, mohon gunakan fitur NitipBeli jika kamu ingin mitra membelikan sesuatu untukmu.\n\nSilakan ubah deskripsimu untuk melanjutkan.');
+}
+
 async function buatOrderBeli(){
   if(!currentUser)return;
   if(!_buktiBeli){showAlert('beliStep3Alert','Upload bukti transfer dulu.');return;}
@@ -2527,6 +2536,7 @@ async function buatOrderSuruh(){
   if(!hp||hp.length<9){showAlert('step1Alert','No HP wajib diisi.');return;}
   if(!alamat){showAlert('step1Alert','Alamat lokasi tugas wajib diisi.');return;}
   if(!desc){showAlert('step1Alert','Deskripsi tugas wajib diisi.');return;}
+  if(cekKataBeli(desc)){tampilkanWarningBeli();return;}
   if(harga<10000){showAlert('step1Alert','Harga minimal Rp 10.000.');return;}
 
   // Cek order aktif
@@ -2941,6 +2951,7 @@ async function buatOrder(){
   const desc=document.getElementById('orderDesc').value.trim();
   const harga=parseInt(document.getElementById('orderHarga').value)||0;
   if(!pickup||!tujuan){showAlert('buatOrderAlert','Alamat penjemputan & tujuan wajib diisi.');return;}
+  if(cekKataBeli(desc)){tampilkanWarningBeli();return;}
   if(harga<5000){showAlert('buatOrderAlert','Harga tawar minimal Rp 5.000.');return;}
   // Validasi batas 80% dari estimasi
   if(estimasiTarif>0){
