@@ -1190,6 +1190,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <button class="sidebar-nav-item" onclick="adminTab('lewati')" id="navLewati">
         <i class="ti ti-player-skip-forward" style="font-size:15px;" aria-hidden="true"></i> Order Dilewati
       </button>
+      <button class="sidebar-nav-item" onclick="adminTab('lokasi')" id="navLokasi">
+        <i class="ti ti-map-pin" style="font-size:15px;" aria-hidden="true"></i> Riwayat Lokasi
+      </button>
     </div>
     <div style="padding:12px 16px;border-top:1px solid rgba(255,255,255,0.1);">
       <button onclick="logoutAdmin()" style="width:100%;background:rgba(255,255,255,0.1);border:none;border-radius:8px;padding:8px;color:#BFDBFE;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
@@ -1305,6 +1308,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div style="font-weight:700;font-size:15px;margin-bottom:4px">Order Dilewati Mitra</div>
       <div style="font-size:12px;color:#6B7280;margin-bottom:16px">Insight kenapa mitra sering melewatkan order yang tersedia</div>
       <div id="adminLewatiContent"><div class="loading">Memuat...</div></div>
+    </div>
+
+    <!-- TAB: RIWAYAT LOKASI -->
+    <div id="adminTabLokasi" style="display:none">
+      <div style="font-weight:700;font-size:15px;margin-bottom:4px">Riwayat Lokasi Mitra</div>
+      <div style="font-size:12px;color:#6B7280;margin-bottom:16px">Snapshot GPS dari setiap checkpoint status order, untuk keperluan audit dan investigasi</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <input id="searchLokasiKode" type="text" placeholder="🔍 Cari kode order... (NGO-XXXXXX)"
+          style="flex:2;min-width:200px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px"
+          oninput="loadAdminLokasi()">
+        <select id="filterLokasiCheckpoint" onchange="loadAdminLokasi()" style="flex:1;min-width:140px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px">
+          <option value="">Semua checkpoint</option>
+          <option value="mengajukan_penawaran">Mengajukan penawaran</option>
+          <option value="dijemput">Dijemput</option>
+          <option value="diambil">Diambil</option>
+          <option value="menunggu_pembayaran">Menunggu pembayaran</option>
+          <option value="diproses">Diproses</option>
+          <option value="dikerjakan">Dikerjakan</option>
+          <option value="diantar">Diantar</option>
+          <option value="selesai">Selesai</option>
+        </select>
+      </div>
+      <div id="adminLokasiContent"><div class="loading">Memuat...</div></div>
     </div>
 
     <!-- TAB: TOP UP -->
@@ -4294,7 +4320,7 @@ function logoutAdmin(){
 }
 
 function adminTab(tab){
-  ['orders','komisi','mitra','topup','akun','ratings','lewati'].forEach(t=>{
+  ['orders','komisi','mitra','topup','akun','ratings','lewati','lokasi'].forEach(t=>{
     const tabEl=document.getElementById('adminTab'+t.charAt(0).toUpperCase()+t.slice(1));
     if(tabEl) tabEl.style.display='none';
     const navEl=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));
@@ -4310,6 +4336,7 @@ function adminTab(tab){
   else if(tab==='topup')loadAdminTopup();
   else if(tab==='ratings')loadAdminRatings();
   else if(tab==='lewati')loadAdminLewati();
+  else if(tab==='lokasi')loadAdminLokasi();
   else loadAdminAkun();
 }
 
@@ -4381,6 +4408,100 @@ async function loadAdminLewati(){
     el.innerHTML = html;
   }catch(e){
     el.innerHTML = '<div class="empty"><div class="icon">⚠️</div><p>Gagal memuat data: '+e.message+'</p><p style="font-size:12px;color:#9CA3AF;margin-top:4px">Pastikan tabel order_dilewati_log sudah dibuat di Supabase.</p></div>';
+  }
+}
+
+function labelCheckpoint(cp){
+  const map = {
+    mengajukan_penawaran:'Mengajukan penawaran',
+    dijemput:'Dijemput', diambil:'Diambil',
+    menunggu_pembayaran:'Menunggu pembayaran',
+    diproses:'Diproses', dikerjakan:'Dikerjakan',
+    diantar:'Diantar', selesai:'Selesai'
+  };
+  return map[cp] || cp;
+}
+
+async function loadAdminLokasi(){
+  const el = document.getElementById('adminLokasiContent');
+  el.innerHTML='<div class="loading">Memuat...</div>';
+  try{
+    const kodeSearch = document.getElementById('searchLokasiKode').value.trim();
+    const checkpointFilter = document.getElementById('filterLokasiCheckpoint').value;
+
+    let q = db.from('gps_snapshot_log')
+      .select('id,checkpoint,lat,lng,terekam,created_at,orders(kode),users(nama)')
+      .order('created_at',{ascending:false}).limit(200);
+
+    if(checkpointFilter) q = q.eq('checkpoint', checkpointFilter);
+
+    const {data, error} = await q;
+    if(error) throw error;
+
+    let filtered = data || [];
+    if(kodeSearch){
+      filtered = filtered.filter(d => d.orders?.kode?.toLowerCase().includes(kodeSearch.toLowerCase()));
+    }
+
+    if(!filtered.length){
+      el.innerHTML = '<div class="empty"><div class="icon">📍</div><p>Belum ada data lokasi'+(kodeSearch?' untuk kode order tersebut':'')+'.</p></div>';
+      return;
+    }
+
+    const totalSnapshot = filtered.length;
+    const berhasil = filtered.filter(d=>d.terekam).length;
+    const gagal = totalSnapshot - berhasil;
+
+    let html = `<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px;">
+      <div style="background:#F9FAFB;border-radius:8px;padding:12px;">
+        <div style="font-size:11px;color:#6B7280;margin-bottom:4px;">Total snapshot</div>
+        <div style="font-size:20px;font-weight:500;color:#111827;">${totalSnapshot}</div>
+      </div>
+      <div style="background:#F9FAFB;border-radius:8px;padding:12px;">
+        <div style="font-size:11px;color:#6B7280;margin-bottom:4px;">Berhasil terekam</div>
+        <div style="font-size:20px;font-weight:500;color:#27500A;">${berhasil}</div>
+      </div>
+      <div style="background:#F9FAFB;border-radius:8px;padding:12px;">
+        <div style="font-size:11px;color:#6B7280;margin-bottom:4px;">Gagal terekam</div>
+        <div style="font-size:20px;font-weight:500;color:${gagal>0?'#791F1F':'#111827'};">${gagal}</div>
+      </div>
+    </div>
+    <div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;overflow:hidden;">`;
+
+    filtered.forEach((d,i)=>{
+      const tgl = new Date(d.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      const namaMitra = d.users?.nama || 'Mitra tidak diketahui';
+      const kodeOrder = d.orders?.kode || '-';
+      const cpLabel = labelCheckpoint(d.checkpoint);
+      const border = i<filtered.length-1 ? 'border-bottom:0.5px solid #F3F4F6;' : '';
+
+      html += `<div style="padding:12px 14px;${border}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+          <div>
+            <div style="font-size:12px;font-weight:500;color:#111827;">${kodeOrder} · ${cpLabel}</div>
+            <div style="font-size:11px;color:#6B7280;margin-top:2px;">${namaMitra} · ${tgl}</div>
+          </div>
+        </div>`;
+
+      if(d.terekam && d.lat && d.lng){
+        const mapsUrl = `https://www.google.com/maps?q=${d.lat},${d.lng}`;
+        const dirUrl = `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}`;
+        html += `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          <span style="font-size:11px;color:#6B7280;font-family:monospace;">${d.lat.toFixed(6)}, ${d.lng.toFixed(6)}</span>
+          <button onclick="navigator.clipboard.writeText('${d.lat},${d.lng}');showToast('📋 Koordinat disalin!')" style="background:#F3F4F6;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;color:#374151;">📋 Copy</button>
+          <a href="${mapsUrl}" target="_blank" style="background:#EEF4FF;color:#0047AB;text-decoration:none;border-radius:6px;padding:4px 10px;font-size:11px;">🗺️ Lihat di Peta</a>
+          <a href="${dirUrl}" target="_blank" style="background:#EEF4FF;color:#0047AB;text-decoration:none;border-radius:6px;padding:4px 10px;font-size:11px;">🧭 Petunjuk Arah</a>
+        </div>`;
+      } else {
+        html += `<div style="font-size:11px;color:#791F1F;background:#FCEBEB;padding:6px 10px;border-radius:6px;margin-top:8px;display:inline-block;">⚠️ Lokasi tidak terekam (GPS gagal/ditolak)</div>`;
+      }
+      html += `</div>`;
+    });
+    html += `</div>`;
+
+    el.innerHTML = html;
+  }catch(e){
+    el.innerHTML = '<div class="empty"><div class="icon">⚠️</div><p>Gagal memuat data: '+e.message+'</p><p style="font-size:12px;color:#9CA3AF;margin-top:4px">Pastikan tabel gps_snapshot_log sudah dibuat di Supabase.</p></div>';
   }
 }
 
