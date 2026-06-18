@@ -1190,6 +1190,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <button class="sidebar-nav-item" onclick="adminTab('lewati')" id="navLewati">
         <i class="ti ti-player-skip-forward" style="font-size:15px;" aria-hidden="true"></i> Order Dilewati
       </button>
+      <button class="sidebar-nav-item" onclick="adminTab('batalmitra')" id="navBatalMitra">
+        <i class="ti ti-x-circle" style="font-size:15px;" aria-hidden="true"></i> Pembatalan Mitra
+      </button>
       <button class="sidebar-nav-item" onclick="adminTab('lokasi')" id="navLokasi">
         <i class="ti ti-map-pin" style="font-size:15px;" aria-hidden="true"></i> Riwayat Lokasi
       </button>
@@ -1312,6 +1315,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div style="font-weight:700;font-size:15px;margin-bottom:4px">Order Dilewati Mitra</div>
       <div style="font-size:12px;color:#6B7280;margin-bottom:16px">Insight kenapa mitra sering melewatkan order yang tersedia</div>
       <div id="adminLewatiContent"><div class="loading">Memuat...</div></div>
+    </div>
+
+    <!-- TAB: PEMBATALAN MITRA -->
+    <div id="adminTabBatalMitra" style="display:none">
+      <div style="font-weight:700;font-size:15px;margin-bottom:4px">Pembatalan Mitra</div>
+      <div style="font-size:12px;color:#6B7280;margin-bottom:16px">Histori order yang dibatalkan mitra setelah diambil, untuk keperluan audit</div>
+      <div id="adminBatalMitraContent"><div class="loading">Memuat...</div></div>
     </div>
 
     <!-- TAB: RIWAYAT LOKASI -->
@@ -3850,6 +3860,12 @@ function uploadFotoSelesai(orderId){
 }
 async function batalMitra(orderId, kode){
   if(!confirm('Yakin batalkan order '+kode+'?\n\nOrder akan kembali ke status mencari mitra lain.'))return;
+  // Catat log histori pembatalan SEBELUM mitra_id dihapus
+  try{
+    await db.from('batal_mitra_log').insert({
+      order_id: orderId, mitra_id: currentUser.id, kode_order: kode
+    });
+  }catch(e){console.log('Gagal catat log batal mitra:', e.message);}
   // Reset order ke mencari, hapus mitra
   await db.from('orders').update({
     status:'mencari',
@@ -4450,7 +4466,7 @@ function logoutAdmin(){
 }
 
 function adminTab(tab){
-  ['orders','komisi','mitra','topup','akun','ratings','lewati','lokasi','darurat'].forEach(t=>{
+  ['orders','komisi','mitra','topup','akun','ratings','lewati','lokasi','darurat','batalmitra'].forEach(t=>{
     const tabEl=document.getElementById('adminTab'+t.charAt(0).toUpperCase()+t.slice(1));
     if(tabEl) tabEl.style.display='none';
     const navEl=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));
@@ -4468,6 +4484,7 @@ function adminTab(tab){
   else if(tab==='lewati')loadAdminLewati();
   else if(tab==='lokasi')loadAdminLokasi();
   else if(tab==='darurat')loadAdminDarurat();
+  else if(tab==='batalmitra')loadAdminBatalMitra();
   else loadAdminAkun();
 }
 
@@ -4739,6 +4756,47 @@ async function ubahStatusInvestigasi(daruratId, statusBaru){
     loadAdminDarurat();
   }catch(e){
     showToast('Gagal update status: '+e.message);
+  }
+}
+
+async function loadAdminBatalMitra(){
+  const el = document.getElementById('adminBatalMitraContent');
+  el.innerHTML='<div class="loading">Memuat...</div>';
+  try{
+    const {data, error} = await db.from('batal_mitra_log')
+      .select('id,order_id,mitra_id,kode_order,created_at,users(nama)')
+      .order('created_at',{ascending:false}).limit(100);
+    if(error) throw error;
+
+    if(!data || !data.length){
+      el.innerHTML = '<div class="empty"><div class="icon">✅</div><p>Belum ada riwayat pembatalan mitra.</p></div>';
+      return;
+    }
+
+    let html = `<div style="background:#F9FAFB;border-radius:8px;padding:12px;margin-bottom:16px;display:inline-block;">
+      <div style="font-size:11px;color:#6B7280;margin-bottom:4px;">Total pembatalan</div>
+      <div style="font-size:20px;font-weight:500;color:#111827;">${data.length}</div>
+    </div>
+    <div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;overflow:hidden;">`;
+
+    data.forEach((d,i)=>{
+      const tgl = new Date(d.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      const namaMitra = d.users?.nama || 'Mitra tidak diketahui';
+      const border = i<data.length-1 ? 'border-bottom:0.5px solid #F3F4F6;' : '';
+
+      html += `<div style="padding:12px 14px;${border};display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:12px;font-weight:500;color:#111827;">${d.kode_order}</div>
+          <div style="font-size:11px;color:#6B7280;margin-top:2px;">${namaMitra} · ${tgl}</div>
+        </div>
+        <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:#791F1F;border-color:#F09595" onclick="picuSnapshotManual('${d.order_id}','${d.mitra_id}')">📍 Snapshot</button>
+      </div>`;
+    });
+    html += `</div>`;
+
+    el.innerHTML = html;
+  }catch(e){
+    el.innerHTML = '<div class="empty"><div class="icon">⚠️</div><p>Gagal memuat data: '+e.message+'</p><p style="font-size:12px;color:#9CA3AF;margin-top:4px">Pastikan tabel batal_mitra_log sudah dibuat di Supabase.</p></div>';
   }
 }
 
