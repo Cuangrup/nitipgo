@@ -1314,6 +1314,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div><!-- /admin-main -->
 </div><!-- /screenAdmin -->
 
+<!-- MODAL LEWATI ORDER -->
+<div id="modalLewati" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:16px;padding:20px;max-width:380px;width:100%;max-height:85vh;overflow-y:auto">
+    <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:4px">Lewati order ini?</div>
+    <div style="font-size:13px;color:#6B7280;margin-bottom:16px">Order tidak akan muncul lagi di daftar kamu. Boleh kasih tahu alasannya (opsional):</div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+      <div class="alasan-lewati-chip" onclick="pilihAlasanLewati(this,'Harga kurang sesuai')" style="padding:7px 12px;border:1.5px solid #D1D5DB;border-radius:99px;font-size:12px;cursor:pointer;color:#374151">Harga kurang sesuai</div>
+      <div class="alasan-lewati-chip" onclick="pilihAlasanLewati(this,'Lokasi terlalu jauh')" style="padding:7px 12px;border:1.5px solid #D1D5DB;border-radius:99px;font-size:12px;cursor:pointer;color:#374151">Lokasi terlalu jauh</div>
+      <div class="alasan-lewati-chip" onclick="pilihAlasanLewati(this,'Sedang ada pekerjaan lain')" style="padding:7px 12px;border:1.5px solid #D1D5DB;border-radius:99px;font-size:12px;cursor:pointer;color:#374151">Sedang sibuk</div>
+      <div class="alasan-lewati-chip" onclick="pilihAlasanLewati(this,'Deskripsi kurang jelas')" style="padding:7px 12px;border:1.5px solid #D1D5DB;border-radius:99px;font-size:12px;cursor:pointer;color:#374151">Deskripsi kurang jelas</div>
+    </div>
+
+    <textarea id="alasanLewatiInput" placeholder="Atau tulis alasan lainnya (opsional)..." style="width:100%;padding:10px 12px;border:1.5px solid #D1D5DB;border-radius:10px;font-size:13px;height:70px;resize:none;font-family:inherit;box-sizing:border-box;margin-bottom:14px"></textarea>
+
+    <div style="display:flex;gap:10px">
+      <button onclick="tutupModalLewati()" style="flex:1;padding:11px;background:white;color:#374151;border:1.5px solid #D1D5DB;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer">Batal</button>
+      <button onclick="konfirmasiLewati()" style="flex:1;padding:11px;background:#0047AB;color:white;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer">Lewati Order</button>
+    </div>
+  </div>
+</div>
+<style>
+.alasan-lewati-chip.selected{background:#0047AB!important;color:white!important;border-color:#0047AB!important}
+</style>
+
 <!-- DOK MODAL (lihat dokumen fullscreen) -->
 <div id="dokModal" class="dok-modal" onclick="closeDokModal()">
   <img id="dokModalImg" src="">
@@ -3188,13 +3213,67 @@ async function loadOrderTersedia(){
     .in('status',['mencari','menunggu_konfirmasi','menunggu_pembayaran'])
     .in('jenis', jenisFilter)
     .is('mitra_id',null).order('created_at',{ascending:false});
-  document.getElementById('badgeTersedia').textContent=data?data.length:0;
-  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="icon">🔍</div><p style="font-weight:700;margin-bottom:4px">Belum ada Order Disekitarmu</p><p style="font-size:13px;color:var(--muted);margin-bottom:16px">Tetap online ya, kami akan memberi notifikasi saat ada order baru.</p><button class="btn btn-outline" style="width:auto" onclick="loadOrderTersedia()">🔄 Refresh</button></div>';return;}
+
+  // Filter order yang sudah dilewati mitra ini
+  const dilewati = getOrderDilewati();
+  const dataFiltered = (data||[]).filter(o => !dilewati.includes(o.id));
+
+  document.getElementById('badgeTersedia').textContent=dataFiltered.length;
+  if(!dataFiltered.length){el.innerHTML='<div class="empty"><div class="icon">🔍</div><p style="font-weight:700;margin-bottom:4px">Belum ada Order Disekitarmu</p><p style="font-size:13px;color:var(--muted);margin-bottom:16px">Tetap online ya, kami akan memberi notifikasi saat ada order baru.</p><button class="btn btn-outline" style="width:auto" onclick="loadOrderTersedia()">🔄 Refresh</button></div>';return;}
   // Cek bid mitra ini untuk setiap order
-  const orderIds=data.map(o=>o.id);
+  const orderIds=dataFiltered.map(o=>o.id);
   const{data:myBids}=await db.from('bids').select('order_id').eq('mitra_id',currentUser.id).eq('status','menunggu').in('order_id',orderIds);
   const sudahBidIds=new Set((myBids||[]).map(b=>b.order_id));
-  el.innerHTML=data.map(o=>renderOrderMitra(o,false,sudahBidIds.has(o.id))).join('');
+  el.innerHTML=dataFiltered.map(o=>renderOrderMitra(o,false,sudahBidIds.has(o.id))).join('');
+}
+
+// === FITUR LEWATI ORDER ===
+function getOrderDilewati(){
+  try{
+    const key = 'nitipgo_dilewati_'+(currentUser?.id||'');
+    return JSON.parse(localStorage.getItem(key)||'[]');
+  }catch(e){return [];}
+}
+function simpanOrderDilewati(orderId){
+  const key = 'nitipgo_dilewati_'+(currentUser?.id||'');
+  const list = getOrderDilewati();
+  if(!list.includes(orderId)){
+    list.push(orderId);
+    localStorage.setItem(key, JSON.stringify(list));
+  }
+}
+
+let _orderIdLewati = null;
+function bukaModalLewati(orderId){
+  _orderIdLewati = orderId;
+  document.getElementById('alasanLewatiInput').value='';
+  document.querySelectorAll('.alasan-lewati-chip').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('modalLewati').style.display='flex';
+}
+function tutupModalLewati(){
+  document.getElementById('modalLewati').style.display='none';
+  _orderIdLewati = null;
+}
+function pilihAlasanLewati(el, teks){
+  document.querySelectorAll('.alasan-lewati-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('alasanLewatiInput').value = teks;
+}
+async function konfirmasiLewati(){
+  if(!_orderIdLewati) return;
+  const alasan = document.getElementById('alasanLewatiInput').value.trim();
+  simpanOrderDilewati(_orderIdLewati);
+  // Catat alasan ke DB jika ada (opsional, untuk insight)
+  if(alasan){
+    try{
+      await db.from('order_dilewati_log').insert({
+        order_id: _orderIdLewati, mitra_id: currentUser.id, alasan: alasan
+      });
+    }catch(e){console.log('Log lewati gagal (tabel mungkin belum ada):', e.message);}
+  }
+  tutupModalLewati();
+  showToast('Order dilewati.');
+  loadOrderTersedia();
 }
 async function loadOrderAktifMitra_badge(){
   const {data} = await db.from('orders').select('id',{count:'exact',head:true})
@@ -3371,7 +3450,10 @@ function renderOrderMitra(o,done=false,sudahBid=false){
       </div>
       <div id="bidWarning_${o.id}" style="display:none;font-size:12px;color:#880e4f;background:#fce4ec;padding:8px;border-radius:6px;margin-bottom:8px"></div>
       <input type="text" id="bidPesan_${o.id}" placeholder="Pesan ke pengirim (opsional)" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px">
-      <button class="btn btn-mitra" style="margin-top:10px" onclick="ajukanBid('${o.id}',${o.harga_tawar})">Ajukan Penawaran →</button>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-outline btn-sm" style="flex:1;color:var(--muted);border-color:var(--border)" onclick="bukaModalLewati('${o.id}')">Lewati</button>
+        <button class="btn btn-mitra" style="flex:2" onclick="ajukanBid('${o.id}',${o.harga_tawar})">Ajukan Penawaran →</button>
+      </div>
     </div>`):`<div style="font-size:13px;font-weight:700;color:var(--mitra);margin-top:8px">✅ ${rupiah((o.harga_deal||o.harga_tawar)*0.95)} masuk ke kamu</div><button class="btn btn-outline btn-sm" style="margin-top:8px;color:var(--go);border-color:var(--go)" onclick="cekDanBukaRating('${o.id}','mitra',this)">⭐ Beri Rating</button>`}
   </div>`;
 }
