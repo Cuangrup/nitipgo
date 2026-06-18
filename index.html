@@ -1193,6 +1193,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <button class="sidebar-nav-item" onclick="adminTab('lokasi')" id="navLokasi">
         <i class="ti ti-map-pin" style="font-size:15px;" aria-hidden="true"></i> Riwayat Lokasi
       </button>
+      <button class="sidebar-nav-item" onclick="adminTab('darurat')" id="navDarurat">
+        <i class="ti ti-shield-exclamation" style="font-size:15px;" aria-hidden="true"></i> Insiden Darurat
+        <span id="badgeDarurat" style="display:none;background:#ef4444;color:white;border-radius:99px;font-size:10px;padding:1px 6px;margin-left:auto;">0</span>
+      </button>
     </div>
     <div style="padding:12px 16px;border-top:1px solid rgba(255,255,255,0.1);">
       <button onclick="logoutAdmin()" style="width:100%;background:rgba(255,255,255,0.1);border:none;border-radius:8px;padding:8px;color:#BFDBFE;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
@@ -1331,6 +1335,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </select>
       </div>
       <div id="adminLokasiContent"><div class="loading">Memuat...</div></div>
+    </div>
+
+    <!-- TAB: INSIDEN DARURAT -->
+    <div id="adminTabDarurat" style="display:none">
+      <div style="font-weight:700;font-size:15px;margin-bottom:4px">Insiden Darurat</div>
+      <div style="font-size:12px;color:#6B7280;margin-bottom:16px">Laporan darurat dari pengguna maupun mitra, lengkap dengan snapshot lokasi mitra</div>
+      <div id="adminDaruratContent"><div class="loading">Memuat...</div></div>
     </div>
 
     <!-- TAB: TOP UP -->
@@ -1968,6 +1979,7 @@ async function masukSebagai(user){
     setTimeout(cekKelengkapanMitra, 2000);
     setTimeout(loadStatMitraHariIni, 300);
     mulaiCekGPSBerkala();
+    mulaiPollingDarurat();
     setTimeout(loadMitraSaldo, 500);
   }
 }
@@ -2002,6 +2014,7 @@ function logout(){
   stopNotifBerulang();
   stopFlagOrderCheck();
   hentikanCekGPSBerkala();
+  hentikanPollingDarurat();
   tutupModalGPSMati();
   _pendingOrderCount=0;
   _lastOrderCount=0;
@@ -2997,7 +3010,7 @@ async function loginMitra(){
   currentUser=user;currentRole='mitra';
   document.getElementById('topRoleBadge').textContent='🛵 '+user.nama;
   document.getElementById('topRoleBadge').style.display='';
-  goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();subscribeRealtimeChat();setTimeout(cekStatusAudio,500);setTimeout(loadStatMitraHariIni, 300);mulaiCekGPSBerkala();
+  goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();subscribeRealtimeChat();setTimeout(cekStatusAudio,500);setTimeout(loadStatMitraHariIni, 300);mulaiCekGPSBerkala();mulaiPollingDarurat();
 }
 
 // ── PENGIRIM TABS ──
@@ -3201,6 +3214,7 @@ async function renderOrderPengirim(o,simple=false){
     ${['dijemput','diantar','dikerjakan','dibayar','diproses','diambil'].includes(o.status)?`<button data-chat-order="${o.id}" onclick="bukaChat('${o.id}','${o.kode}','mitra')" style="width:100%;margin-top:10px;padding:10px;background:#1a5f3f;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-message-circle" style="font-size:16px" aria-hidden="true"></i> Chat dengan Mitra</button>`:''} 
     ${o.mitra?.no_hp?`<div style="background:var(--mitra-light);border:1.5px solid #b2dfdb;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px"><span style="color:var(--muted);font-size:11px">HUB MITRA</span><br><a href="https://wa.me/${o.mitra?.no_hp}" target="_blank" style="color:#25D366;font-weight:700;text-decoration:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="#25D366" style="vertical-align:middle;margin-right:4px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.998 2C6.477 2 2 6.477 2 12c0 1.989.574 3.842 1.562 5.408L2 22l4.744-1.521A9.96 9.96 0 0011.998 22c5.521 0 10-4.477 10-10S17.519 2 11.998 2zm0 18c-1.72 0-3.32-.463-4.699-1.268l-.333-.198-3.46 1.109 1.13-3.364-.217-.347A7.96 7.96 0 014 12c0-4.411 3.589-8 7.998-8C16.41 4 20 7.589 20 12s-3.59 8-8.002 8z"/></svg>${o.mitra?.no_hp}</a></div>`:''}
     <button onclick="bukabantuanDariOrder('${o.id}','${o.kode}')" style="width:100%;margin-top:8px;padding:8px;background:none;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--muted);cursor:pointer"><i class="ti ti-help-circle" style="font-size:14px;color:var(--muted)" aria-hidden="true"></i> Butuh Bantuan</button>
+    ${o.mitra_id&&['dijemput','diantar','dikerjakan','dibayar','diproses','diambil'].includes(o.status)?`<button onclick="picuDarurat('${o.id}','${o.mitra_id}','pengguna')" style="width:100%;margin-top:8px;padding:10px;background:#FCEBEB;color:#791F1F;border:1px solid #F09595;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer"><i class="ti ti-alert-triangle" style="font-size:14px" aria-hidden="true"></i> Tombol Darurat</button>`:''}
     ${bidsHtml}
     ${!simple&&(o.status==='mencari'||o.status==='menunggu_konfirmasi'||o.status==='menunggu_pembayaran')?`<button class="btn btn-danger btn-sm" style="margin-top:10px" onclick="batalOrder('${o.id}')">Batalkan Order</button>`:''}
     ${o.foto_pickup?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">📸 Foto Pickup</div><img src="${o.foto_pickup}" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover"></div>`:''}
@@ -3666,6 +3680,7 @@ function renderOrderAktifMitra(o){
       ${o.foto_pickup?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Foto Pickup</div><img src="${o.foto_pickup}" style="width:100%;border-radius:8px;max-height:150px;object-fit:cover"></div>`:''}
     `}
     <button onclick="bukabantuanDariOrder('${o.id}','${o.kode}')" style="width:100%;margin-top:8px;padding:8px;background:none;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--muted);cursor:pointer"><i class="ti ti-help-circle" style="font-size:14px;color:var(--muted)" aria-hidden="true"></i> Butuh Bantuan</button>
+    <button onclick="picuDarurat('${o.id}','${currentUser.id}','mitra')" style="width:100%;margin-top:8px;padding:10px;background:#FCEBEB;color:#791F1F;border:1px solid #F09595;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer"><i class="ti ti-shield-exclamation" style="font-size:14px" aria-hidden="true"></i> Saya Butuh Bantuan Darurat</button>
   </div>`;
 }
 
@@ -3871,6 +3886,72 @@ async function simpanSnapshotGPS(orderId, checkpoint, lat, lng, terekam){
       checkpoint, lat, lng, terekam
     });
   }catch(e){console.log('Snapshot GPS gagal disimpan:', e.message);}
+}
+
+// === TOMBOL DARURAT ===
+async function picuDarurat(orderId, mitraId, dipicuOleh){
+  const pesan = dipicuOleh==='pengguna'
+    ? 'Aktifkan tombol darurat?\n\nLokasi mitra akan dicatat sebagai bukti. Tim NitipGo akan menindaklanjuti laporanmu.'
+    : 'Aktifkan tombol darurat?\n\nLokasimu akan dicatat sebagai bukti. Tim NitipGo akan menindaklanjuti laporanmu.';
+  if(!confirm(pesan)) return;
+
+  try{
+    const {data, error} = await db.from('darurat_log').insert({
+      order_id: orderId, mitra_id: mitraId, dipicu_oleh: dipicuOleh,
+      status_snapshot: 'menunggu'
+    }).select().single();
+    if(error) throw error;
+
+    if(dipicuOleh==='mitra'){
+      ambilSnapshotDarurat(data.id);
+    }
+    showToast('🚨 Laporan darurat terkirim. Tim kami akan menindaklanjuti.');
+  }catch(e){
+    showToast('Gagal mengirim laporan darurat: '+e.message);
+  }
+}
+
+function ambilSnapshotDarurat(daruratId){
+  if(!navigator.geolocation){
+    simpanSnapshotDarurat(daruratId, null, null, false);
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    (pos)=>{ simpanSnapshotDarurat(daruratId, pos.coords.latitude, pos.coords.longitude, true); },
+    ()=>{ simpanSnapshotDarurat(daruratId, null, null, false); },
+    {timeout:5000, maximumAge:0}
+  );
+}
+async function simpanSnapshotDarurat(daruratId, lat, lng, berhasil){
+  try{
+    await db.from('darurat_log').update({
+      lat, lng,
+      status_snapshot: berhasil ? 'terpenuhi' : 'menunggu',
+      snapshot_at: berhasil ? new Date().toISOString() : null
+    }).eq('id', daruratId);
+  }catch(e){console.log('Gagal simpan snapshot darurat:', e.message);}
+}
+
+let _daruratPollTimer=null;
+function mulaiPollingDarurat(){
+  if(_daruratPollTimer) clearInterval(_daruratPollTimer);
+  cekFlagDaruratMitra();
+  _daruratPollTimer = setInterval(cekFlagDaruratMitra, 15000);
+}
+function hentikanPollingDarurat(){
+  if(_daruratPollTimer){ clearInterval(_daruratPollTimer); _daruratPollTimer=null; }
+}
+async function cekFlagDaruratMitra(){
+  if(!currentUser || currentRole!=='mitra') return;
+  try{
+    const {data} = await db.from('darurat_log')
+      .select('id')
+      .eq('mitra_id', currentUser.id)
+      .eq('status_snapshot','menunggu');
+    if(data && data.length){
+      data.forEach(d => ambilSnapshotDarurat(d.id));
+    }
+  }catch(e){console.log('Cek flag darurat gagal:', e.message);}
 }
 
 async function updateStatus(orderId,status){
@@ -4320,7 +4401,7 @@ function logoutAdmin(){
 }
 
 function adminTab(tab){
-  ['orders','komisi','mitra','topup','akun','ratings','lewati','lokasi'].forEach(t=>{
+  ['orders','komisi','mitra','topup','akun','ratings','lewati','lokasi','darurat'].forEach(t=>{
     const tabEl=document.getElementById('adminTab'+t.charAt(0).toUpperCase()+t.slice(1));
     if(tabEl) tabEl.style.display='none';
     const navEl=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));
@@ -4337,6 +4418,7 @@ function adminTab(tab){
   else if(tab==='ratings')loadAdminRatings();
   else if(tab==='lewati')loadAdminLewati();
   else if(tab==='lokasi')loadAdminLokasi();
+  else if(tab==='darurat')loadAdminDarurat();
   else loadAdminAkun();
 }
 
@@ -4502,6 +4584,112 @@ async function loadAdminLokasi(){
     el.innerHTML = html;
   }catch(e){
     el.innerHTML = '<div class="empty"><div class="icon">⚠️</div><p>Gagal memuat data: '+e.message+'</p><p style="font-size:12px;color:#9CA3AF;margin-top:4px">Pastikan tabel gps_snapshot_log sudah dibuat di Supabase.</p></div>';
+  }
+}
+
+function labelInvestigasi(s){
+  return {baru:'Baru', sedang_ditangani:'Sedang ditangani', selesai:'Selesai'}[s] || s;
+}
+function warnaInvestigasi(s){
+  return {baru:'#791F1F', sedang_ditangani:'#854F0B', selesai:'#27500A'}[s] || '#374151';
+}
+function bgInvestigasi(s){
+  return {baru:'#FCEBEB', sedang_ditangani:'#FAEEDA', selesai:'#EAF3DE'}[s] || '#F3F4F6';
+}
+
+async function loadAdminDarurat(){
+  const el = document.getElementById('adminDaruratContent');
+  el.innerHTML='<div class="loading">Memuat...</div>';
+  try{
+    const {data, error} = await db.from('darurat_log')
+      .select('id,order_id,mitra_id,dipicu_oleh,status_snapshot,lat,lng,status_investigasi,created_at,snapshot_at,orders(kode),users(nama)')
+      .order('created_at',{ascending:false}).limit(100);
+    if(error) throw error;
+
+    const belumDitangani = (data||[]).filter(d=>d.status_investigasi!=='selesai').length;
+    const badge = document.getElementById('badgeDarurat');
+    if(badge){
+      if(belumDitangani>0){ badge.style.display='inline-block'; badge.textContent=belumDitangani; }
+      else { badge.style.display='none'; }
+    }
+
+    if(!data || !data.length){
+      el.innerHTML = '<div class="empty"><div class="icon">🛡️</div><p>Belum ada laporan darurat.</p></div>';
+      return;
+    }
+
+    const total = data.length;
+    const belum = data.filter(d=>d.status_investigasi!=='selesai').length;
+    const selesai = total - belum;
+
+    let html = `<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px;">
+      <div style="background:#F9FAFB;border-radius:8px;padding:12px;">
+        <div style="font-size:11px;color:#6B7280;margin-bottom:4px;">Total laporan</div>
+        <div style="font-size:20px;font-weight:500;color:#111827;">${total}</div>
+      </div>
+      <div style="background:#F9FAFB;border-radius:8px;padding:12px;">
+        <div style="font-size:11px;color:#6B7280;margin-bottom:4px;">Belum ditangani</div>
+        <div style="font-size:20px;font-weight:500;color:${belum>0?'#791F1F':'#111827'};">${belum}</div>
+      </div>
+      <div style="background:#F9FAFB;border-radius:8px;padding:12px;">
+        <div style="font-size:11px;color:#6B7280;margin-bottom:4px;">Selesai ditangani</div>
+        <div style="font-size:20px;font-weight:500;color:#27500A;">${selesai}</div>
+      </div>
+    </div>`;
+
+    data.forEach(d=>{
+      const tgl = new Date(d.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      const namaMitra = d.users?.nama || 'Mitra tidak diketahui';
+      const kodeOrder = d.orders?.kode || '-';
+      const dipicuLabel = d.dipicu_oleh==='pengguna' ? 'Dipicu oleh pengguna' : 'Dipicu oleh mitra';
+      const isBaru = d.status_investigasi==='baru';
+      const borderColor = isBaru ? '#F09595' : '#E5E7EB';
+
+      html += `<div style="background:white;border:0.5px solid ${borderColor};${isBaru?'border-width:1.5px;':''}border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:#111827;">${kodeOrder}</div>
+            <div style="font-size:12px;color:#6B7280;margin-top:2px;">${dipicuLabel} · ${namaMitra} · ${tgl}</div>
+          </div>
+          <div style="background:${bgInvestigasi(d.status_investigasi)};color:${warnaInvestigasi(d.status_investigasi)};font-size:11px;padding:4px 10px;border-radius:8px;flex-shrink:0;margin-left:10px;">${labelInvestigasi(d.status_investigasi)}</div>
+        </div>
+
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Status snapshot lokasi</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+          <span style="background:${d.status_snapshot==='terpenuhi'?'#EAF3DE':'#FAEEDA'};color:${d.status_snapshot==='terpenuhi'?'#27500A':'#854F0B'};font-size:11px;padding:3px 10px;border-radius:8px;">${d.status_snapshot==='terpenuhi'?'Terpenuhi':'Menunggu'}</span>
+          ${d.snapshot_at?`<span style="font-size:11px;color:#6B7280;">${new Date(d.snapshot_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>`:''}
+        </div>
+
+        ${d.lat && d.lng ? `
+        <div style="font-size:11px;color:#6B7280;font-family:monospace;margin-bottom:8px;">${d.lat.toFixed(6)}, ${d.lng.toFixed(6)}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          <button onclick="navigator.clipboard.writeText('${d.lat},${d.lng}');showToast('📋 Koordinat disalin!')" style="background:#F3F4F6;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;color:#374151;">📋 Copy</button>
+          <a href="https://www.google.com/maps?q=${d.lat},${d.lng}" target="_blank" style="background:#EEF4FF;color:#0047AB;text-decoration:none;border-radius:6px;padding:4px 10px;font-size:11px;">🗺️ Lihat di Peta</a>
+          <a href="https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}" target="_blank" style="background:#EEF4FF;color:#0047AB;text-decoration:none;border-radius:6px;padding:4px 10px;font-size:11px;">🧭 Petunjuk Arah</a>
+        </div>` : `<div style="font-size:11px;color:#854F0B;background:#FAEEDA;padding:6px 10px;border-radius:6px;margin-bottom:12px;display:inline-block;">⏳ Menunggu mitra online untuk ambil snapshot</div>`}
+
+        <div style="font-size:12px;color:#6B7280;margin-bottom:6px;">Status investigasi</div>
+        <select onchange="ubahStatusInvestigasi('${d.id}', this.value)" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px">
+          <option value="baru" ${d.status_investigasi==='baru'?'selected':''}>Baru</option>
+          <option value="sedang_ditangani" ${d.status_investigasi==='sedang_ditangani'?'selected':''}>Sedang ditangani</option>
+          <option value="selesai" ${d.status_investigasi==='selesai'?'selected':''}>Selesai</option>
+        </select>
+      </div>`;
+    });
+
+    el.innerHTML = html;
+  }catch(e){
+    el.innerHTML = '<div class="empty"><div class="icon">⚠️</div><p>Gagal memuat data: '+e.message+'</p><p style="font-size:12px;color:#9CA3AF;margin-top:4px">Pastikan tabel darurat_log sudah dibuat di Supabase.</p></div>';
+  }
+}
+
+async function ubahStatusInvestigasi(daruratId, statusBaru){
+  try{
+    await db.from('darurat_log').update({status_investigasi: statusBaru}).eq('id', daruratId);
+    showToast('✅ Status investigasi diperbarui.');
+    loadAdminDarurat();
+  }catch(e){
+    showToast('Gagal update status: '+e.message);
   }
 }
 
