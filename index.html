@@ -1338,6 +1338,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div><!-- /screenAdmin -->
 
 <!-- MODAL LEWATI ORDER -->
+<!-- MODAL GPS WAJIB UNTUK MITRA -->
+<div id="modalGPSWajib" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:18px;padding:24px 22px;max-width:360px;width:100%;text-align:center">
+    <div style="width:56px;height:56px;background:#FEF3C7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <i class="ti ti-map-pin-off" style="font-size:28px;color:#D97706" aria-hidden="true"></i>
+    </div>
+    <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:8px;line-height:1.4">Aktifkan lokasi (GPS) untuk lanjut</div>
+    <div style="font-size:13px;color:#6B7280;margin-bottom:20px;line-height:1.5">NitipGo membutuhkan akses lokasi aktif selama kamu menjadi mitra. Ini penting untuk keamanan dan verifikasi setiap order yang kamu kerjakan.</div>
+    <button onclick="cekGPSMitra()" style="width:100%;padding:12px;background:#0047AB;color:white;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:8px">Aktifkan & Coba Lagi</button>
+    <div style="font-size:11px;color:#9CA3AF">Pastikan GPS HP dinyalakan dan izin lokasi untuk NitipGo diaktifkan di pengaturan browser/HP-mu.</div>
+  </div>
+</div>
+
 <!-- MODAL WARNING DETEKSI KATA TERLARANG -->
 <div id="modalWarningBeli" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:20px">
   <div style="background:white;border-radius:18px;padding:24px 22px;max-width:360px;width:100%;text-align:center">
@@ -1928,6 +1941,7 @@ async function masukSebagai(user){
     startFlagOrderCheck();
     setTimeout(cekKelengkapanMitra, 2000);
     setTimeout(loadStatMitraHariIni, 300);
+    mulaiCekGPSBerkala();
     setTimeout(loadMitraSaldo, 500);
   }
 }
@@ -1961,6 +1975,8 @@ function logout(){
   if(_mitraPollTimer){clearInterval(_mitraPollTimer);_mitraPollTimer=null;}
   stopNotifBerulang();
   stopFlagOrderCheck();
+  hentikanCekGPSBerkala();
+  tutupModalGPSMati();
   _pendingOrderCount=0;
   _lastOrderCount=0;
   // Tutup AudioContext supaya suara benar-benar berhenti
@@ -2955,7 +2971,7 @@ async function loginMitra(){
   currentUser=user;currentRole='mitra';
   document.getElementById('topRoleBadge').textContent='🛵 '+user.nama;
   document.getElementById('topRoleBadge').style.display='';
-  goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();subscribeRealtimeChat();setTimeout(cekStatusAudio,500);setTimeout(loadStatMitraHariIni, 300);
+  goScreen('screenMitra');mitraTab('tersedia');subscribeRealtime();subscribeRealtimeChat();setTimeout(cekStatusAudio,500);setTimeout(loadStatMitraHariIni, 300);mulaiCekGPSBerkala();
 }
 
 // ── PENGIRIM TABS ──
@@ -3823,6 +3839,35 @@ async function updateStatus(orderId,status){
 let _lastOrderCount=0;
 let _mitraPollTimer=null;
 let _audioCtx=null;
+let _gpsCheckTimer=null;
+
+function cekGPSMitra(){
+  if(!navigator.geolocation){
+    tampilkanModalGPSMati();
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    ()=>{ tutupModalGPSMati(); },
+    ()=>{ tampilkanModalGPSMati(); },
+    {timeout:5000, maximumAge:30000}
+  );
+}
+function tampilkanModalGPSMati(){
+  const modal = document.getElementById('modalGPSWajib');
+  if(modal) modal.style.display='flex';
+}
+function tutupModalGPSMati(){
+  const modal = document.getElementById('modalGPSWajib');
+  if(modal) modal.style.display='none';
+}
+function mulaiCekGPSBerkala(){
+  cekGPSMitra();
+  if(_gpsCheckTimer) clearInterval(_gpsCheckTimer);
+  _gpsCheckTimer = setInterval(cekGPSMitra, 30000);
+}
+function hentikanCekGPSBerkala(){
+  if(_gpsCheckTimer){ clearInterval(_gpsCheckTimer); _gpsCheckTimer=null; }
+}
 
 function aktifkanAudio(){
   // Inisialisasi AudioContext setelah user interaction
