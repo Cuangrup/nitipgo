@@ -5694,8 +5694,16 @@ async function gantiPassword(){
 // FAQ data per role
 const FAQ_PENGGUNA = [
   {
+    q: 'Apa saja layanan yang tersedia di NitipGo?',
+    a: 'Ada 3 layanan: NitipKirim (antar barang dari satu titik ke titik lain), NitipBeli (mitra membelikan barang untukmu dengan pembayaran aman lewat NitipGo), dan NitipSuruh (mitra membantu pekerjaan seperti bersih-bersih, siram tanaman, bantu laporan, dan lainnya).'
+  },
+  {
     q: 'Bagaimana cara membuat order?',
-    a: 'Masuk sebagai Pengguna → klik tab "+ Buat Order" → isi alamat jemput & tujuan → tentukan harga tawar → pasang order. Mitra akan mengajukan penawaran dan kamu bisa memilih mitra terbaik.'
+    a: 'Pilih layanan yang sesuai (NitipKirim/NitipBeli/NitipSuruh) dari menu utama → isi detail yang diminta → tentukan harga → pasang order. Mitra akan mengajukan penawaran (untuk NitipKirim/NitipSuruh) dan kamu bisa memilih mitra terbaik.'
+  },
+  {
+    q: 'Apa bedanya NitipBeli dengan NitipKirim/NitipSuruh untuk urusan uang?',
+    a: 'NitipBeli punya sistem pembayaran aman — kamu transfer dulu ke NitipGo, baru mitra belanja. Untuk NitipKirim & NitipSuruh, JANGAN minta mitra membeli/membayar/top up sesuatu, karena tidak ada sistem perlindungan pembayaran di sana. Kalau kebutuhanmu melibatkan transaksi uang, selalu gunakan NitipBeli.'
   },
   {
     q: 'Bagaimana cara memilih mitra?',
@@ -5703,42 +5711,54 @@ const FAQ_PENGGUNA = [
   },
   {
     q: 'Berapa biaya layanan untuk pengguna?',
-    a: 'Layanan NitipGo untuk pengguna 100% GRATIS. Tidak ada biaya tambahan apapun selain harga yang kamu tawarkan.'
+    a: 'Layanan NitipGo untuk pengguna 100% GRATIS. Tidak ada biaya tambahan apapun selain harga yang kamu tawarkan ke mitra.'
   },
   {
     q: 'Bagaimana cara membatalkan order?',
-    a: 'Buka tab "Order Aktif" → temukan order yang ingin dibatalkan → klik tombol "Batalkan Order". Order hanya bisa dibatalkan sebelum mitra menjemput barang.'
+    a: 'Buka tab "Order Aktif" → temukan order yang ingin dibatalkan → klik tombol "Batalkan Order". Order hanya bisa dibatalkan sebelum mitra mulai mengerjakan/menjemput.'
   },
   {
-    q: 'Bagaimana jika mitra tidak datang?',
+    q: 'Bagaimana jika mitra tidak datang atau tidak merespons?',
     a: 'Hubungi mitra via WhatsApp yang tersedia di kartu order. Jika tidak ada respons, batalkan order dan pilih mitra lain.'
   },
   {
-    q: 'Apakah ada jaminan keamanan barang?',
-    a: 'Semua mitra NitipGo telah melalui verifikasi identitas (KTP, SIM, STNK) yang bersifat rahasia. Setiap pengiriman dilengkapi foto bukti pickup dan selesai. Apabila terjadi hal yang tidak diinginkan, pihak NitipGo kooperatif untuk bekerjasama seperti penghentian sementara akun dan membantu penyelidikan sesuai prosedur hukum yang berlaku, disertai bukti kuat.'
+    q: 'Apakah ada jaminan keamanan barang dan identitas mitra?',
+    a: 'Semua mitra NitipGo telah melalui verifikasi identitas (KTP, SIM/dokumen pendukung) yang bersifat rahasia. Setiap NitipKirim dilengkapi foto bukti pickup dan selesai. Apabila terjadi hal yang tidak diinginkan, pihak NitipGo kooperatif untuk bekerjasama seperti penghentian sementara akun dan membantu penyelidikan sesuai prosedur hukum yang berlaku, disertai bukti kuat.'
   },
   {
     q: 'Bagaimana sistem rating bekerja?',
     a: 'Setelah order selesai, pengguna dan mitra dapat saling memberikan rating bintang 1-5 beserta komentar. Rating bersifat anonim dan hanya bisa diberikan sekali per order. Rating mitra mempengaruhi urutan tampil saat kamu memilih.'
   },
   {
-    q: 'Bagaimana cara menjadi mitra driver NitipGo?',
-    a: 'Daftar akun baru dan pilih role "Mitra Driver" → upload foto selfie, KTP, SIM, STNK, dan foto kendaraan → tunggu verifikasi admin maksimal 3x24 jam → setelah disetujui kamu bisa mulai menerima order.'
+    q: 'Bagaimana cara menjadi mitra NitipGo?',
+    a: 'Daftar akun baru dan pilih role "Mitra Driver" (untuk NitipKirim & NitipBeli) atau "Mitra Service" (untuk NitipSuruh) → upload dokumen yang diminta → tunggu verifikasi admin maksimal 3x24 jam → setelah disetujui kamu bisa mulai menerima order.'
   },
 ];
 
 const FAQ_MITRA = [
   {
     q: 'Bagaimana cara menerima order?',
-    a: 'Masuk sebagai Mitra → buka tab "Tersedia" → akan muncul notifikasi suara saat ada order baru → ajukan penawaran harga → tunggu pengguna memilihmu.'
+    a: 'Masuk sebagai Mitra → buka tab "Tersedia" → akan muncul notifikasi suara saat ada order baru → ajukan penawaran harga (NitipKirim/NitipSuruh) atau langsung proses (NitipBeli) → tunggu pengguna memilihmu.'
+  },
+  {
+    q: 'Order apa saja yang muncul di tab Tersedia?',
+    a: 'Kalau kamu Mitra Driver, akan muncul order NitipKirim dan NitipBeli. Kalau kamu Mitra Service, akan muncul order NitipSuruh. Order di luar tipe mitramu tidak akan ditampilkan.'
+  },
+  {
+    q: 'Bagaimana cara melewati order yang tidak ingin diambil?',
+    a: 'Klik tombol "Lewati" di kartu order → pilih alasan cepat atau tulis sendiri (opsional) → konfirmasi. Order tersebut tidak akan muncul lagi di daftar Tersedia milikmu.'
   },
   {
     q: 'Berapa komisi yang dipotong?',
     a: 'Komisi sebesar 7,5% dari harga deal per order. Rincian: 5% untuk operasional NitipGo dan 2,5% disalurkan untuk program kemanusiaan. Contoh: harga deal Rp 20.000 → komisi Rp 1.500 → kamu menerima Rp 18.500. Untuk 10 order pertama sejak bergabung, komisi 0% (gratis).'
   },
   {
-    q: 'Bagaimana cara upload bukti pengiriman?',
-    a: 'Saat status "Dijemput" → upload foto pickup sebelum berangkat. Saat sudah sampai tujuan → upload foto selesai → klik selesaikan order.'
+    q: 'Bagaimana cara upload bukti pengerjaan?',
+    a: 'Untuk NitipKirim: saat status "Dijemput" upload foto pickup, saat sampai tujuan upload foto selesai. Untuk NitipBeli: upload foto bukti belanja saat sudah beli, lalu tandai selesai setelah diantar. Untuk NitipSuruh: upload foto hasil pekerjaan saat selesai.'
+  },
+  {
+    q: 'Bagaimana cara request top up saldo?',
+    a: 'Klik "Request Top Up" di dashboard → pilih nominal → transfer sesuai kode unik yang muncul (memudahkan verifikasi) → upload bukti transfer. Estimasi verifikasi 5-60 menit pada jam operasional 08.00-22.00.'
   },
   {
     q: 'Apakah rating pengguna berpengaruh?',
@@ -5749,8 +5769,12 @@ const FAQ_MITRA = [
     a: 'Setelah order selesai, pengguna akan memberikan rating 1-5 bintang untuk pelayananmu. Rating bersifat anonim. Semakin tinggi ratingmu, semakin prioritas namamu muncul di daftar pilihan pengguna.'
   },
   {
+    q: 'Apa yang harus dilakukan jika pengguna minta dibelikan sesuatu lewat NitipKirim/NitipSuruh?',
+    a: 'Tolak dan arahkan pengguna untuk membuat order lewat NitipBeli. Sistem NitipGo akan otomatis memblokir kata-kata yang mengindikasikan transaksi pembelian/pembayaran di kolom deskripsi NitipKirim & NitipSuruh untuk melindungimu dari potensi penipuan.'
+  },
+  {
     q: 'Apakah ada jaminan keamanan identitas mitra?',
-    a: 'Semua dokumen yang kamu upload (KTP, SIM, STNK, foto selfie) bersifat RAHASIA dan hanya bisa diakses oleh admin NitipGo untuk keperluan verifikasi.'
+    a: 'Semua dokumen yang kamu upload (KTP, SIM/dokumen pendukung, foto selfie) bersifat RAHASIA dan hanya bisa diakses oleh admin NitipGo untuk keperluan verifikasi.'
   },
   {
     q: 'Bagaimana jika ada masalah dengan pengguna?',
