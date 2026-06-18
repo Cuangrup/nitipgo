@@ -2411,13 +2411,23 @@ function previewBuktiBeli(input){
   reader.readAsDataURL(file);
 }
 
+const KATA_TERLARANG_DESKRIPSI = [
+  'beli','belikan','membeli','belikno','pembelian',
+  'pulsa','voucher','linkaja','link aja','token',
+  'top up','topup','bayar','bayarkan','membayar'
+];
 function cekKataBeli(teks){
   if(!teks) return false;
-  // Word-boundary supaya tidak false-positive ke kata lain yang mengandung substring "beli" (misal: "kebelinger" jarang dipakai, tapi tetap aman)
-  return /\bbeli\b/i.test(teks);
+  const lower = teks.toLowerCase();
+  return KATA_TERLARANG_DESKRIPSI.some(kata => {
+    // Word-boundary untuk kata satu kata; untuk frasa 2 kata (link aja, top up) cek substring biasa
+    if(kata.includes(' ')) return lower.includes(kata);
+    const re = new RegExp('\\b'+kata+'\\b','i');
+    return re.test(lower);
+  });
 }
 function tampilkanWarningBeli(){
-  alert('⚠️ Terdeteksi kata "beli" di deskripsi.\n\nNitipKirim & NitipSuruh tidak memiliki sistem pembayaran aman seperti NitipBeli. Untuk menghindari penipuan, mohon gunakan fitur NitipBeli jika kamu ingin mitra membelikan sesuatu untukmu.\n\nSilakan ubah deskripsimu untuk melanjutkan.');
+  alert('⚠️ Terdeteksi kata yang mengindikasikan transaksi pembelian/pembayaran.\n\nNitipKirim & NitipSuruh tidak memiliki sistem pembayaran aman seperti NitipBeli. Untuk menghindari penipuan, semua transaksi yang melibatkan uang (beli barang, top up, bayar sesuatu) wajib menggunakan fitur NitipBeli.\n\nSilakan ubah deskripsimu untuk melanjutkan.');
 }
 
 async function buatOrderBeli(){
