@@ -3281,7 +3281,7 @@ async function loadOrderTersedia(){
   const isDriver = currentUser.tipe_mitra !== 'service';
   const jenisFilter = isDriver ? ['kirim','beli'] : ['suruh'];
 
-  const{data}=await db.from('orders').select('id,kode,jenis,status,created_at,alamat_pickup,alamat_tujuan,harga_tawar,harga_deal,nama_penerima,hp_penerima,deskripsi,estimasi_harga_barang,pengirim_id,mitra_id,users!orders_pengirim_id_fkey(nama)')
+  const{data}=await db.from('orders').select('id,kode,jenis,status,created_at,alamat_pickup,alamat_tujuan,harga_tawar,harga_deal,nama_penerima,hp_penerima,deskripsi,estimasi_harga_barang,pengirim_id,mitra_id,users!orders_pengirim_id_fkey(nama,rating)')
     .in('status',['mencari','menunggu_konfirmasi','menunggu_pembayaran'])
     .in('jenis', jenisFilter)
     .is('mitra_id',null).order('created_at',{ascending:false});
@@ -3501,7 +3501,7 @@ function renderOrderMitra(o,done=false,sudahBid=false){
     </div>
     `:`<div class="harga-row" style="margin-bottom:12px">
       <div><div style="font-size:11px;color:var(--muted)">Harga tawar pengguna</div><div class="harga-tawar">${rupiah(o.harga_tawar)}</div></div>
-      ${pengirim.nama?`<div style="font-size:12px;color:var(--muted)">👤 ${pengirim.nama}</div>`:''}
+      ${pengirim.nama?`<div style="font-size:12px;color:var(--muted)">👤 ${pengirim.nama} ${pengirim.rating?`⭐ ${Number(pengirim.rating).toFixed(1)}`:''}</div>`:''}
     </div>`}
     ${!done?(sudahBid?
     `<div style="background:var(--mitra-light);border:1.5px solid #b2dfdb;border-radius:10px;padding:12px;margin-top:12px;text-align:center">
@@ -5580,6 +5580,13 @@ async function bukaHalamanPengaturan(){
   _prevScreen = currentRole==='mitra' ? 'screenMitra' : 'screenPengirim';
   goScreen('screenPengaturan');
   window.scrollTo(0,0);
+
+  // Ambil data terbaru dari DB (rating & total_rating bisa berubah sejak login)
+  const{data:freshUser}=await db.from('users').select('rating,total_rating').eq('id',currentUser.id).single();
+  if(freshUser){
+    currentUser.rating = freshUser.rating;
+    currentUser.total_rating = freshUser.total_rating;
+  }
 
   // Isi data profil
   const u = currentUser;
