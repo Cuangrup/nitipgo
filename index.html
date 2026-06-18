@@ -884,6 +884,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
       <div class="field">
+        <label>Jenis pekerjaan</label>
+        <select id="suruhKategori" onchange="suruhPilihKategori()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:white;color:#111827;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%236B7280\' stroke-width=\'2\'><polyline points=\'6 9 12 15 18 9\'/></svg>');background-repeat:no-repeat;background-position:right 14px center;background-size:16px">
+          <option value="">Pilih jenis pekerjaan</option>
+          <option value="🧹 Bersih-bersih rumah">🧹 Bersih-bersih rumah</option>
+          <option value="🌱 Siram tanaman">🌱 Siram tanaman</option>
+          <option value="🎨 Cat rumah/dinding">🎨 Cat rumah/dinding</option>
+          <option value="👀 Pantau proyek/bangunan">👀 Pantau proyek/bangunan</option>
+          <option value="📊 Bantu susun laporan keuangan">📊 Bantu susun laporan keuangan</option>
+          <option value="📝 Bantu kerjakan tugas">📝 Bantu kerjakan tugas</option>
+          <option value="isi_sendiri">✏️ Isi sendiri — ceritakan kebutuhanmu</option>
+        </select>
+      </div>
+      <div class="field" id="suruhDescWrap">
         <label>Deskripsi pekerjaan</label>
         <textarea id="suruhDesc" placeholder="Ceritakan tugasnya secara detail..." style="min-height:100px"></textarea>
       </div>
@@ -2545,6 +2558,21 @@ function validateHargaSuruh(el){
   let val=parseInt(el.value)||0;
   if(val<10000) el.style.color='#DC2626';
   else el.style.color='var(--brand)';
+}
+
+function suruhPilihKategori(){
+  const kategori = document.getElementById('suruhKategori').value;
+  const desc = document.getElementById('suruhDesc');
+  if(!kategori) return;
+  if(kategori === 'isi_sendiri'){
+    desc.value = '';
+    desc.placeholder = 'Ceritakan kebutuhanmu secara detail...';
+    desc.focus();
+  } else {
+    desc.value = kategori.replace(/^[^\s]+\s/, '') + ' — ';
+    desc.focus();
+    desc.setSelectionRange(desc.value.length, desc.value.length);
+  }
 }
 
 async function buatOrderSuruh(){
