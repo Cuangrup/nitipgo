@@ -1174,6 +1174,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <button class="sidebar-nav-item" onclick="adminTab('ratings')" id="navRatings">
         <i class="ti ti-star" style="font-size:15px;" aria-hidden="true"></i> Rating & Ulasan
       </button>
+      <button class="sidebar-nav-item" onclick="adminTab('lewati')" id="navLewati">
+        <i class="ti ti-player-skip-forward" style="font-size:15px;" aria-hidden="true"></i> Order Dilewati
+      </button>
     </div>
     <div style="padding:12px 16px;border-top:1px solid rgba(255,255,255,0.1);">
       <button onclick="logoutAdmin()" style="width:100%;background:rgba(255,255,255,0.1);border:none;border-radius:8px;padding:8px;color:#BFDBFE;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
@@ -1282,6 +1285,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="adminTabRatings" style="display:none">
       <div style="font-weight:700;font-size:15px;margin-bottom:12px">Semua Rating & Ulasan</div>
       <div id="adminRatingsList"><div class="loading">Memuat...</div></div>
+    </div>
+
+    <!-- TAB: ORDER DILEWATI -->
+    <div id="adminTabLewati" style="display:none">
+      <div style="font-weight:700;font-size:15px;margin-bottom:4px">Order Dilewati Mitra</div>
+      <div style="font-size:12px;color:#6B7280;margin-bottom:16px">Insight kenapa mitra sering melewatkan order yang tersedia</div>
+      <div id="adminLewatiContent"><div class="loading">Memuat...</div></div>
     </div>
 
     <!-- TAB: TOP UP -->
@@ -4145,7 +4155,7 @@ function logoutAdmin(){
 }
 
 function adminTab(tab){
-  ['orders','komisi','mitra','topup','akun','ratings'].forEach(t=>{
+  ['orders','komisi','mitra','topup','akun','ratings','lewati'].forEach(t=>{
     const tabEl=document.getElementById('adminTab'+t.charAt(0).toUpperCase()+t.slice(1));
     if(tabEl) tabEl.style.display='none';
     const navEl=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));
@@ -4160,7 +4170,79 @@ function adminTab(tab){
   else if(tab==='mitra')loadAdminMitra();
   else if(tab==='topup')loadAdminTopup();
   else if(tab==='ratings')loadAdminRatings();
+  else if(tab==='lewati')loadAdminLewati();
   else loadAdminAkun();
+}
+
+async function loadAdminLewati(){
+  const el = document.getElementById('adminLewatiContent');
+  el.innerHTML='<div class="loading">Memuat...</div>';
+  try{
+    const {data, error} = await db.from('order_dilewati_log')
+      .select('id,order_id,mitra_id,alasan,created_at,orders(kode,jenis),users(nama)')
+      .order('created_at',{ascending:false}).limit(200);
+
+    if(error) throw error;
+
+    if(!data || !data.length){
+      el.innerHTML = '<div class="empty"><div class="icon">⏭️</div><p>Belum ada order yang dilewati mitra.</p></div>';
+      return;
+    }
+
+    // Hitung breakdown alasan
+    const breakdown = {};
+    data.forEach(d=>{
+      const key = d.alasan ? d.alasan.trim() : 'Tanpa alasan';
+      breakdown[key] = (breakdown[key]||0) + 1;
+    });
+    const sortedBreakdown = Object.entries(breakdown).sort((a,b)=>b[1]-a[1]);
+    const total = data.length;
+    const maxCount = sortedBreakdown[0]?.[1] || 1;
+
+    let html = `<div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:500;color:#111827;margin-bottom:4px;">Total order dilewati</div>
+      <div style="font-size:24px;font-weight:500;color:#791F1F;">${total}</div>
+    </div>
+
+    <div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:500;color:#111827;margin-bottom:12px;">Breakdown alasan terbanyak</div>`;
+
+    sortedBreakdown.forEach(([alasan,count])=>{
+      const pct = Math.round(count/maxCount*100);
+      html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="font-size:12px;color:#374151;width:160px;flex-shrink:0;">${alasan}</div>
+        <div style="flex:1;height:8px;background:#F3F4F6;border-radius:4px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:#0047AB;border-radius:4px;"></div>
+        </div>
+        <div style="font-size:12px;font-weight:500;color:#111827;width:30px;text-align:right;flex-shrink:0;">${count}</div>
+      </div>`;
+    });
+    html += `</div>`;
+
+    html += `<div style="background:white;border:0.5px solid #E5E7EB;border-radius:10px;overflow:hidden;">
+      <div style="padding:12px 14px;border-bottom:0.5px solid #F3F4F6;font-size:12px;font-weight:500;color:#6B7280;">Riwayat terbaru</div>`;
+
+    data.slice(0,30).forEach((d,i)=>{
+      const tgl = new Date(d.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      const namaMitra = d.users?.nama || 'Mitra tidak diketahui';
+      const kodeOrder = d.orders?.kode || '-';
+      const jenisOrder = d.orders?.jenis ? jenisLabel(d.orders.jenis) : '-';
+      html += `<div style="padding:10px 14px;${i<data.length-1?'border-bottom:0.5px solid #F3F4F6;':''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-size:12px;font-weight:500;color:#111827;">${namaMitra}</div>
+            <div style="font-size:11px;color:#6B7280;margin-top:2px;">${kodeOrder} · ${jenisOrder} · ${tgl}</div>
+          </div>
+        </div>
+        ${d.alasan ? `<div style="font-size:12px;color:#374151;margin-top:6px;background:#F9FAFB;padding:6px 10px;border-radius:6px;">"${d.alasan}"</div>` : ''}
+      </div>`;
+    });
+    html += `</div>`;
+
+    el.innerHTML = html;
+  }catch(e){
+    el.innerHTML = '<div class="empty"><div class="icon">⚠️</div><p>Gagal memuat data: '+e.message+'</p><p style="font-size:12px;color:#9CA3AF;margin-top:4px">Pastikan tabel order_dilewati_log sudah dibuat di Supabase.</p></div>';
+  }
 }
 
 async function loadAdminTopup(){
