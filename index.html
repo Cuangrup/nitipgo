@@ -3946,6 +3946,20 @@ function showToastDarurat(msg, isError=false){
   setTimeout(()=>toast.remove(),3500);
 }
 
+async function picuSnapshotManual(orderId, mitraId){
+  if(!confirm('Minta snapshot lokasi mitra ini sekarang?\n\nPermintaan akan tercatat di menu Insiden Darurat. Lokasi akan terambil otomatis begitu mitra online.'))return;
+  try{
+    const {data, error} = await db.from('darurat_log').insert({
+      order_id: orderId, mitra_id: mitraId, dipicu_oleh: 'developer',
+      status_snapshot: 'menunggu'
+    }).select().single();
+    if(error) throw error;
+    showToastDarurat('Permintaan snapshot manual tercatat. Cek menu Insiden Darurat.');
+  }catch(e){
+    showToastDarurat('Gagal kirim permintaan snapshot: '+e.message, true);
+  }
+}
+
 function ambilSnapshotDarurat(daruratId){
   if(!navigator.geolocation){
     simpanSnapshotDarurat(daruratId, null, null, false);
@@ -4676,7 +4690,7 @@ async function loadAdminDarurat(){
       const tgl = new Date(d.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
       const namaMitra = d.users?.nama || 'Mitra tidak diketahui';
       const kodeOrder = d.orders?.kode || '-';
-      const dipicuLabel = d.dipicu_oleh==='pengguna' ? 'Dipicu oleh pengguna' : 'Dipicu oleh mitra';
+      const dipicuLabel = d.dipicu_oleh==='pengguna' ? 'Dipicu oleh pengguna' : d.dipicu_oleh==='mitra' ? 'Dipicu oleh mitra' : 'Diminta manual oleh developer';
       const isBaru = d.status_investigasi==='baru';
       const borderColor = isBaru ? '#F09595' : '#E5E7EB';
 
@@ -5038,6 +5052,7 @@ async function loadAdminOrders(){
       <td>
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px" onclick="lihatDetailOrder('${o.id}')">Detail</button>
+          ${o.mitra_id?`<button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:#791F1F;border-color:#F09595" onclick="picuSnapshotManual('${o.id}','${o.mitra_id}')">📍 Snapshot</button>`:''}
           <button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="hapusOrder('${o.id}')">Hapus</button>
         </div>
       </td>
