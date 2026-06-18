@@ -3802,30 +3802,30 @@ async function ajukanBid(orderId, hargaTawar=0){
   }
   const harga=parseInt(document.getElementById('bidHarga_'+orderId).value)||0;
   const pesan=document.getElementById('bidPesan_'+orderId).value;
-  if(!harga||harga<5000){alert('Harga minimal Rp 5.000');return;}
+  if(!harga||harga<5000){showToastElegan('Harga minimal Rp 5.000','warning');return;}
   if(hargaTawar>0){
     const maxBid=bulatkan500(hargaTawar*1.2);
     const minBid=bulatkan500(hargaTawar*0.8);
     const w=document.getElementById('bidWarning_'+orderId);
     if(harga>maxBid){
       if(w){w.style.display='block';w.textContent='⚠️ Maksimal bid '+rupiah(maxBid)+' (120% dari harga tawar pengirim)';}
-      alert('⚠️ Maksimal bid '+rupiah(maxBid)+' (120% dari harga tawar pengirim)');
+      showToastElegan('Maksimal bid '+rupiah(maxBid)+' (120% dari tawaran pengguna)','warning');
       return;
     }
     if(harga<minBid){
       if(w){w.style.display='block';w.textContent='⚠️ Minimal bid '+rupiah(minBid)+' (80% dari harga tawar pengirim)';}
-      alert('⚠️ Minimal bid '+rupiah(minBid)+' (80% dari harga tawar pengirim)');
+      showToastElegan('Minimal bid '+rupiah(minBid)+' (80% dari tawaran pengguna)','warning');
       return;
     }
     if(w) w.style.display='none';
   }
   // Cek apakah sudah bid sebelumnya
   const{data:existing}=await db.from('bids').select('id').eq('order_id',orderId).eq('mitra_id',currentUser.id).eq('status','menunggu');
-  if(existing&&existing.length){alert('Kamu sudah mengajukan penawaran untuk order ini. Tunggu pengirim memilih.');return;}
+  if(existing&&existing.length){showToastElegan('Kamu sudah mengajukan penawaran. Tunggu pengguna memilih.','info');return;}
   await db.from('bids').insert({order_id:orderId,mitra_id:currentUser.id,harga,pesan});
   await db.from('orders').update({status:'menunggu_konfirmasi'}).eq('id',orderId).eq('status','mencari');
   ambilSnapshotGPS(orderId, 'mengajukan_penawaran');
-  alert('✅ Penawaran berhasil diajukan! Tunggu pengirim memilih kamu.');
+  showToastElegan('Penawaran terkirim. Menunggu pengguna memilih.','success');
   loadOrderTersedia();
 }
 
@@ -3958,6 +3958,19 @@ function showToastDarurat(msg, isError=false){
   const iconColor = isError ? '#FCEBEB' : '#791F1F';
   const iconName = isError ? 'ti-alert-circle' : 'ti-shield-check';
   toast.innerHTML = `<div style="width:26px;height:26px;border-radius:50%;background:${iconBg};display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ${iconName}" style="font-size:14px;color:${iconColor}" aria-hidden="true"></i></div><span>${msg}</span>`;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(),3500);
+}
+
+function showToastElegan(msg, tipe='success'){
+  const toast=document.createElement('div');
+  toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1d2e;color:white;padding:12px 18px;border-radius:14px;font-size:13px;font-weight:500;z-index:99999;display:flex;align-items:center;gap:10px;max-width:320px;box-shadow:0 4px 16px rgba(0,0,0,0.25)';
+  const cfg = {
+    success: {bg:'#EAF3DE', color:'#27500A', icon:'ti-check'},
+    warning: {bg:'#FAEEDA', color:'#854F0B', icon:'ti-alert-triangle'},
+    info: {bg:'#E6F1FB', color:'#0C447C', icon:'ti-info-circle'}
+  }[tipe] || {bg:'#EAF3DE', color:'#27500A', icon:'ti-check'};
+  toast.innerHTML = `<div style="width:26px;height:26px;border-radius:50%;background:${cfg.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ${cfg.icon}" style="font-size:14px;color:${cfg.color}" aria-hidden="true"></i></div><span>${msg}</span>`;
   document.body.appendChild(toast);
   setTimeout(()=>toast.remove(),3500);
 }
