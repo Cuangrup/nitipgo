@@ -1200,6 +1200,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <i class="ti ti-shield-exclamation" style="font-size:15px;" aria-hidden="true"></i> Insiden Darurat
         <span id="badgeDarurat" style="display:none;background:#ef4444;color:white;border-radius:99px;font-size:10px;padding:1px 6px;margin-left:auto;">0</span>
       </button>
+      <button class="sidebar-nav-item" onclick="adminTab('pesanBantuan')" id="navPesanBantuan">
+        <i class="ti ti-message-circle" style="font-size:15px;" aria-hidden="true"></i> Pesan Bantuan
+        <span id="badgePesanBantuan" style="display:none;background:#ef4444;color:white;border-radius:99px;font-size:10px;padding:1px 6px;margin-left:auto;">0</span>
+      </button>
     </div>
     <div style="padding:12px 16px;border-top:1px solid rgba(255,255,255,0.1);">
       <button onclick="logoutAdmin()" style="width:100%;background:rgba(255,255,255,0.1);border:none;border-radius:8px;padding:8px;color:#BFDBFE;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
@@ -1352,6 +1356,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div style="font-weight:700;font-size:15px;margin-bottom:4px">Insiden Darurat</div>
       <div style="font-size:12px;color:#6B7280;margin-bottom:16px">Laporan darurat dari pengguna maupun mitra, lengkap dengan snapshot lokasi mitra</div>
       <div id="adminDaruratContent"><div class="loading">Memuat...</div></div>
+    </div>
+
+    <!-- TAB: PESAN BANTUAN -->
+    <div id="adminTabPesanBantuan" style="display:none">
+      <div style="font-weight:700;font-size:15px;margin-bottom:4px">Pesan Bantuan</div>
+      <div style="font-size:12px;color:#6B7280;margin-bottom:16px">Pesan bantuan dari pengguna dan mitra — tidak perlu cek email lagi</div>
+      <div id="adminPesanBantuanContent"><div class="loading">Memuat...</div></div>
     </div>
 
     <!-- TAB: TOP UP -->
@@ -4663,6 +4674,7 @@ function adminTab(tab){
   else if(tab==='lokasi')loadAdminLokasi();
   else if(tab==='darurat')loadAdminDarurat();
   else if(tab==='batalmitra')loadAdminBatalMitra();
+  else if(tab==='pesanBantuan')loadAdminPesanBantuan();
   else loadAdminAkun();
 }
 
@@ -4940,6 +4952,64 @@ async function ubahStatusInvestigasi(daruratId, statusBaru){
   }catch(e){
     showToast('Gagal update status: '+e.message);
   }
+}
+
+async function loadAdminPesanBantuan(){
+  const el = document.getElementById('adminPesanBantuanContent');
+  el.innerHTML='<div class="loading">Memuat...</div>';
+  try{
+    const{data,error}=await db.from('pesan_bantuan')
+      .select('id,user_id,nama,no_hp,email,role,subjek,pesan,status_dibaca,created_at')
+      .order('created_at',{ascending:false}).limit(100);
+    if(error) throw error;
+
+    const belumDibaca = (data||[]).filter(d=>!d.status_dibaca).length;
+    const badge = document.getElementById('badgePesanBantuan');
+    if(badge){
+      badge.textContent = belumDibaca;
+      badge.style.display = belumDibaca > 0 ? 'inline' : 'none';
+    }
+
+    if(!data||!data.length){
+      el.innerHTML='<div class="empty"><div class="icon">💬</div><p>Belum ada pesan bantuan masuk.</p></div>';
+      return;
+    }
+
+    let html='';
+    data.forEach(d=>{
+      const tgl = new Date(d.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      const roleLabel = d.role==='mitra' ? 'Mitra' : 'Pengguna';
+      const roleBg = d.role==='mitra' ? '#FAEEDA' : '#E6F1FB';
+      const roleColor = d.role==='mitra' ? '#854F0B' : '#0C447C';
+      const borderColor = !d.status_dibaca ? '#93B4F5' : '#E5E7EB';
+      const borderWidth = !d.status_dibaca ? '2px' : '1px';
+      html += `<div style="border:${borderWidth} solid ${borderColor};border-radius:10px;padding:14px 16px;margin-bottom:10px;background:${!d.status_dibaca?'#FAFBFF':'white'}">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+          <div>
+            <span style="font-size:13px;font-weight:600;color:#111827">${d.nama}</span>
+            <span style="font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;background:${roleBg};color:${roleColor};margin-left:6px">${roleLabel}</span>
+            ${!d.status_dibaca?'<span style="font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;background:#EEF4FF;color:#0047AB;margin-left:4px">Baru</span>':''}
+          </div>
+          <div style="font-size:11px;color:#9CA3AF">${tgl}</div>
+        </div>
+        <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">${d.subjek}</div>
+        <div style="font-size:12px;color:#6B7280;margin-bottom:10px;line-height:1.5">${d.pesan}</div>
+        <div style="font-size:11px;color:#9CA3AF;margin-bottom:8px">HP: ${d.no_hp}${d.email?' · '+d.email:''}</div>
+        <div style="display:flex;gap:8px;">
+          ${!d.status_dibaca?`<button onclick="tandaiDibacaBantuan('${d.id}')" style="font-size:11px;padding:5px 12px;border-radius:7px;background:#0047AB;color:white;border:none;cursor:pointer">✓ Tandai Dibaca</button>`:''}
+          <a href="https://wa.me/${d.no_hp}" target="_blank" style="font-size:11px;padding:5px 12px;border-radius:7px;background:#EAF3DE;color:#27500A;text-decoration:none">💬 Balas WA</a>
+        </div>
+      </div>`;
+    });
+    el.innerHTML = html;
+  }catch(e){
+    el.innerHTML='<div class="empty"><p>Gagal memuat: '+e.message+'</p></div>';
+  }
+}
+
+async function tandaiDibacaBantuan(id){
+  await db.from('pesan_bantuan').update({status_dibaca:true}).eq('id',id);
+  loadAdminPesanBantuan();
 }
 
 async function loadAdminBatalMitra(){
@@ -6516,17 +6586,19 @@ async function kirimBantuan(){
   const btn = document.querySelector('#screenBantuan .btn-go');
   btn.disabled=true; btn.textContent='Mengirim...';
 
-  const fullMsg = `Dari: ${currentUser.nama}\nHP: +${currentUser.no_hp}\nEmail: ${currentUser.email||'-'}\nRole: ${currentUser.role}\n\nSubjek: ${subjek}\n\nPesan:\n${pesan}`;
-
   try{
-    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_NOTIF,{
-      to_email: 'nitipgo000@gmail.com',
-      to_name: 'Admin NitipGo',
-      subject: '[NitipGo Bantuan] ' + subjek,
-      body: fullMsg,
-      name: currentUser.nama
+    const{error}=await db.from('pesan_bantuan').insert({
+      user_id: currentUser.id,
+      nama: currentUser.nama,
+      no_hp: currentUser.no_hp,
+      email: currentUser.email||null,
+      role: currentUser.role,
+      subjek,
+      pesan,
+      status_dibaca: false
     });
-    showAlert('bantuanAlert','✅ Pesan berhasil dikirim! Tim kami akan merespons via email.','success');
+    if(error) throw error;
+    showAlert('bantuanAlert','✅ Pesan berhasil dikirim! Tim kami akan segera merespons.','success');
     document.getElementById('bantuanPesan').value='';
     document.getElementById('bantuanSubjek').value='';
   }catch(e){
