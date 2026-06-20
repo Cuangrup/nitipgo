@@ -2168,6 +2168,11 @@ function statusLabel(s,jenis){
   return m[s]||s;
 }
 function jenisLabel(j){return{kirim:'NitipKirim',suruh:'NitipSuruh',beli:'NitipBeli'}[j]||j;}
+function mapsBtn(addr){
+  if(!addr) return '';
+  const url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(addr);
+  return `<a href="${url}" target="_blank" rel="noopener" title="Buka di Google Maps" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#E6F1FB;flex-shrink:0;text-decoration:none;margin-left:8px;vertical-align:middle;"><i class="ti ti-map-pin" style="font-size:14px;color:#185FA5;" aria-hidden="true"></i></a>`;
+}
 
 function showAlert(elId,msg,type='error'){
   const el=document.getElementById(elId);
@@ -3608,23 +3613,23 @@ function renderOrderMitra(o,done=false,sudahBid=false){
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Lokasi Pekerjaan</div>${o.alamat_pickup}</div>
+        <div class="route-addr"><div class="route-label">Lokasi Pekerjaan</div><div style="display:flex;align-items:center;gap:4px;">${o.alamat_pickup}${mapsBtn(o.alamat_pickup)}</div></div>
       </div>
     </div>
     `:o.jenis==='beli'?`
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Tempat Pembelian</div>${o.alamat_pickup}</div>
-        <div class="route-addr"><div class="route-label">Antar ke</div>${o.alamat_tujuan}</div>
+        <div class="route-addr"><div class="route-label">Tempat Pembelian</div><div style="display:flex;align-items:center;gap:4px;">${o.alamat_pickup}${mapsBtn(o.alamat_pickup)}</div></div>
+        <div class="route-addr"><div class="route-label">Antar ke</div><div style="display:flex;align-items:center;gap:4px;">${o.alamat_tujuan}${mapsBtn(o.alamat_tujuan)}</div></div>
       </div>
     </div>
     `:`
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup}</div>
-        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan}</div>
+        <div class="route-addr"><div class="route-label">Jemput</div><div style="display:flex;align-items:center;gap:4px;">${o.alamat_pickup}${mapsBtn(o.alamat_pickup)}</div></div>
+        <div class="route-addr"><div class="route-label">Antar</div><div style="display:flex;align-items:center;gap:4px;">${o.alamat_tujuan}${mapsBtn(o.alamat_tujuan)}</div></div>
       </div>
     </div>
     `}
@@ -3681,23 +3686,23 @@ function renderOrderAktifMitra(o){
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Lokasi Pekerjaan</div>${o.alamat_pickup}</div>
+        <div class="route-addr"><div class="route-label">Lokasi Pekerjaan</div><div style="display:flex;align-items:center;gap:4px;">${o.alamat_pickup}${mapsBtn(o.alamat_pickup)}</div></div>
       </div>
     </div>
     `:o.jenis==='beli'?`
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Tempat Pembelian</div>${o.alamat_pickup}</div>
-        <div class="route-addr"><div class="route-label">Antar ke</div>${o.alamat_tujuan}</div>
+        <div class="route-addr"><div class="route-label">Tempat Pembelian</div><div style="display:flex;align-items:center;gap:4px;">${o.alamat_pickup}${mapsBtn(o.alamat_pickup)}</div></div>
+        <div class="route-addr"><div class="route-label">Antar ke</div><div style="display:flex;align-items:center;gap:4px;">${o.alamat_tujuan}${mapsBtn(o.alamat_tujuan)}</div></div>
       </div>
     </div>
     `:`
     <div class="route">
       <div class="route-line"><div class="dot dot-pickup"></div><div class="line"></div><div class="dot dot-drop"></div></div>
       <div class="route-text">
-        <div class="route-addr"><div class="route-label">Jemput</div>${o.alamat_pickup}</div>
-        <div class="route-addr"><div class="route-label">Antar</div>${o.alamat_tujuan}</div>
+        <div class="route-addr"><div class="route-label">Jemput</div><div style="display:flex;align-items:center;gap:4px;">${o.alamat_pickup}${mapsBtn(o.alamat_pickup)}</div></div>
+        <div class="route-addr"><div class="route-label">Antar</div><div style="display:flex;align-items:center;gap:4px;">${o.alamat_tujuan}${mapsBtn(o.alamat_tujuan)}</div></div>
       </div>
     </div>
     `}
