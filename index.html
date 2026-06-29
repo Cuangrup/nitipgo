@@ -524,6 +524,90 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+<div id="screenDitolak" class="screen">
+  <div class="form-wrap">
+    <div style="text-align:center;padding:28px 0 20px">
+      <div style="font-size:48px;margin-bottom:12px">❌</div>
+      <div class="form-title">Dokumen ditolak</div>
+      <div class="form-sub">Jangan khawatir — kamu bisa upload ulang tanpa perlu daftar ulang.</div>
+    </div>
+    <div id="alasanDitolakBox" style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:14px;margin-bottom:16px;display:none">
+      <div style="font-size:11px;font-weight:700;color:#991B1B;margin-bottom:6px;display:flex;align-items:center;gap:4px"><i class="ti ti-alert-circle" style="font-size:13px" aria-hidden="true"></i> Alasan penolakan</div>
+      <div id="teksAlasanDitolak" style="font-size:13px;color:#7F1D1D;line-height:1.6"></div>
+    </div>
+    <div style="background:#EEF4FF;border-radius:10px;padding:12px;margin-bottom:18px;font-size:12px;color:#1E40AF;line-height:1.6">
+      <i class="ti ti-info-circle" style="font-size:13px" aria-hidden="true"></i> Kamu hanya perlu upload ulang dokumen yang bermasalah. Dokumen lain tidak perlu diulang.
+    </div>
+    <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:10px">Upload ulang dokumen</div>
+    <div id="ditolakDokDriver">
+      <div class="field"><label>🤳 Foto Selfie</label>
+        <div class="dok-upload" id="uploadDitolakSelfie" onclick="document.getElementById('inputDitolakSelfie').click()">
+          <div id="previewDitolakSelfie"><div style="font-size:22px">🤳</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk ganti (opsional)</div></div>
+        </div>
+        <input type="file" id="inputDitolakSelfie" accept="image/*" capture="user" onchange="previewDitolak('Selfie',this)">
+      </div>
+      <div class="field"><label>📄 Foto KTP</label>
+        <div class="dok-upload" id="uploadDitolakKtp" onclick="document.getElementById('inputDitolakKtp').click()">
+          <div id="previewDitolakKtp"><div style="font-size:22px">📄</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk ganti (opsional)</div></div>
+        </div>
+        <input type="file" id="inputDitolakKtp" accept="image/*" onchange="previewDitolak('Ktp',this)">
+      </div>
+      <div class="field"><label>🪪 Foto SIM</label>
+        <div class="dok-upload" id="uploadDitolakSim" onclick="document.getElementById('inputDitolakSim').click()">
+          <div id="previewDitolakSim"><div style="font-size:22px">🪪</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk ganti (opsional)</div></div>
+        </div>
+        <input type="file" id="inputDitolakSim" accept="image/*" onchange="previewDitolak('Sim',this)">
+      </div>
+      <div class="field"><label>🚗 Foto STNK + Bukti Pajak</label>
+        <div class="dok-upload" id="uploadDitolakStnk" onclick="document.getElementById('inputDitolakStnk').click()">
+          <div id="previewDitolakStnk"><div style="font-size:22px">🚗</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk ganti (opsional)</div></div>
+        </div>
+        <input type="file" id="inputDitolakStnk" accept="image/*" onchange="previewDitolak('Stnk',this)">
+      </div>
+      <div class="field"><label>📸 Foto Kendaraan (plat nomor terlihat)</label>
+        <div class="dok-upload" id="uploadDitolakKendaraan" onclick="document.getElementById('inputDitolakKendaraan').click()">
+          <div id="previewDitolakKendaraan"><div style="font-size:22px">📸</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk ganti (opsional)</div></div>
+        </div>
+        <input type="file" id="inputDitolakKendaraan" accept="image/*" onchange="previewDitolak('Kendaraan',this)">
+      </div>
+    </div>
+    <div id="ditolakDokService" style="display:none">
+      <div class="field"><label>🤳 Foto Selfie</label>
+        <div class="dok-upload" id="uploadDitolakSelfieS" onclick="document.getElementById('inputDitolakSelfieS').click()">
+          <div id="previewDitolakSelfieS"><div style="font-size:22px">🤳</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk ganti (opsional)</div></div>
+        </div>
+        <input type="file" id="inputDitolakSelfieS" accept="image/*" capture="user" onchange="previewDitolak('SelfieS',this)">
+      </div>
+      <div class="field"><label>📄 Foto KTP</label>
+        <div class="dok-upload" id="uploadDitolakKtpS" onclick="document.getElementById('inputDitolakKtpS').click()">
+          <div id="previewDitolakKtpS"><div style="font-size:22px">📄</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk ganti (opsional)</div></div>
+        </div>
+        <input type="file" id="inputDitolakKtpS" accept="image/*" onchange="previewDitolak('KtpS',this)">
+      </div>
+      <div class="field"><label id="labelDokPendukungDitolak">📋 KK / Ijazah</label>
+        <div class="dok-upload" id="uploadDitolakDokS" onclick="document.getElementById('inputDitolakDokS').click()">
+          <div id="previewDitolakDokS"><div style="font-size:22px">📋</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Klik untuk ganti (opsional)</div></div>
+        </div>
+        <input type="file" id="inputDitolakDokS" accept="image/*" onchange="previewDitolak('DokS',this)">
+      </div>
+    </div>
+    <div id="ditolakAlert"></div>
+    <button class="btn btn-go" id="btnKirimUlang" onclick="kirimUlangDokumen()" style="margin-top:8px">Kirim ulang untuk diverifikasi</button>
+    <button class="btn btn-outline" style="margin-top:10px" onclick="logout()">Kembali ke Beranda</button>
+  </div>
+</div>
+
+<div id="screenNonaktif" class="screen">
+  <div class="form-wrap">
+    <div class="menunggu-verifikasi">
+      <div class="icon">🚫</div>
+      <div class="form-title">Akun Dinonaktifkan</div>
+      <div class="form-sub" style="margin-top:8px">Akun kamu telah dinonaktifkan oleh tim NitipGo karena melanggar ketentuan layanan.<br><br>Jika kamu merasa ini adalah kesalahan, hubungi kami melalui menu Bantuan di beranda.</div>
+      <button class="btn btn-outline" style="margin-top:20px" onclick="logout()">Kembali ke Beranda</button>
+    </div>
+  </div>
+</div>
+
 <!-- LOGIN -->
 <div id="screenLogin" class="screen">
   <div class="form-wrap">
@@ -2041,7 +2125,12 @@ async function masukSebagai(user){
   }
   if(u.role==='mitra' && u.status_verifikasi==='ditolak'){
     localStorage.removeItem('nitipgo_user');
-    showAlert('loginAlert','Pendaftaran mitrammu ditolak. Hubungi admin untuk info lebih lanjut.');
+    goScreenDitolak(u);
+    return;
+  }
+  if(u.role==='mitra' && u.status_verifikasi==='nonaktif'){
+    localStorage.removeItem('nitipgo_user');
+    goScreen('screenNonaktif');
     return;
   }
   // Simpan session tanpa data besar
@@ -4121,6 +4210,75 @@ function tutupModalApprove(){
   document.getElementById('modalApprove').style.display='none';
 }
 
+const ditolakFiles={selfie:null,ktp:null,sim:null,stnk:null,kendaraan:null,selfieS:null,ktpS:null,dokS:null};
+let _userDitolak=null;
+
+function goScreenDitolak(u){
+  _userDitolak=u;
+  const isService=u.tipe_mitra==='service';
+  document.getElementById('ditolakDokDriver').style.display=isService?'none':'block';
+  document.getElementById('ditolakDokService').style.display=isService?'block':'none';
+  if(isService&&u.tipe_dok_pendukung){
+    const lbl=u.tipe_dok_pendukung==='ijazah'?'📋 Ijazah':'📋 KK (Kartu Keluarga)';
+    document.getElementById('labelDokPendukungDitolak').textContent=lbl;
+  }
+  const alasan=u.catatan_verifikasi||'';
+  if(alasan){
+    document.getElementById('teksAlasanDitolak').textContent=alasan;
+    document.getElementById('alasanDitolakBox').style.display='block';
+  } else {
+    document.getElementById('alasanDitolakBox').style.display='none';
+  }
+  Object.keys(ditolakFiles).forEach(k=>ditolakFiles[k]=null);
+  goScreen('screenDitolak');
+}
+
+function previewDitolak(key, input){
+  const file=input.files[0];
+  if(!file)return;
+  const keyMap={Selfie:'selfie',Ktp:'ktp',Sim:'sim',Stnk:'stnk',Kendaraan:'kendaraan',SelfieS:'selfieS',KtpS:'ktpS',DokS:'dokS'};
+  ditolakFiles[keyMap[key]]=file;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const prev=document.getElementById('previewDitolak'+key);
+    if(prev) prev.innerHTML=`<img src="${e.target.result}" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px">`;
+    const wrap=document.getElementById('uploadDitolak'+key);
+    if(wrap) wrap.classList.add('uploaded');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function kirimUlangDokumen(){
+  if(!_userDitolak){showAlert('ditolakAlert','Sesi habis, silakan login ulang.');return;}
+  const btn=document.getElementById('btnKirimUlang');
+  const isService=_userDitolak.tipe_mitra==='service';
+  const adaFile=isService
+    ?(ditolakFiles.selfieS||ditolakFiles.ktpS||ditolakFiles.dokS)
+    :(ditolakFiles.selfie||ditolakFiles.ktp||ditolakFiles.sim||ditolakFiles.stnk||ditolakFiles.kendaraan);
+  if(!adaFile){showAlert('ditolakAlert','Pilih minimal satu dokumen untuk diupload ulang.');return;}
+  btn.disabled=true;btn.textContent='Mengirim...';
+  try{
+    const updates={status_verifikasi:'menunggu',catatan_verifikasi:null};
+    if(isService){
+      if(ditolakFiles.selfieS) updates.foto_profil=await fileToStorage(ditolakFiles.selfieS,'profil',800,0.8);
+      if(ditolakFiles.ktpS) updates.dok_ktp=await fileToStorage(ditolakFiles.ktpS,'dokumen',800,0.8);
+      if(ditolakFiles.dokS) updates.dok_kk_ijazah=await fileToStorage(ditolakFiles.dokS,'dokumen',800,0.8);
+    } else {
+      if(ditolakFiles.selfie) updates.foto_profil=await fileToStorage(ditolakFiles.selfie,'profil',800,0.8);
+      if(ditolakFiles.ktp) updates.dok_ktp=await fileToStorage(ditolakFiles.ktp,'dokumen',800,0.8);
+      if(ditolakFiles.sim) updates.dok_sim=await fileToStorage(ditolakFiles.sim,'dokumen',800,0.8);
+      if(ditolakFiles.stnk) updates.dok_stnk=await fileToStorage(ditolakFiles.stnk,'dokumen',800,0.8);
+      if(ditolakFiles.kendaraan) updates.dok_kendaraan=await fileToStorage(ditolakFiles.kendaraan,'dokumen',800,0.8);
+    }
+    const{error}=await db.from('users').update(updates).eq('id',_userDitolak.id);
+    if(error) throw error;
+    goScreen('screenMenunggu');
+  }catch(e){
+    showAlert('ditolakAlert','Gagal upload: '+e.message);
+    btn.disabled=false;btn.textContent='Kirim ulang untuk diverifikasi';
+  }
+}
+
 function lihatFotoBesar(url){
   document.getElementById('imgModalLihatFoto').src = url;
   document.getElementById('modalLihatFoto').style.display='flex';
@@ -5654,26 +5812,16 @@ Tim NitipGo`
 }
 
 async function approveMitra(userId, hp){
-  const{data:u}=await db.from('users').select('nama,email').eq('id',userId).single();
   await db.from('users').update({status_verifikasi:'aktif'}).eq('id',userId);
-  // Kirim email notifikasi
-  if(u?.email){
-    await kirimEmailNotif(u.email, u.nama, 'approved');
-  }
-  alert('✅ Mitra berhasil di-approve! Email notifikasi dikirim.');
+  showToastElegan('Mitra berhasil di-approve!','success');
   loadAdminMitra();
   loadAdminStats();
 }
 
 async function tolakMitra(userId, hp){
-  const{data:u}=await db.from('users').select('nama,email').eq('id',userId).single();
   const alasan=prompt('Alasan penolakan (opsional):') || 'Dokumen tidak memenuhi syarat';
   await db.from('users').update({status_verifikasi:'ditolak',catatan_verifikasi:alasan}).eq('id',userId);
-  // Kirim email notifikasi
-  if(u?.email){
-    await kirimEmailNotif(u.email, u.nama, 'ditolak', alasan);
-  }
-  alert('❌ Mitra ditolak. Email notifikasi dikirim.');
+  showToastElegan('Mitra ditolak.','warning');
   loadAdminMitra();
   loadAdminStats();
 }
@@ -5703,14 +5851,10 @@ async function hapusAkun(userId){
       }
       await db.from('orders').delete().eq('pengirim_id',userId);
     }
-    // Kirim email notifikasi banned
-    if(u?.email&&u?.role==='mitra'){
-      await kirimEmailNotif(u.email, u.nama, 'banned');
-    }
     // Baru hapus user
     const{error}=await db.from('users').delete().eq('id',userId);
     if(error){alert('Gagal hapus: '+error.message);return;}
-    alert('✅ Akun berhasil dihapus. Email notifikasi dikirim.');
+    showToastElegan('Akun berhasil dihapus.','success');
     loadAdminAkun();
     loadAdminStats();
   }catch(e){alert('Error: '+e.message);}
@@ -6703,10 +6847,10 @@ async function homeLogin(){
     goScreen('screenMenunggu');return;
   }
   if(user.status_verifikasi==='ditolak'){
-    showAlert('homeLoginAlert','Akun kamu ditolak. Hubungi admin.');return;
+    goScreenDitolak(user);return;
   }
   if(user.status_verifikasi==='nonaktif'){
-    showAlert('homeLoginAlert','Akun kamu dinonaktifkan. Hubungi admin.');return;
+    goScreen('screenNonaktif');return;
   }
 
   // Login langsung tanpa OTP
