@@ -5738,10 +5738,6 @@ async function lihatDetailMitra(userId){
           <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Nomor HP</label>
           <input id="editHp_${u.id}" type="text" value="${u.no_hp}" style="width:100%;padding:7px 10px;border:0.5px solid var(--border);border-radius:8px;font-size:13px">
         </div>
-        ${isMitra?`<div style="margin-bottom:0">
-          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">6 digit terakhir NIK</label>
-          <input id="editNik_${u.id}" type="text" maxlength="6" value="${u.nik_6digit||''}" placeholder="Belum diisi" style="width:100%;padding:7px 10px;border:0.5px solid var(--border);border-radius:8px;font-size:13px;letter-spacing:2px">
-        </div>`:''}
       </div>
 
       ${isMitra?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
@@ -5769,11 +5765,8 @@ async function lihatDetailMitra(userId){
 async function simpanEditAkun(userId, isMitra){
   const nama=document.getElementById('editNama_'+userId)?.value?.trim();
   const hp=document.getElementById('editHp_'+userId)?.value?.trim();
-  const nik=isMitra?document.getElementById('editNik_'+userId)?.value?.trim():null;
   if(!nama||!hp){showToastElegan('Nama dan HP tidak boleh kosong','warning');return;}
-  if(nik&&!/^\d{6}$/.test(nik)){showToastElegan('NIK harus 6 digit angka','warning');return;}
   const updates={nama, no_hp:hp};
-  if(isMitra) updates.nik_6digit=nik||null;
   const{error}=await db.from('users').update(updates).eq('id',userId);
   if(error){showToastElegan('Gagal simpan: '+error.message,'warning');return;}
   showToastElegan('Data akun berhasil diperbarui','success');
