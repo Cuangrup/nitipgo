@@ -5635,7 +5635,7 @@ async function loadAdminAkun(){
       <td>
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           ${u.role==='mitra'?`<button class="btn btn-mitra btn-sm" style="padding:4px 8px;font-size:11px" onclick="ubahStatusMitra('${u.id}','aktif')">Aktifkan</button>
-          <button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="ubahStatusMitra('${u.id}','ditolak')">Nonaktif</button>`:''}
+          <button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="ubahStatusMitra('${u.id}','nonaktif')">Nonaktif</button>`:''}
           <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:#0047AB;border-color:#0047AB" onclick="lihatDetailMitra('${u.id}')">Detail</button>
           ${u.role==='mitra'?`<button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:#0D9E6B;border-color:#0D9E6B" onclick="topUpSaldo('${u.id}','${u.nama}',${u.saldo||0})">Top Up</button>`:''}
           <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:red;border-color:red" onclick="hapusAkun('${u.id}')">Hapus</button>
