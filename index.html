@@ -1479,7 +1479,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <select id="filterRole" onchange="loadAdminAkun()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px">
           <option value="">Semua Role</option>
           <option value="pengirim">Pengguna</option>
-          <option value="mitra">Mitra</option>
+          <option value="mitra">Semua Mitra</option>
+          <option value="driver">Mitra Driver</option>
+          <option value="service">Mitra Service</option>
         </select>
       </div>
       <div id="adminAkunList"><div class="loading">Memuat...</div></div>
@@ -5619,29 +5621,33 @@ async function loadAdminAkun(){
   el.innerHTML='<div class="loading">Memuat...</div>';
   const role=document.getElementById('filterRole').value;
   let q=db.from('users').select('*').order('created_at',{ascending:false}).limit(100);
-  if(role)q=q.eq('role',role);
+  if(role==='driver') q=q.eq('role','mitra').eq('tipe_mitra','driver');
+  else if(role==='service') q=q.eq('role','mitra').eq('tipe_mitra','service');
+  else if(role==='pengirim') q=q.eq('role','pengirim');
+  else if(role==='mitra') q=q.eq('role','mitra');
   const{data}=await q;
   if(!data||!data.length){el.innerHTML='<div class="empty"><p>Tidak ada akun.</p></div>';return;}
   el.innerHTML=`<table class="admin-table">
-    <tr><th>Nama</th><th>HP</th><th>Role</th><th>Status</th><th>Order</th><th>Rating</th><th>Saldo</th><th>Aksi</th></tr>
-    ${data.map(u=>`<tr>
-      <td><b>${u.nama}</b><br><small style="color:var(--muted)">${u.email||''}</small></td>
-      <td>+${u.no_hp}</td>
-      <td><span style="font-size:11px;font-weight:600">${u.role==='mitra'?'🛵 Mitra':'👤 Pengguna'}</span>${u.plat_nomor?`<br><small style="color:var(--muted);font-weight:700;letter-spacing:1px">${u.plat_nomor}</small>`:''}</td>
-      <td><span class="status-badge badge-${u.status_verifikasi||'aktif'}">${u.status_verifikasi||'aktif'}</span></td>
-      <td>${u.total_order||0}</td>
-      <td>⭐ ${u.rating||5.0}</td>
-      <td style="font-weight:600;color:${(u.saldo||0)<0?'#e53935':'#0D9E6B'}">${rupiah(u.saldo||0)}</td>
-      <td>
-        <div style="display:flex;gap:4px;flex-wrap:wrap">
-          ${u.role==='mitra'?`<button class="btn btn-mitra btn-sm" style="padding:4px 8px;font-size:11px" onclick="ubahStatusMitra('${u.id}','aktif')">Aktifkan</button>
-          <button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="ubahStatusMitra('${u.id}','nonaktif')">Nonaktif</button>`:''}
-          <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:#0047AB;border-color:#0047AB" onclick="lihatDetailMitra('${u.id}')">Detail</button>
-          ${u.role==='mitra'?`<button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:#0D9E6B;border-color:#0D9E6B" onclick="topUpSaldo('${u.id}','${u.nama}',${u.saldo||0})">Top Up</button>`:''}
-          <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:red;border-color:red" onclick="hapusAkun('${u.id}')">Hapus</button>
-        </div>
-      </td>
-    </tr>`).join('')}
+    <tr><th>Nama</th><th>Role</th><th>Status</th><th>Order</th><th>Saldo</th><th>Aksi</th></tr>
+    ${data.map(u=>{
+      const isMitra=u.role==='mitra';
+      const isService=u.tipe_mitra==='service';
+      const ikon=!isMitra?'👤':(isService?'🤝':'🛵');
+      const roleLabel=!isMitra?'Pengguna':(isService?'Mitra Service':'Mitra Driver');
+      const roleBg=!isMitra?'#F3F4F6':(isService?'#ECFDF5':'#EEF4FF');
+      const roleClr=!isMitra?'#374151':(isService?'#065F46':'#0C447C');
+      return `<tr>
+        <td><b style="font-size:13px">${u.nama}</b><br><small style="color:var(--muted);font-size:11px">${u.email||''}</small></td>
+        <td>
+          <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;background:${roleBg};color:${roleClr}">${ikon} ${roleLabel}</span>
+          ${u.plat_nomor?`<div style="font-size:10px;color:#0047AB;font-weight:700;letter-spacing:0.5px;margin-top:2px">${u.plat_nomor}</div>`:''}
+        </td>
+        <td><span class="status-badge badge-${u.status_verifikasi||'aktif'}">${u.status_verifikasi||'aktif'}</span></td>
+        <td>${u.total_order||0}</td>
+        <td style="font-weight:600;color:${(u.saldo||0)<0?'#e53935':'#0D9E6B'}">${rupiah(u.saldo||0)}</td>
+        <td><button class="btn btn-outline btn-sm" style="padding:4px 10px;font-size:11px;color:#0047AB;border-color:#0047AB" onclick="lihatDetailMitra('${u.id}')">Detail</button></td>
+      </tr>`;
+    }).join('')}
   </table>`;
 }
 
@@ -5676,6 +5682,10 @@ async function topUpSaldo(userId, nama, saldoSkrg){
 async function lihatDetailMitra(userId){
   const{data:u}=await db.from('users').select('*').eq('id',userId).single();
   if(!u){alert('Data tidak ditemukan');return;}
+  const isMitra=u.role==='mitra';
+  const isService=u.tipe_mitra==='service';
+  const ikon=!isMitra?'👤':(isService?'🤝':'🛵');
+  const roleLabel=!isMitra?'Pengguna':(isService?'Mitra Service':'Mitra Driver');
 
   const modal=document.createElement('div');
   modal.className='admin-modal';
@@ -5683,54 +5693,31 @@ async function lihatDetailMitra(userId){
   modal.innerHTML=`
     <div style="background:white;border-radius:16px;padding:20px;max-width:480px;width:100%;margin:auto">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div style="font-weight:700;font-size:16px">Detail Mitra</div>
+        <div style="font-weight:700;font-size:16px">Detail akun</div>
         <button onclick="this.closest('.admin-modal').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)">✕</button>
       </div>
 
-      <!-- Foto & Info Dasar -->
-      <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
-        ${u.foto_profil?`<img src="${u.foto_profil}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0">`:`<div style="width:64px;height:64px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">🛵</div>`}
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px">
+        ${u.foto_profil?`<img src="${u.foto_profil}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0">`:`<div style="width:56px;height:56px;border-radius:50%;background:#EEF4FF;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;border:2px solid var(--border)">${ikon}</div>`}
         <div>
-          <div style="font-weight:700;font-size:16px">${u.nama}</div>
-          <div style="font-size:13px;color:var(--muted)">+${u.no_hp}</div>
-          <div style="font-size:12px;color:var(--muted)">${u.email||'-'}</div>
-          <span class="status-badge badge-${u.status_verifikasi||'aktif'}" style="margin-top:4px;display:inline-block">${u.status_verifikasi||'aktif'}</span>
+          <div style="font-weight:700;font-size:15px">${u.nama}</div>
+          <div style="font-size:12px;color:var(--muted)">+${u.no_hp}</div>
+          <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;margin-top:4px;background:${!isMitra?'#F3F4F6':(isService?'#ECFDF5':'#EEF4FF')};color:${!isMitra?'#374151':(isService?'#065F46':'#0C447C')}">${ikon} ${roleLabel}${u.plat_nomor?' · '+u.plat_nomor:''}</div>
         </div>
       </div>
 
-      <!-- Info Detail -->
-      <div style="background:var(--surface);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;display:flex;flex-direction:column;gap:6px">
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Tipe Mitra</span><b>${u.tipe_mitra==='service'?'Mitra Service':'Mitra Driver'}</b></div>
-        ${u.jenis_kendaraan?`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Kendaraan</span><b>${u.jenis_kendaraan}</b></div>`:''}
-        ${u.plat_nomor?`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Plat Nomor</span><b style="letter-spacing:1px">${u.plat_nomor}</b></div>`:''}
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Rating</span><b>⭐ ${u.rating||'5.0'} (${u.total_rating||0} ulasan)</b></div>
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Total Order</span><b>${u.total_order||0} order</b></div>
+      <div style="background:#F8FAFC;border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Status</span><span class="status-badge badge-${u.status_verifikasi||'aktif'}">${u.status_verifikasi||'aktif'}</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Rating</span><b>⭐ ${parseFloat(u.rating||5).toFixed(1)} (${u.total_rating||0} ulasan)</b></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Total order</span><b>${u.total_order||0} order</b></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Saldo</span><b style="color:#0D9E6B">${rupiah(u.saldo||0)}</b></div>
         <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Bergabung</span><b>${new Date(u.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</b></div>
+        ${u.no_rekening?`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Rekening</span><b>${u.nama_bank} · ${u.no_rekening}</b></div>`:''}
+        ${u.hp_kontak_darurat?`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Kontak darurat</span><b>${u.nama_kontak_darurat} (${u.hp_kontak_darurat})</b></div>`:''}
       </div>
 
-      <!-- Rekening -->
-      <div style="background:#EEF4FF;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
-        <div style="font-weight:600;color:#0047AB;margin-bottom:6px">🏦 Rekening Pencairan</div>
-        ${u.no_rekening?`
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">Bank</span><b>${u.nama_bank}</b></div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">No. Rekening</span><b style="letter-spacing:1px">${u.no_rekening}</b></div>
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">A/N</span><b>${u.nama_rekening}</b></div>
-        `:'<div style="color:#e53935;font-size:12px">⚠️ Belum ada rekening tersimpan</div>'}
-      </div>
-
-      <!-- Kontak Darurat -->
-      <div style="background:#FFF3E0;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
-        <div style="font-weight:600;color:#E65100;margin-bottom:6px">🆘 Kontak Darurat</div>
-        ${u.hp_kontak_darurat?`
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">Nama</span><b>${u.nama_kontak_darurat}</b></div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--muted)">Hubungan</span><b>${u.hubungan_kontak_darurat}</b></div>
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">No. HP</span><b>${u.hp_kontak_darurat}</b></div>
-        `:'<div style="color:#e53935;font-size:12px">⚠️ Belum ada kontak darurat</div>'}
-      </div>
-
-      <!-- Dokumen -->
-      <div style="margin-bottom:16px">
-        <div style="font-weight:600;font-size:13px;margin-bottom:8px">📄 Dokumen</div>
+      ${isMitra?`<div style="margin-bottom:12px">
+        <div style="font-weight:600;font-size:12px;margin-bottom:8px;color:#374151">Dokumen</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           ${u.foto_profil?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">SELFIE</div><img src="${u.foto_profil}" class="dok-thumb" onclick="openDokModal('${u.foto_profil}')"></div>`:''}
           ${u.dok_ktp?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">KTP</div><img src="${u.dok_ktp}" class="dok-thumb" onclick="openDokModal('${u.dok_ktp}')"></div>`:''}
@@ -5739,22 +5726,61 @@ async function lihatDetailMitra(userId){
           ${u.dok_kendaraan?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Kendaraan</div><img src="${u.dok_kendaraan}" class="dok-thumb" onclick="openDokModal('${u.dok_kendaraan}')"></div>`:''}
           ${u.dok_kk_ijazah?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">${u.tipe_dok_pendukung==='ijazah'?'Ijazah':'KK'}</div><img src="${u.dok_kk_ijazah}" class="dok-thumb" onclick="openDokModal('${u.dok_kk_ijazah}')"></div>`:''}
         </div>
+      </div>`:''}
+
+      <div style="border:0.5px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:#0047AB;margin-bottom:10px">Edit data akun</div>
+        <div style="margin-bottom:8px">
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Nama</label>
+          <input id="editNama_${u.id}" type="text" value="${u.nama}" style="width:100%;padding:7px 10px;border:0.5px solid var(--border);border-radius:8px;font-size:13px">
+        </div>
+        <div style="margin-bottom:8px">
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Nomor HP</label>
+          <input id="editHp_${u.id}" type="text" value="${u.no_hp}" style="width:100%;padding:7px 10px;border:0.5px solid var(--border);border-radius:8px;font-size:13px">
+        </div>
+        ${isMitra?`<div style="margin-bottom:0">
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">6 digit terakhir NIK</label>
+          <input id="editNik_${u.id}" type="text" maxlength="6" value="${u.nik_6digit||''}" placeholder="Belum diisi" style="width:100%;padding:7px 10px;border:0.5px solid var(--border);border-radius:8px;font-size:13px;letter-spacing:2px">
+        </div>`:''}
       </div>
 
-      <!-- Aksi -->
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${isMitra?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
         ${u.status_verifikasi==='menunggu'?`
-          <button class="btn btn-mitra btn-sm" onclick="approveMitra('${u.id}','${u.no_hp}');this.closest('.admin-modal').remove()">✅ Approve</button>
-          <button class="btn btn-danger btn-sm" onclick="tolakMitra('${u.id}','${u.no_hp}');this.closest('.admin-modal').remove()">❌ Tolak</button>
+          <button class="btn btn-mitra btn-sm" onclick="approveMitra('${u.id}');this.closest('.admin-modal').remove()">Approve</button>
+          <button class="btn btn-danger btn-sm" onclick="tolakMitra('${u.id}');this.closest('.admin-modal').remove()">Tolak</button>
         `:''}
-        <button class="btn btn-outline btn-sm" onclick="ubahStatusMitra('${u.id}','aktif');this.closest('.admin-modal').remove()">Set Aktif</button>
+        <button class="btn btn-outline btn-sm" onclick="ubahStatusMitra('${u.id}','aktif');this.closest('.admin-modal').remove()">Set aktif</button>
         <button class="btn btn-outline btn-sm" style="color:#e53935;border-color:#e53935" onclick="ubahStatusMitra('${u.id}','nonaktif');this.closest('.admin-modal').remove()">Nonaktifkan</button>
-        <button class="btn btn-outline btn-sm" onclick="this.closest('.admin-modal').remove()">Tutup</button>
+        <button class="btn btn-outline btn-sm" style="color:#0D9E6B;border-color:#0D9E6B" onclick="topUpSaldo('${u.id}','${u.nama}',${u.saldo||0})">Top Up</button>
+        <button class="btn btn-outline btn-sm" style="color:red;border-color:red" onclick="hapusAkun('${u.id}')">Hapus</button>
+      </div>`:`<div style="margin-bottom:12px">
+        <button class="btn btn-outline btn-sm" style="color:red;border-color:red" onclick="hapusAkun('${u.id}')">Hapus akun</button>
+      </div>`}
+
+      <div style="display:flex;gap:8px">
+        <button onclick="simpanEditAkun('${u.id}',${isMitra})" style="flex:1;background:#0047AB;color:white;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer">Simpan perubahan</button>
+        <button onclick="this.closest('.admin-modal').remove()" style="padding:10px 16px;border-radius:8px;background:none;border:0.5px solid var(--border);color:var(--muted);font-size:13px;cursor:pointer">Tutup</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
   modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
 }
+
+async function simpanEditAkun(userId, isMitra){
+  const nama=document.getElementById('editNama_'+userId)?.value?.trim();
+  const hp=document.getElementById('editHp_'+userId)?.value?.trim();
+  const nik=isMitra?document.getElementById('editNik_'+userId)?.value?.trim():null;
+  if(!nama||!hp){showToastElegan('Nama dan HP tidak boleh kosong','warning');return;}
+  if(nik&&!/^\d{6}$/.test(nik)){showToastElegan('NIK harus 6 digit angka','warning');return;}
+  const updates={nama, no_hp:hp};
+  if(isMitra) updates.nik_6digit=nik||null;
+  const{error}=await db.from('users').update(updates).eq('id',userId);
+  if(error){showToastElegan('Gagal simpan: '+error.message,'warning');return;}
+  showToastElegan('Data akun berhasil diperbarui','success');
+  document.querySelectorAll('.admin-modal').forEach(m=>m.remove());
+  loadAdminAkun();
+}
+
 
 async function kirimEmailNotif(email, nama, status, alasan=''){
   const messages = {
