@@ -1446,6 +1446,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+<!-- MODAL SELAMAT DATANG MITRA BARU DI-APPROVE -->
+<div id="modalApprove" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:99998;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:20px;padding:28px 22px 22px;max-width:320px;width:100%;text-align:center">
+    <div style="width:64px;height:64px;background:#EEF4FF;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <i class="ti ti-circle-check" style="font-size:30px;color:#0047AB" aria-hidden="true"></i>
+    </div>
+    <div style="font-size:18px;font-weight:700;color:#111827;margin-bottom:8px">Akun kamu sudah aktif!</div>
+    <div id="teksModalApprove" style="font-size:13px;color:#6B7280;margin-bottom:20px;line-height:1.6"></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:20px">
+      <span style="display:flex;align-items:center;gap:4px;background:#EEF4FF;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:#0C447C"><i class="ti ti-shield-check" style="font-size:13px" aria-hidden="true"></i> Terverifikasi</span>
+      <span style="display:flex;align-items:center;gap:4px;background:#ECFDF5;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:#065F46"><i class="ti ti-map-pin" style="font-size:13px" aria-hidden="true"></i> Siap bertugas</span>
+    </div>
+    <button onclick="tutupModalApprove()" style="width:100%;background:#0047AB;color:white;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer">Mulai terima order</button>
+  </div>
+</div>
+
 <!-- MODAL KONFIRMASI UMUM (reusable) -->
 <div id="modalKonfirmasiUmum" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:99997;align-items:center;justify-content:center;padding:20px">
   <div style="background:white;border-radius:16px;padding:24px 22px;max-width:320px;width:100%;text-align:center">
@@ -2061,6 +2077,12 @@ async function masukSebagai(user){
     mulaiCekKameraBerkala();
     mulaiPollingDarurat();
     setTimeout(loadMitraSaldo, 500);
+    const flagKey = 'approve_shown_'+u.id;
+    const totalOrder = u.total_order || 0;
+    if(totalOrder === 0 && !localStorage.getItem(flagKey)){
+      localStorage.setItem(flagKey, '1');
+      setTimeout(()=>tampilModalApprove(u.nama), 800);
+    }
   }
 }
 
@@ -4087,6 +4109,16 @@ function konfirmasiElegan(opts){
 }
 function tutupModalKonfirmasiUmum(){
   document.getElementById('modalKonfirmasiUmum').style.display='none';
+}
+
+function tampilModalApprove(namaUser){
+  const firstName = namaUser ? namaUser.split(' ')[0] : 'Mitra';
+  document.getElementById('teksModalApprove').textContent =
+    'Hei, '+firstName+'! Dokumenmu sudah kami verifikasi. Kamu sekarang bisa mulai menerima order dari pengguna NitipGo.';
+  document.getElementById('modalApprove').style.display='flex';
+}
+function tutupModalApprove(){
+  document.getElementById('modalApprove').style.display='none';
 }
 
 function lihatFotoBesar(url){
